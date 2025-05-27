@@ -1,34 +1,42 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
-class Timer {
-public:
-  Timer() {}
-  ~Timer() {
-
-  }
-};
+#include <iostream>
+#include "common/types.h"
 
 void init() {
+  /* Initialize the library */
+  if (!glfwInit())
+    exit(EXIT_FAILURE);
+
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef MACOS_BUILD
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
 
 }
 
-int main(void) {
+i32 main(void) {
+  init();
+
   GLFWwindow *window;
 
-  /* Initialize the library */
-  if (!glfwInit())
-    return -1;
-
   /* Create a windowed mode window and its OpenGL context */
-  window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+  window = glfwCreateWindow(800, 600, "Hello Sono", NULL, NULL);
   if (!window) {
+    std::cout << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
     return -1;
   }
-
   /* Make the window's context current */
   glfwMakeContextCurrent(window);
+
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+  {
+      std::cout << "Failed to initialize GLAD" << std::endl;
+      exit(EXIT_FAILURE);
+  }    
 
   glViewport(0, 0, 400, 300);
 

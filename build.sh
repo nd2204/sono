@@ -27,7 +27,7 @@ echo "Configuring Sono"
 echo "================================================================================"
 echo "Build directory: $build_dir"
 
-if cmake -B "$build_dir" -S "$engine_dir" -G Ninja; then
+if cmake -B "$build_dir" -S "$project_dir" -G Ninja; then
     echo "CMake configuration successful."
 else
     echo "CMake configuration failed."
