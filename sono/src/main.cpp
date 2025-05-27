@@ -1,37 +1,49 @@
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-int main(void)
-{
-    GLFWwindow* window;
+class Timer {
+public:
+  Timer() {}
+  ~Timer() {
 
-    /* Initialize the library */
-    if (!glfwInit())
-        return -1;
+  }
+};
 
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
+void init() {
 
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
+}
 
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+int main(void) {
+  GLFWwindow *window;
 
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
+  /* Initialize the library */
+  if (!glfwInit())
+    return -1;
 
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
-
+  /* Create a windowed mode window and its OpenGL context */
+  window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+  if (!window) {
     glfwTerminate();
-    return 0;
+    return -1;
+  }
+
+  /* Make the window's context current */
+  glfwMakeContextCurrent(window);
+
+  glViewport(0, 0, 400, 300);
+
+  /* Loop until the user closes the window */
+  while (!glfwWindowShouldClose(window)) {
+    /* Render here */
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    /* Swap front and back buffers */
+    glfwSwapBuffers(window);
+
+    /* Poll for and process events */
+    glfwPollEvents();
+  }
+
+  glfwTerminate();
+  return 0;
 }

@@ -3,6 +3,7 @@ project(SonoCore VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenGL REQUIRED)
 add_subdirectory(vendors/glfw)
@@ -15,6 +16,7 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE
   OpenGL::GL
   glad
-  glfw)
+  glfw
+)
 
 target_include_directories(${PROJECT_NAME} PRIVATE vendors/glad/include)
