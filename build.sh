@@ -21,11 +21,13 @@ fi
 
 engine_dir="${project_dir}/sono"
 build_dir="${project_dir}/build"
+build_type=Debug
 
 echo "================================================================================"
 echo "Configuring Sono"
 echo "================================================================================"
 echo "Build directory: $build_dir"
+echo "Build type: $build_type"
 
 if cmake -B "$build_dir" -S "$project_dir" -G Ninja; then
     echo "CMake configuration successful."

@@ -4,14 +4,19 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-project(SonoCore VERSION 0.1.0 LANGUAGES CXX)
+project(SonoEngine VERSION 0.1.0 LANGUAGES CXX)
 
 find_package(OpenGL REQUIRED)
 add_subdirectory(vendors/glfw)
 add_subdirectory(vendors/glad)
+add_subdirectory(vendors/imgui)
 
-if(APPLE)
-  add_compile_definitions(MACOS_BUILD)
+if(WIN32)
+  add_compile_definitions(WIN32_BUILD)
+elseif(APPLE)
+  add_compile_definitions(OSX_BUILD)
+elseif(UNIX)
+  add_compile_definitions(UNIX_BUILD)
 endif()
 
 add_executable(${PROJECT_NAME}
@@ -19,9 +24,11 @@ add_executable(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  OpenGL::GL
-  glad
+  imgui
   glfw
+  glad
+  OpenGL::GL
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE vendors/glad/include)
+target_include_directories(${PROJECT_NAME} PUBLIC includes)
