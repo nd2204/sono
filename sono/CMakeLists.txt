@@ -19,8 +19,12 @@ elseif(UNIX)
   add_compile_definitions(UNIX_BUILD)
 endif()
 
+file(GLOB SRC_FILES "src/*.cpp")
+file(GLOB SNGL_SRC_FILES "src/sngl/*.cpp")
+
 add_executable(${PROJECT_NAME}
-  src/main.cpp
+  ${SNGL_SRC_FILES}
+  ${SRC_FILES}
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
