@@ -58,18 +58,17 @@ u32 GLShader::_Compile(const char *src, u32 type) {
     glGetShaderInfoLog(shaderId, 512, NULL, infoLog);
     switch (type) {
     case GL_VERTEX_SHADER:
-      std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
-                << infoLog << std::endl;
+      LOG_ERROR_F("Vertex shader compilation failed: %s", infoLog);
       break;
     case GL_GEOMETRY_SHADER:
-      std::cout << "ERROR::SHADER::GEOMETRY::COMPILATION_FAILED\n"
-                << infoLog << std::endl;
+      LOG_ERROR_F("Geometry shader compilation failed: %s", infoLog);
       break;
     case GL_FRAGMENT_SHADER:
-      std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
-                << infoLog << std::endl;
+      LOG_ERROR_F("Fragment shader compilation failed: %s", infoLog);
       break;
     }
+  } else {
+    LOG_INFO_F("%s compilation success", ShaderTypeStr.at(type));
   }
 
   return shaderId;
@@ -115,6 +114,14 @@ void GLShaderProgram::AttachShader(GLShader &shader) {
   }
 }
 
+void GLShaderProgram::SetUniform4f(
+  const char *uniform, f32 x, f32 y, f32 z, f32 w
+) {
+  int uniformLoc = glGetUniformLocation(this->m_Id, uniform);
+  glUseProgram(this->m_Id);
+  glUniform4f(uniformLoc, x, y, z, w);
+}
+
 void GLShaderProgram::LinkProgram() {
   i32 success;
   char infoLog[512];
@@ -131,22 +138,8 @@ void GLShaderProgram::Use() { glUseProgram(this->m_Id); }
 GLShaderProgram::operator u32() const { return this->m_Id; }
 
 GLShaderProgram &GLShaderProgram::DefaultPipeLine() {
-  static const char *vsSrc = " \
-#version 330 core\n\
-layout (location = 0) in vec3 aPos;\n\
-void main() {\n\
-  gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n\
-}";
-
-  static const char *fsSrc = " \
-#version 330 core\n\
-out vec4 fragColor;\n\
-void main() {\n\
-  fragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n\
-}";
-
-  static GLShader vsId(&vsSrc, GL_VERTEX_SHADER);
-  static GLShader fsId(&fsSrc, GL_FRAGMENT_SHADER);
+  static GLShader vsId("./assets/vertex.glsl", GL_VERTEX_SHADER);
+  static GLShader fsId("./assets/fragment.glsl", GL_FRAGMENT_SHADER);
   static GLShaderProgram program(vsId, fsId);
   return program;
 }

@@ -87,4 +87,6 @@ u32 SNWindow::GetHeight() { return this->m_Height; }
 
 WindowMode SNWindow::GetCurrentWindowMode() { return this->m_Mode; }
 
+void SNWindow::EnableVsync(i32 vsync) { glfwSwapInterval(vsync); }
+
 SNWindow::operator GLFWwindow *() const { return this->m_Context; }
