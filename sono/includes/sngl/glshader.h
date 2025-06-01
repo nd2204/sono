@@ -36,6 +36,7 @@ public:
 
   void AttachShader(GLShader &shader);
   void LinkProgram();
+  void SetUniform4f(const char *uniform, f32 x, f32 y, f32 z, f32 w);
   void Use();
 
   operator u32() const;

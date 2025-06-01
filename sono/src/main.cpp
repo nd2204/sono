@@ -1,12 +1,17 @@
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 #include "sngl/glshader.h"
 #include "sono/snwindow.h"
+#include "sono/time.h"
+#include "logger.h"
 
+#include <cmath>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-f32 vertices[] = {-1.0f, -0.5f, 0.0f, 0.0f, -0.5f, 0.0f, -0.5f, 0.5f, 0.0f};
-f32 vertices2[] = {-0.0f, -0.5f, 0.0f, 1.0f, -0.5f, 0.0f, 0.5f, 0.5f, 0.0f};
+f32 vertices[] = {-0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f};
 
 void Init() {
   /* Initialize the library */
@@ -31,32 +36,41 @@ i32 main(void) {
 
   /* Create a windowed mode window and its OpenGL context */
   SNWindow window(800, 600, "Hello Sono");
+  window.EnableVsync(false);
 
-  /* Make the window's context current */
   glfwSetFramebufferSizeCallback(
     window,
     [](GLFWwindow *window, int width, int height) {
-      std::cout << "Changing viewport w:" << width << "h: " << height
-                << std::endl;
       glViewport(0, 0, width, height);
     }
   );
 
-  u32 VAO[2];
-  glGenVertexArrays(2, VAO);
-  u32 VBO[2];
-  glGenBuffers(2, VBO);
+  // Setup Dear ImGui context
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO &io = ImGui::GetIO();
+  (void)io;
+  io.ConfigFlags |=
+    ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+  io.ConfigFlags |=
+    ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
-  glBindVertexArray(VAO[0]);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+  // Setup Dear ImGui style
+  ImGui::StyleColorsDark();
+  // ImGui::StyleColorsLight();
+
+  // Setup Platform/Renderer backends
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init("#version 330 core");
+
+  u32 VAO;
+  glGenVertexArrays(1, &VAO);
+  u32 VBO;
+  glGenBuffers(1, &VBO);
+
+  glBindVertexArray(VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void *)0);
-  glEnableVertexAttribArray(0);
-  glBindVertexArray(0);
-
-  glBindVertexArray(VAO[1]);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices2), vertices2, GL_STATIC_DRAW);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void *)0);
   glEnableVertexAttribArray(0);
   glBindVertexArray(0);
@@ -67,26 +81,53 @@ i32 main(void) {
   while (!glfwWindowShouldClose(window)) {
     ProcessInput(window);
 
+    /* Poll for and process events */
+    glfwPollEvents();
+
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    {
+      ImGuiIO &io = ImGui::GetIO();
+
+      ImGui::SetNextWindowPos(ImVec2(0, io.DisplaySize.y - 30));
+      ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, 20));
+
+      ImGui::Begin(
+        "Status Bar",
+        nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+          ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+          ImGuiWindowFlags_NoSavedSettings
+      );
+
+      ImGui::Text("Status: Ready | FPS: %.2f", Time::GetFPS());
+      ImGui::End();
+    }
+
+    ImGui::Render();
+
     /* Render here */
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     shaderProgram.Use();
-    glBindVertexArray(VAO[0]);
+    float greenValue = (sin(Time::TotalTime()) / 2.0f) + 0.5f;
+    shaderProgram.SetUniform4f("ourColor", 0.0f, greenValue, 0.0f, 1.0f);
+    glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
-    glBindVertexArray(VAO[1]);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glBindVertexArray(0);
+
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     /* Swap front and back buffers */
     glfwSwapBuffers(window);
 
-    /* Poll for and process events */
-    glfwPollEvents();
+    Time::Tick();
   }
 
-  glDeleteVertexArrays(2, VAO);
-  glDeleteBuffers(2, VBO);
+  glDeleteVertexArrays(1, &VAO);
+  glDeleteBuffers(1, &VBO);
   glDeleteProgram(shaderProgram);
 
   glfwTerminate();

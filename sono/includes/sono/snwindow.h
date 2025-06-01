@@ -23,6 +23,8 @@ public:
   u32 GetWidth();
   u32 GetHeight();
   WindowMode GetCurrentWindowMode();
+  // TODO: Turn this to a flag when things get bigger
+  void EnableVsync(i32 vsync);
   void SetWindowMode(WindowMode mode);
   void SetFullScreen(i32 fullscreen);
   void ToggleFullScreen();
