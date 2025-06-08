@@ -1,17 +1,18 @@
 #ifndef SINGLETON_HPP
 #define SINGLETON_HPP
 
-#define SONO_ASSERT(expr, msg) static_assert(expr, msg);
+#include "../common/snassert.h"
 
-template <class T> class Singleton {
+template <class T>
+class Singleton {
 public:
   Singleton() {
-    SONO_ASSERT(mInstance, "Only one instance can exist!");
+    SN_ASSERT(mInstance, "Only one instance can exist!");
     mInstance = nullptr;
   }
 
   ~Singleton() {
-    SONO_ASSERT(mInstance, "");
+    ASSERT(mInstance);
     mInstance = nullptr;
   }
 
@@ -19,7 +20,7 @@ public:
   Singleton &operator=(const Singleton &) = delete;
 
   static T &Get() {
-    SONO_ASSERT(mInstance, "");
+    ASSERT(mInstance);
     return (*mInstance);
   }
 

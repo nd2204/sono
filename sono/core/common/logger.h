@@ -1,7 +1,8 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-#include "sono/types.h"
+#include "../common/types.h"
+#include <cstdarg>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -13,11 +14,13 @@
 #include <windows.h>
 #endif
 
+#define LOG_F(fmt, ...)       Logger::LogF(LOG_LEVEL_NONE, fmt, __VA_ARGS__)
 #define LOG_INFO_F(fmt, ...)  Logger::LogF(LOG_LEVEL_INFO, fmt, __VA_ARGS__)
 #define LOG_WARN_F(fmt, ...)  Logger::LogF(LOG_LEVEL_WARNING, fmt, __VA_ARGS__)
 #define LOG_ERROR_F(fmt, ...) Logger::LogF(LOG_LEVEL_ERROR, fmt, __VA_ARGS__)
 #define LOG_DEBUG_F(fmt, ...) Logger::LogF(LOG_LEVEL_DEBUG, fmt, __VA_ARGS__)
 
+#define LOG(msg)       Logger::Log(LOG_LEVEL_NONE, msg)
 #define LOG_INFO(msg)  Logger::Log(LOG_LEVEL_INFO, msg)
 #define LOG_WARN(msg)  Logger::Log(LOG_LEVEL_WARNING, msg)
 #define LOG_ERROR(msg) Logger::Log(LOG_LEVEL_ERROR, msg)
@@ -33,8 +36,9 @@ enum LogLevel {
 
 class Logger {
 public:
-  static void
-  Init(const std::string &filename = "", LogLevel minLevel = LOG_LEVEL_INFO) {
+  static void Init(
+    const std::string &filename = "", LogLevel minLevel = LOG_LEVEL_INFO
+  ) {
     minLogLevel = minLevel;
     if (!filename.empty()) {
       logFile.open(filename, std::ios::app);
@@ -58,15 +62,23 @@ public:
 
     va_list args;
     va_start(args, fmt);
-    usize needed = 0;
-    vsnprintf(buffer.data(), buffer.size(), fmt, args);
+    usize needed = vsnprintf(buffer.data(), buffer.size(), fmt, args);
     va_end(args);
 
+    if (static_cast<size_t>(needed) >= buffer.size()) {
+      buffer.resize(needed + 1); // +1 for null terminator
+
+      va_start(args, fmt);
+      vsnprintf(buffer.data(), buffer.size(), fmt, args);
+      va_end(args);
+    }
+
     std::ostringstream oss;
-    oss << GetColor(level);
-    oss << "[" << GetTimestamp() << "]";
-    oss << "[" << LogLevelToString(level) << "] ";
-    oss << GetColor(LOG_LEVEL_NONE);
+    if (level != LOG_LEVEL_NONE) {
+      oss << GetColor(level);
+      oss << "[" << GetTimestamp() << "]";
+      oss << "[" << LogLevelToString(level) << "] ";
+    }
     oss << buffer.data();
     oss << "\033[0m"; // reset color
 
@@ -74,8 +86,14 @@ public:
 
     std::cout << finalMessage << std::endl;
     if (logFile.is_open()) {
-      logFile << "[" << GetTimestamp() << "][" << LogLevelToString(level)
-              << "] " << fmt << std::endl;
+      logFile
+        << "["
+        << GetTimestamp()
+        << "]["
+        << LogLevelToString(level)
+        << "] "
+        << fmt
+        << std::endl;
     }
   }
 
@@ -112,7 +130,7 @@ private:
   static std::string GetColor(LogLevel level) {
     switch (level) {
     case LOG_LEVEL_INFO:
-      return "\033[34m"; // Blue
+      return "\033[0m"; // Default
     case LOG_LEVEL_WARNING:
       return "\033[33m"; // Yellow
     case LOG_LEVEL_ERROR:
