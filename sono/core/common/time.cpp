@@ -1,4 +1,6 @@
-#include "sono/time.h"
+#include "time.h"
+
+using namespace Sono;
 
 void Time::Tick() {
   using clock = std::chrono::high_resolution_clock;
@@ -6,9 +8,8 @@ void Time::Tick() {
 
   if (m_FrameCount == 0) {
     m_LastTime = now;
-    m_DeltaTime = 0.0f;
   } else {
-    m_DeltaTime = std::chrono::duration<f64>(now - m_LastTime).count();
+    m_DeltaTime = std::chrono::duration<f32>(now - m_LastTime).count();
     m_TotalTime += m_DeltaTime;
     m_LastTime = now;
   }
@@ -22,7 +23,7 @@ f32 Time::TotalTime() { return m_TotalTime; }
 u64 Time::FrameCount() { return m_FrameCount; }
 f32 Time::GetFPS() { return m_FPS; }
 
-f32 Time::m_DeltaTime = 0.0f;
+f32 Time::m_DeltaTime = 0.01f;
 f32 Time::m_TotalTime = 0.0f;
 u64 Time::m_FrameCount = 0;
 f32 Time::m_FPS = 0;

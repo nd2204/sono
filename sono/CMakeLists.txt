@@ -1,38 +1,43 @@
 cmake_minimum_required(VERSION 3.15)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-project(SonoEngine VERSION 0.1.0 LANGUAGES CXX)
+project(SonoEngine LANGUAGES CXX)
+
+set(CMAKE_PROJECT_VERSION_MAJOR 0)
+set(CMAKE_PROJECT_VERSION_MINOR 1)
+set(CMAKE_PROJECT_VERSION_PATCH 0)
+set(CMAKE_PROJECT_VERSION ${CMAKE_PROJECT_VERSION_MAJOR}.${CMAKE_PROJECT_VERSION_MINOR}.${CMAKE_PROJECT_VERSION_PATCH})
 
 find_package(OpenGL REQUIRED)
 add_subdirectory(vendors/glfw)
 add_subdirectory(vendors/glad)
 add_subdirectory(vendors/imgui)
 
-if(WIN32)
-  add_compile_definitions(WIN32_BUILD)
-elseif(APPLE)
-  add_compile_definitions(OSX_BUILD)
-elseif(UNIX)
-  add_compile_definitions(UNIX_BUILD)
+# Add debug-specific definition
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+  add_compile_definitions(NDEBUG)
 endif()
 
-file(GLOB SRC_FILES "src/*.cpp")
-file(GLOB SNGL_SRC_FILES "src/sngl/*.cpp")
+if(WIN32)
+  add_compile_definitions(SONO_PLATFORM_WINDOWS)
+elseif(APPLE)
+  add_compile_definitions(SONO_PLATFORM_MACOS)
+elseif(UNIX)
+  add_compile_definitions(SONO_PLATFORM_UNIX)
+endif()
 
-add_executable(${PROJECT_NAME}
-  ${SNGL_SRC_FILES}
-  ${SRC_FILES}
-)
+file(GLOB_RECURSE SOURCE_FILES "core/*.cpp")
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
+add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES})
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
   imgui
   glfw
   glad
   OpenGL::GL
 )
 
-target_include_directories(${PROJECT_NAME} PRIVATE vendors/glad/include)
-target_include_directories(${PROJECT_NAME} PUBLIC includes)
+target_include_directories(${PROJECT_NAME} PUBLIC .)
