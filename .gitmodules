@@ -5,3 +5,6 @@
 	path = sono/vendors/imgui
 	url = https://github.com/nd2204/imgui.git
 	branch = docking
+[submodule "sono/vendors/glm"]
+	path = sono/vendors/glm
+	url = https://github.com/g-truc/glm

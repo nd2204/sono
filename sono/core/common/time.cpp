@@ -1,7 +1,5 @@
 #include "time.h"
 
-using namespace Sono;
-
 void Time::Tick() {
   using clock = std::chrono::high_resolution_clock;
   auto now = clock::now();

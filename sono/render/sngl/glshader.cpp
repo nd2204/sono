@@ -1,6 +1,6 @@
 #include "glshader.h"
-#include "../common/logger.h"
-#include "../common/snassert.h"
+#include "core/common/logger.h"
+#include "core/common/snassert.h"
 
 #include <fstream>
 #include <glad/glad.h>
@@ -8,22 +8,21 @@
 #include <sstream>
 #include <unordered_map>
 
-#ifndef NDEBUG
+#ifdef SN_NDEBUG
+#define ASSERT_CURRENT_PROGRAM(program)
+#else
 #define ASSERT_CURRENT_PROGRAM(program)                                        \
   do {                                                                         \
     GLint _currentProgram = 0;                                                 \
     glGetIntegerv(GL_CURRENT_PROGRAM, &_currentProgram);                       \
     SN_ASSERT_F(                                                               \
-      (program).GetId() == _currentProgram,                                    \
+      (program)->GetId() == (u32)_currentProgram,                              \
       "Erroneous usage of shader program (current: %d, expected: %d)\n"        \
       "Did you forget to call GLShaderProgram::Use()?",                        \
       _currentProgram,                                                         \
-      (program).GetId()                                                        \
+      (program)->GetId()                                                       \
     );                                                                         \
   } while (0)
-
-#else
-#define ASSERT_CURRENT_PROGRAM(program)
 #endif
 
 const std::unordered_map<u32, const char *> ShaderTypeStr = {
@@ -32,14 +31,10 @@ const std::unordered_map<u32, const char *> ShaderTypeStr = {
   {GL_GEOMETRY_SHADER, "GL_GEOMETRY_SHADER"}
 };
 
-GLShader::GLShader(const char **src, u32 type)
-  : m_Type(type) {
-  this->m_Id = _Compile(*src, type);
-  this->m_Type = type;
-}
+GLShader::GLShader(u32 type)
+  : m_Type(type) {}
 
-GLShader::GLShader(const char *srcPath, u32 type)
-  : m_Type(type) {
+GLShader::GLShader(const char *srcPath, u32 type) {
   std::ifstream srcFile(srcPath);
   std::stringstream srcStream;
   std::string code;
@@ -51,11 +46,13 @@ GLShader::GLShader(const char *srcPath, u32 type)
     code = srcStream.str();
 
     LOG_DEBUG_F("Compiling shader from file: %s", srcPath);
-    this->m_Id = _Compile(code.c_str(), type);
+    this->m_ID = _Compile(code.c_str(), type);
   } else {
     LOG_ERROR_F("Failed to open shader file: %s", srcPath);
-    this->m_Id = 0;
+    this->m_ID = 0;
   }
+
+  m_Type = type;
 }
 
 GLShader::~GLShader() { DeleteShader(); }
@@ -94,23 +91,27 @@ u32 GLShader::_Compile(const char *src, u32 type) {
 
 u32 GLShader::GetType() const { return this->m_Type; }
 
-u32 GLShader::GetId() const { return this->m_Id; }
+u32 GLShader::GetId() const { return this->m_ID; }
 
-void GLShader::DeleteShader() { glDeleteShader(this->m_Id); }
+void GLShader::DeleteShader() { glDeleteShader(this->m_ID); }
 
-GLShader::operator u32() const { return this->m_Id; }
+void GLShader::SetSource(const char **src) {
+  this->m_ID = _Compile(*src, m_Type);
+}
+
+GLShader::operator u32() const { return this->m_ID; }
 
 GLShaderProgram::GLShaderProgram(GLShader &s1, GLShader &s2) {
-  this->m_Id = glCreateProgram();
+  this->m_ID = glCreateProgram();
   AttachShader(s1);
   AttachShader(s2);
   LinkProgram();
 }
 
-GLShaderProgram::~GLShaderProgram() { glDeleteProgram(this->m_Id); }
+GLShaderProgram::~GLShaderProgram() { glDeleteProgram(this->m_ID); }
 
 void GLShaderProgram::AttachShader(GLShader &shader) {
-  glAttachShader(this->m_Id, shader);
+  glAttachShader(this->m_ID, shader);
 
   switch (shader.GetType()) {
   case GL_VERTEX_SHADER: {
@@ -135,55 +136,55 @@ void GLShaderProgram::AttachShader(GLShader &shader) {
 void GLShaderProgram::SetVec4(
   const char *uniform, f32 x, f32 y, f32 z, f32 w
 ) const {
-  ASSERT_CURRENT_PROGRAM(*this);
-  glUniform4f(glGetUniformLocation(this->m_Id, uniform), x, y, z, w);
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform4f(glGetUniformLocation(this->m_ID, uniform), x, y, z, w);
 }
 
 void GLShaderProgram::SetVec3(const char *uniform, f32 x, f32 y, f32 z) const {
-  ASSERT_CURRENT_PROGRAM(*this);
-  glUniform3f(glGetUniformLocation(this->m_Id, uniform), x, y, z);
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform3f(glGetUniformLocation(this->m_ID, uniform), x, y, z);
 }
 
 void GLShaderProgram::SetVec2(const char *uniform, f32 x, f32 y) const {
-  ASSERT_CURRENT_PROGRAM(*this);
-  glUniform2f(glGetUniformLocation(this->m_Id, uniform), x, y);
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform2f(glGetUniformLocation(this->m_ID, uniform), x, y);
 }
 
 void GLShaderProgram::SetFloat(const char *uniform, f32 v) const {
-  ASSERT_CURRENT_PROGRAM(*this);
-  glUniform1f(glGetUniformLocation(this->m_Id, uniform), v);
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform1f(glGetUniformLocation(this->m_ID, uniform), v);
 }
 
 void GLShaderProgram::SetBool(const char *uniform, u8 v) const {
-  ASSERT_CURRENT_PROGRAM(*this);
-  glUniform1i(glGetUniformLocation(this->m_Id, uniform), v);
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform1i(glGetUniformLocation(this->m_ID, uniform), v);
 }
 
 void GLShaderProgram::SetInt(const char *uniform, i32 v) const {
-  ASSERT_CURRENT_PROGRAM(*this);
-  glUniform1i(glGetUniformLocation(this->m_Id, uniform), v);
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform1i(glGetUniformLocation(this->m_ID, uniform), v);
 }
 
 void GLShaderProgram::LinkProgram() const {
   i32 success;
   char infoLog[512];
 
-  glLinkProgram(this->m_Id);
-  glGetProgramiv(this->m_Id, GL_LINK_STATUS, &success);
+  glLinkProgram(this->m_ID);
+  glGetProgramiv(this->m_ID, GL_LINK_STATUS, &success);
   if (!success) {
-    glGetProgramInfoLog(this->m_Id, 512, NULL, infoLog);
+    glGetProgramInfoLog(this->m_ID, 512, NULL, infoLog);
   }
 }
 
-void GLShaderProgram::Use() const { glUseProgram(this->m_Id); }
+void GLShaderProgram::Use() const { glUseProgram(this->m_ID); }
 
-u32 GLShaderProgram::GetId() const { return this->m_Id; }
+u32 GLShaderProgram::GetId() const { return this->m_ID; }
 
-GLShaderProgram::operator u32() const { return this->m_Id; }
+GLShaderProgram::operator u32() const { return this->m_ID; }
 
 GLShaderProgram &GLShaderProgram::DefaultPipeLine() {
-  static GLShader vsId("./assets/vertex.glsl", GL_VERTEX_SHADER);
-  static GLShader fsId("./assets/fragment.glsl", GL_FRAGMENT_SHADER);
+  static GLShader vsId("./assets/shaders/vertex.glsl", GL_VERTEX_SHADER);
+  static GLShader fsId("./assets/shaders/fragment.glsl", GL_FRAGMENT_SHADER);
   static GLShaderProgram program(vsId, fsId);
   return program;
 }

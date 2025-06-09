@@ -8,8 +8,6 @@
 #define DEFAULT_ALIGNMENT (2 * sizeof(void *))
 #endif
 
-using namespace Sono::Memory;
-
 using Marker = ArenaAllocator::Marker;
 
 ArenaAllocator::ArenaAllocator(u32 arenaSizeBytes) {
@@ -24,7 +22,7 @@ ArenaAllocator::ArenaAllocator(u8 *backingBuffer, u32 backingBufferSize)
   , m_BufSize(backingBufferSize)
   , m_Offset(0) {};
 
-ArenaAllocator::~ArenaAllocator() { SNFree(m_Buf); }
+ArenaAllocator::~ArenaAllocator() { SN_FREE(m_Buf); }
 
 Marker ArenaAllocator::GetMarker() const { return m_Offset; }
 

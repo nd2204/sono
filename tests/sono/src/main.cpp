@@ -1,22 +1,31 @@
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include "core/sngl/glshader.h"
-#include "core/snscreen.h"
-#include "core/common/time.h"
+#include <core/memory/memory_system.h>
+#include <core/common/time.h>
+#include <render/sngl/sngl.h>
+#include <core/snscreen.h>
+#include <core/common/logger.h>
 
-#include <cmath>
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <cstdlib>
+#include <glad/glad.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <core/global.h>
 
-f32 vertices[] = {-0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f};
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
-void ProcessInput(Sono::SNScreen &ctx) {
+SonoGlobal global;
+
+void ProcessInput(SNScreen &ctx) {
   if (ctx.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS)
     ctx.SetShouldClose(true);
 }
 
 i32 main(void) {
+  void *mem = SN_ALLOC(100, SN_ALLOCATION_TYPE_DEFAULT);
+  MemorySystem::Get().PrintMemoryReport();
+  SN_FREE(mem);
   /* Initialize the library */
   if (!glfwInit())
     exit(EXIT_FAILURE);
@@ -29,77 +38,71 @@ i32 main(void) {
 #endif
 
   /* Create a windowed mode window and its OpenGL context */
-  Sono::SNScreen screen(800, 600, "Hello Sono");
+  SNScreen screen(800, 600, "Hello Sono");
   screen.EnableVsync(true);
   screen.SetFrameBufferSizeCallback(
-    [](Sono::SNScreen &window, i32 width, i32 height) {
+    [](SNScreen &window, i32 width, i32 height) {
       glViewport(0, 0, width, height);
     }
   );
 
-  // Setup Dear ImGui context
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  ImGuiIO &io = ImGui::GetIO();
-  (void)io;
-  io.ConfigFlags = io.ConfigFlags
-    | ImGuiConfigFlags_NavEnableKeyboard // Enable Keyboard Controls
-    | ImGuiConfigFlags_NavEnableGamepad  // Enable Gamepad Controls
-    ;
+  float vertices[] = {
+    // positions          // colors           // texture coords
+    0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
+    0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
+    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
+    -0.5f, 0.5f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left
+  };
 
-  // Setup Dear ImGui style
-  ImGui::StyleColorsDark();
-  // ImGui::StyleColorsLight();
-
-  // Setup Platform/Renderer backends
-  ImGui_ImplGlfw_InitForOpenGL(screen, true);
-  ImGui_ImplOpenGL3_Init("#version 330 core");
-
-  GLuint fbo, colorTex;
-  glGenFramebuffers(1, &fbo);
-  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
-  // Create texture
-  glGenTextures(1, &colorTex);
-  glBindTexture(GL_TEXTURE_2D, colorTex);
-  glTexImage2D(
-    GL_TEXTURE_2D,
+  u32 indices[] = {
+    // note that we start from 0!
     0,
-    GL_RGBA8,
-    screen.GetWidth(),
-    screen.GetHeight(),
-    0,
-    GL_RGBA,
-    GL_UNSIGNED_BYTE,
-    nullptr
-  );
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    1,
+    3, // first triangle
+    1,
+    2,
+    3 // second triangle
+  };
 
-  // Attach to FBO
-  glFramebufferTexture2D(
-    GL_FRAMEBUFFER,
-    GL_COLOR_ATTACHMENT0,
-    GL_TEXTURE_2D,
-    colorTex,
+  GLVertexBuffer VBO(vertices, sizeof(vertices));
+  GLElementBuffer EBO(indices, sizeof(indices));
+  GLVertexLayout layout;
+  layout.Push({3, GL_FLOAT, sizeof(f32), GL_FALSE}); // 3 floats per vertex
+  layout.Push({3, GL_FLOAT, sizeof(f32), GL_FALSE}); // 3 floats per vertex
+  layout.Push({2, GL_FLOAT, sizeof(f32), GL_FALSE}); // 2 floats per vertex
+
+  GLVertexArray VAO;
+  VAO.SetVertexBuffer(VBO, layout);
+  VAO.SetELementBuffer(EBO);
+
+  int width, height, nrChannels;
+  stbi_set_flip_vertically_on_load(true);
+  unsigned char *data =
+    stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels, 0);
+  GLTexture texture(GL_TEXTURE_2D, GL_RGB, width, height);
+  texture.SetData(data, GL_RGB, GL_UNSIGNED_BYTE);
+  texture.GenerateMipmap();
+  stbi_image_free(data);
+
+  data = stbi_load(
+    "assets/textures/awesomeface.png",
+    &width,
+    &height,
+    &nrChannels,
     0
   );
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-  u32 VAO;
-  glGenVertexArrays(1, &VAO);
-  u32 VBO;
-  glGenBuffers(1, &VBO);
-
-  glBindVertexArray(VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(f32), (void *)0);
-  glEnableVertexAttribArray(0);
-  glBindVertexArray(0);
+  GLTexture texture2(GL_TEXTURE_2D, GL_RGBA, width, height);
+  texture2.SetData(data, GL_RGBA, GL_UNSIGNED_BYTE);
+  texture2.GenerateMipmap();
+  stbi_image_free(data);
 
   GLShaderProgram &shaderProgram = GLShaderProgram::DefaultPipeLine();
+  shaderProgram.Use();
+  shaderProgram.SetInt("texture1", 0);
+  shaderProgram.SetInt("texture2", 1);
 
+  f32 opacity = 0.2f;
   /* Loop until the user closes the window */
   while (!screen.ShouldClose()) {
     ProcessInput(screen);
@@ -107,97 +110,27 @@ i32 main(void) {
     /* Poll for and process events */
     glfwPollEvents();
 
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    // Set up a fullscreen dockspace window with no decoration
-    ImGuiWindowFlags window_flags =
-      ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-    const ImGuiViewport *viewport = ImGui::GetMainViewport();
-
-    ImGui::SetNextWindowPos(viewport->WorkPos);
-    ImGui::SetNextWindowSize(viewport->WorkSize);
-    ImGui::SetNextWindowViewport(viewport->ID);
-
-    window_flags |= ImGuiWindowFlags_NoTitleBar
-      | ImGuiWindowFlags_NoCollapse
-      | ImGuiWindowFlags_NoResize
-      | ImGuiWindowFlags_NoMove;
-    window_flags |=
-      ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::Begin("DockSpace Demo", nullptr, window_flags);
-    ImGui::PopStyleVar(2);
-
-    // Setup actual dockspace
-    ImGuiID dockspace_id = ImGui::GetID("MyDockspace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
-
-    ImGui::End();
-
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-
     /* Render here */
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    texture.Bind(0);
+    texture2.Bind(1);
     shaderProgram.Use();
-    float greenValue = (sin(Sono::Time::TotalTime()) / 2.0f) + 0.5f;
-    shaderProgram.SetVec4("ourColor", 0.0f, greenValue, 0.0f, 1.0f);
-    glBindVertexArray(VAO);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    ImGui::Begin("Viewport");
-
-    // Get available content region size for dynamic scaling
-    ImVec2 size = ImGui::GetContentRegionAvail();
-
-    // Show texture (OpenGL uses GLuint texture as ImTextureID)
-    ImGui::Image(
-      (ImTextureID)(uintptr_t)colorTex,
-      size,
-      ImVec2(0, 1),
-      ImVec2(1, 0)
-    );
-
-    ImGui::End();
-
-    // {
-    //   ImGuiIO &io = ImGui::GetIO();
-
-    //   ImGui::SetNextWindowPos(ImVec2(0, io.DisplaySize.y - 30));
-    //   ImGui::SetNextWindowSize(ImVec2(io.DisplaySize.x, 20));
-
-    //   ImGui::Begin(
-    //     "Status Bar",
-    //     nullptr,
-    //     ImGuiWindowFlags_NoTitleBar
-    //       | ImGuiWindowFlags_NoResize
-    //       | ImGuiWindowFlags_NoMove
-    //       | ImGuiWindowFlags_NoScrollbar
-    //       | ImGuiWindowFlags_NoSavedSettings
-    //   );
-    //   ImGui::Text("Status: Ready | FPS: %.2f", Sono::Time::GetFPS());
-    //   ImGui::End();
-    // }
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    if (screen.GetKey(GLFW_KEY_UP) == GLFW_PRESS) {
+      opacity += Time::DeltaTime();
+    } else if (screen.GetKey(GLFW_KEY_DOWN) == GLFW_PRESS) {
+      opacity -= Time::DeltaTime();
+    }
+    shaderProgram.SetFloat("uOpacity", opacity);
+    VAO.Draw();
+    // glDrawArrays(GL_LINE_STRIP, 0, 3);
 
     /* Swap front and back buffers */
     screen.SwapBuffers();
 
-    Sono::Time::Tick();
+    Time::Tick();
   }
-
-  glDeleteVertexArrays(1, &VAO);
-  glDeleteBuffers(1, &VBO);
-  glDeleteProgram(shaderProgram);
 
   glfwTerminate();
   return 0;

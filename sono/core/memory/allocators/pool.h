@@ -3,8 +3,6 @@
 
 #include "core/common/types.h"
 
-namespace Sono::Mem {
-
 class PoolAllocator {
 public:
   /// @param chunkSizeBytes the size of each chunk in bytes
@@ -18,7 +16,7 @@ public:
 
   // Deletes copy and assignment
   PoolAllocator(const PoolAllocator &) = delete;
-  PoolAllocator operator=(const PoolAllocator &) = delete;
+  PoolAllocator &operator=(const PoolAllocator &) = delete;
 
   /// @param sizeBytes the size in bytes
   /// @return the pointer to the zeroed out preallocated memory
@@ -42,7 +40,5 @@ private:
   u32 m_ChunkSize;
   Chunk *m_FreeList;
 };
-
-} // namespace Sono::Mem
 
 #endif // !POOL_H

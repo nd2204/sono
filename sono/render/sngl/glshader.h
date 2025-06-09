@@ -1,21 +1,22 @@
 #ifndef SHADERS_H
 #define SHADERS_H
 
-#include "../common/types.h"
+#include "core/common/types.h"
 
 class GLShader {
 public:
-  GLShader(const char **src, u32 type);
+  GLShader(u32 type);
   GLShader(const char *filename, u32 type);
   ~GLShader();
 
   u32 GetType() const;
   u32 GetId() const;
+  void SetSource(const char **src);
   void DeleteShader();
   operator u32() const;
 
 private:
-  u32 m_Id;
+  u32 m_ID;
   u32 m_Type;
 
   static u32 _Compile(const char *src, u32 type);
@@ -27,7 +28,7 @@ private:
 
 class GLShaderProgram {
 private:
-  u32 m_Id;
+  u32 m_ID;
   u8 m_AttachedShaders;
 
 public:

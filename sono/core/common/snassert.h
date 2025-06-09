@@ -1,8 +1,8 @@
 #ifndef ERRORS_H
 #define ERRORS_H
 
-#include <cassert>
 #include "logger.h"
+#include <cassert>
 
 #if defined(_MSC_VER)
 #include <intrin.h>
@@ -12,8 +12,6 @@
 #else
 #define DEBUG_BREAK() std::raise(SIGTRAP)
 #endif
-
-#ifndef NDEBUG
 
 #define ASSERT(expr)                                                           \
   do {                                                                         \
@@ -36,7 +34,7 @@
   do {                                                                         \
     if (!(expr)) {                                                             \
       LOG_F(                                                                   \
-        "Assertion Failed (at %s:%d): " #fmt,                                  \
+        "Assertion Failed (at %s:%d): " fmt,                                   \
         __FILE__,                                                              \
         __LINE__,                                                              \
         __VA_ARGS__                                                            \
@@ -55,12 +53,4 @@
     }                                                                          \
   } while (0)
 
-#else
-
-#define ASSERT(expr)
-#define SN_ASSERT_F(expr, fmt, ...)
-#define SN_ASSERT(expr, msg)
-
 #endif
-
-#endif // !ERRORS_H
