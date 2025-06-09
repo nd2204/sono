@@ -4,8 +4,6 @@
 #include "types.h"
 #include <chrono>
 
-namespace Sono {
-
 class Time {
 public:
   static void Tick();
@@ -23,7 +21,5 @@ private:
   static std::chrono::high_resolution_clock::time_point m_LastTime;
   static std::chrono::high_resolution_clock::time_point m_FpsTime;
 };
-
-} // namespace Sono
 
 #endif // !TIME_H

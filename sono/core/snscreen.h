@@ -9,8 +9,6 @@
 #include <memory>
 #include <utility>
 
-namespace Sono {
-
 class SNScreen;
 
 enum WindowMode {
@@ -69,7 +67,5 @@ private:
   u32 m_Width, m_Height;
   std::shared_ptr<CallbackState> m_CallbackState;
 };
-
-} // namespace Sono
 
 #endif // !SN_WINDOW_H

@@ -1,8 +1,9 @@
 #ifndef MEMORY_SYSTEM_H
 #define MEMORY_SYSTEM_H
 
-#include "core/system.h"
 #include "core/common/types.h"
+#include "core/common/singleton.h"
+#include <mutex>
 #include <string>
 #include <unordered_map>
 
@@ -27,73 +28,119 @@
 #define MEBIBYTES(byte) (byte / SN_MEM_MIB)
 #define KIBIBYTES(byte) (byte / SN_MEM_KIB)
 
-#if !defined(NDEBUG) && !defined(SN_NO_MEMTRACKING)
-#define SN_ALLOC(size, type)                                                   \
-  Sono::Memory::SNAlloc((size), (type), __FILE__, __LINE__)
-#define SN_FREE(ptr) Sono::Memory::SNFree((ptr))
-#else
-#define SN_ALLOC(size, type) malloc(size)
-#define SN_FREE(ptr)         free(ptr)
-#endif
-
-namespace Sono::Memory {
-
 enum AllocationType {
   SN_ALLOCATION_TYPE_DEFAULT = 0,
 
   // Allocator
-  SN_ALLOCATION_TYPE_ALLOCATOR_ARENA,
+  SN_ALLOCATION_TYPE_ALLOCATOR_ARENA = 1,
   SN_ALLOCATION_TYPE_ALLOCATOR_POOL,
+
+  // Resource
+  SN_ALLOCATION_TYPE_RESOURCE,
+
+  // Render
 
   // Max value for using in arrays
   SN_ALLOCATION_TYPE_MAX
 };
 
 struct AllocationInfo {
-  i32 line;
-  std::string sourceFile;
-  AllocationType type;
+  const char *file;
+  const char *func;
   usize size;
+  i32 line;
+  AllocationType type;
+
+  AllocationInfo()
+    : file(nullptr)
+    , func(nullptr)
+    , size(0)
+    , line(0)
+    , type(SN_ALLOCATION_TYPE_DEFAULT) {}
+
+  AllocationInfo(
+    const char *file,
+    const char *func,
+    usize size,
+    i32 line,
+    AllocationType type
+  )
+    : file(file)
+    , func(func)
+    , size(size)
+    , line(line)
+    , type(type) {}
 };
 
-class MemorySystem : public SubSystem {
+class MemorySystem : public Singleton<MemorySystem> {
 public:
-  MemorySystem() = default;
-  ~MemorySystem() override = default;
+  MemorySystem();
+  ~MemorySystem() = default;
+  MemorySystem(MemorySystem &rhs) = delete;
+  MemorySystem &operator=(MemorySystem &rhs) = delete;
 
-  /// @brief: Initialize the memory system
-  void Init() override;
+  void Init();
+  void Shutdown();
 
-  /// @brief: Shutdown the memory system
-  void Shutdown() override;
-
-  /// @brief: Track memory allocation
-  void TrackAllocation(
-    void *ptr, size_t size, const char *file, int line, AllocationType type
+  /// @brief: update memory allocation
+  void ReportAllocation(
+    void *ptr,
+    const char *file,
+    const char *func,
+    usize size,
+    int line,
+    AllocationType type
   );
 
-  /// @brief Track memory deallocation
-  void TrackDeallocation(void *ptr);
+  /// @brief update memory deallocation
+  void ReportDeallocation(void *ptr, const char *file, i32 line);
 
   /// @brief: Generate a report of all tracked allocations
-  void Report();
+  std::string &&GetMemoryReport();
+
+  /// @brief: Prints a report of all tracked allocations
+  void PrintMemoryReport();
 
 private:
-  static std::unordered_map<void *, AllocationInfo> m_allocTracker;
+  std::string &&ToHumanReadable(u64 byte);
+  std::unordered_map<void *, AllocationInfo> m_AllocTracker;
+  std::mutex m_Mutex;
+  usize m_TotalAllocated;
+  usize m_TotalFreed;
+  usize m_PeakUsage;
+  usize m_CurrentUsage;
+  u32 m_AllocationCount;
+  u32 m_DeallocationCount;
 };
 
-std::string &&ToHumanReadable(u64 byte);
-
 void *SNAlloc(
-  usize sizeBytes, AllocationType type, std::string &&file, i32 line
+  usize sizeBytes,
+  const char *file,
+  const char *func,
+  i32 line,
+  AllocationType type
 );
 
-void SNFree(void *mem);
+void SNFree(void *mem, const char *file, i32 line);
+
+void *operator new(usize size);
+void *operator new(usize size);
+
+#if !defined(SN_NDEBUG) && !defined(SN_NO_MEMTRACKING)
+#define SN_ALLOC(size, type)                                                   \
+  SNAlloc((size), __FILE__, __FUNCTION__, __LINE__, (type))
+#define SN_FREE(ptr) SNFree(ptr, __FILE__, __LINE__)
+#define SN_NEW       new
+#define SN_DELETE    delete
+#else
+#define SN_ALLOC(size, type) malloc(size)
+#define SN_FREE(ptr)         free(ptr)
+#define SN_NEW               new
+#define SN_DELETE            delete
+#endif
 
 uintptr_t AlignAddress(uintptr_t addr, usize align);
 
 uintptr_t AlignSize(uintptr_t size, usize align);
-
-} // namespace Sono::Memory
 
 #endif // !MEMORY_SYSTEM_H

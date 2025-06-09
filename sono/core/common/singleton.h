@@ -7,27 +7,28 @@ template <class T>
 class Singleton {
 public:
   Singleton() {
-    SN_ASSERT(mInstance, "Only one instance can exist!");
-    mInstance = nullptr;
+    // Assert error when instance is not null
+    SN_ASSERT(!m_sInstance, "Only one instance can exist!");
+    m_sInstance = static_cast<T *>(this);
   }
 
   ~Singleton() {
-    ASSERT(mInstance);
-    mInstance = nullptr;
+    ASSERT(m_sInstance);
+    m_sInstance = nullptr;
   }
 
   Singleton(const Singleton &) = delete;
   Singleton &operator=(const Singleton &) = delete;
 
   static T &Get() {
-    ASSERT(mInstance);
-    return (*mInstance);
+    ASSERT(m_sInstance);
+    return (*m_sInstance);
   }
 
-  static T *GetPtr() { return mInstance; }
+  static T *GetPtr() { return m_sInstance; }
 
 protected:
-  static T *mInstance;
+  static T *m_sInstance;
 
 private:
 };

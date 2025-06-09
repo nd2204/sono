@@ -2,28 +2,118 @@
 #include "../common/snassert.h"
 #include <cstdint>
 #include <cstdlib>
+#include <sstream>
 
 #define DEFAULT_ALIGNMENT (2 * sizeof(void *))
 
-using namespace Sono::Memory;
+template <>
+MemorySystem *Singleton<MemorySystem>::m_sInstance = nullptr;
+
+MemorySystem::MemorySystem()
+  : m_TotalAllocated(0)
+  , m_TotalFreed(0)
+  , m_PeakUsage(0)
+  , m_CurrentUsage(0)
+  , m_AllocationCount(0)
+  , m_DeallocationCount(0) {}
 
 void MemorySystem::Init() {}
 
-void MemorySystem::TrackAllocation(
-  void *ptr, size_t size, const char *file, int line, AllocationType type
-) {}
-
-void MemorySystem::TrackDeallocation(void *ptr) {}
-
-void MemorySystem::Report() {}
-
 void MemorySystem::Shutdown() {}
 
-static inline bool is_power_of_two(uintptr_t x) { return (x & (x - 1)) == 0; }
+void MemorySystem::ReportAllocation(
+  void *ptr,
+  const char *file,
+  const char *func,
+  usize size,
+  int line,
+  AllocationType type
+) {
+  if (!ptr)
+    return;
 
-static MemorySystem g_memorySystem;
+  std::lock_guard<std::mutex> lock(m_Mutex);
 
-std::string &&ToHumanReadable(u64 byte) {
+  // Check for double allocation (potential bug)
+  if (m_AllocTracker.find(ptr) != m_AllocTracker.end()) {
+    LOG_WARN_F("Double allocation detected at %p in %s:%d", ptr, size, line);
+  }
+
+  m_AllocTracker[ptr] = AllocationInfo(file, func, size, line, type);
+  m_TotalAllocated += size;
+  m_CurrentUsage += size;
+  m_AllocationCount++;
+
+  if (m_CurrentUsage > m_PeakUsage) {
+    m_PeakUsage = m_CurrentUsage;
+  }
+}
+
+void MemorySystem::ReportDeallocation(void *ptr, const char *file, i32 line) {
+  if (!ptr)
+    return;
+
+  std::lock_guard<std::mutex> lock(m_Mutex);
+
+  auto it = m_AllocTracker.find(ptr);
+  if (it == m_AllocTracker.end()) {
+    LOG_WARN_F(
+      "Attempting to free untracked pointer %p in %s:%d",
+      ptr,
+      file,
+      line
+    );
+    return;
+  }
+
+  m_TotalFreed += it->second.size;
+  m_CurrentUsage -= it->second.size;
+  m_DeallocationCount++;
+  m_AllocTracker.erase(it);
+}
+
+std::string &&MemorySystem::GetMemoryReport() {
+  std::lock_guard<std::mutex> lock(m_Mutex);
+
+  static std::string buffer;
+  std::stringstream oss;
+
+  oss << "\n=== Memory Tracking Statistics ===" << std::endl;
+  oss << "Total allocated: " << ToHumanReadable(m_TotalAllocated) << std::endl;
+  oss << "Total freed: " << ToHumanReadable(m_TotalFreed) << std::endl;
+  oss << "Current usage: " << ToHumanReadable(m_CurrentUsage) << std::endl;
+  oss << "Peak usage: " << ToHumanReadable(m_PeakUsage) << std::endl;
+  oss << "Allocation count: " << m_AllocationCount << std::endl;
+  oss << "Deallocation count: " << m_DeallocationCount << std::endl;
+  oss << "Active allocations: " << m_AllocTracker.size() << std::endl;
+
+  if (!m_AllocTracker.empty()) {
+    oss << "\n=== Memory Leaks Detected ===" << std::endl;
+    for (const auto &pair : m_AllocTracker) {
+      const AllocationInfo &info = pair.second;
+      oss
+        << "Leak: "
+        << pair.first
+        << " ("
+        << ToHumanReadable(info.size)
+        << ") "
+        << "allocated in "
+        << (info.file ? info.file : "unknown")
+        << ":"
+        << info.line
+        << " ("
+        << (info.func ? info.func : "unknown")
+        << ")"
+        << std::endl;
+    }
+  }
+  buffer = oss.str();
+  return std::move(buffer);
+}
+
+void MemorySystem::PrintMemoryReport() { LOG(GetMemoryReport().c_str()); }
+
+std::string &&MemorySystem::ToHumanReadable(u64 byte) {
   static std::string buffer;
   buffer = (byte < SN_MEM_KIB) ? std::to_string(byte) + SN_MEM_B_STR :
     (byte < SN_MEM_MIB) ? std::to_string(byte / SN_MEM_KIB) + SN_MEM_KIB_STR :
@@ -33,21 +123,25 @@ std::string &&ToHumanReadable(u64 byte) {
 }
 
 void *SNAlloc(
-  usize sizeBytes, AllocationType type, std::string &&file, i32 line
+  usize sizeBytes,
+  const char *file,
+  const char *func,
+  i32 line,
+  AllocationType type
 ) {
   void *ptr = malloc(sizeBytes);
-  g_memorySystem.TrackAllocation(ptr, sizeBytes, file.c_str(), line, type);
+  MemorySystem::Get().ReportAllocation(ptr, file, func, sizeBytes, line, type);
   return ptr;
 }
 
-void SNFree(void *mem) {
-  g_memorySystem.TrackDeallocation(mem);
+void SNFree(void *mem, const char *file, i32 line) {
+  MemorySystem::Get().ReportDeallocation(mem, file, line);
   free(mem);
 }
 
 uintptr_t AlignAddress(uintptr_t ptr, usize align) {
-  SN_ASSERT(is_power_of_two(align), "alignment is not a power of two");
-  SN_ASSERT(align > 0, "alignment must be > 0");
+  SN_ASSERT((ptr & (ptr - 1)) == 0, "alignment must be a power of two");
+  SN_ASSERT(align > 0 && align <= 128, "alignment must be in range [1, 128]");
 
   uintptr_t a, mod;
   a = reinterpret_cast<uintptr_t>(align);

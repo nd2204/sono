@@ -1,7 +1,5 @@
 #include "pool.h"
 
-using namespace Sono::Mem;
-
 PoolAllocator::PoolAllocator(
   u32 poolSizeBytes, u32 chunkSize, usize chunkAlign
 ) {}

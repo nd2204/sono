@@ -12,50 +12,96 @@ if ! cmake --version > /dev/null 2>&1 ; then
   exit 1
 fi
 
+uname_output=$(uname -s)
+is_win=0
+is_mac=0
+if [[ "$uname_output" == "Linux" ]]; then
+  nop
+  # We're building on Linux
+elif [[ "$uname_output" == "Darwin" ]]; then
+  is_mac=1
+  # We're building on macOS
+elif [[ "$uname_output" == "MINGW64_NT"* || "$uname_output" == "MSYS_NT"* ]]; then
+  is_win=1
+  cmake_flags=(
+    -DCMAKE_C_COMPILER="x86_64-w64-mingw32-gcc.exe"
+    -DCMAKE_CXX_COMPILER="x86_64-w64-mingw32-g++.exe"
+  )
+else
+  echo "Unsupported operating system: $uname_output"
+  exit 1
+fi
+
 if ! ninja --version > /dev/null 2>&1; then
   echo "Ninja is not installed. Please install Ninja to proceed."
   echo "Refer to the Ninja installation guide: https://ninja-build.org/"
-
-  uname_output=$(uname -s)
-  if [[ "$uname_output" == "Linux" ]]; then
-    generator="Unix Makefiles"
-  elif [[ "$uname_output" == "Darwin" ]]; then
-    generator="Unix Makefiles"
-  elif [[ "$uname_output" == "MINGW64_NT"* || "$uname_output" == "MSYS_NT"* ]]; then
-    generator="Unix Makefiles"
-  else
-    echo "Unsupported operating system: $uname_output"
-    exit 1
-  fi
-else
-  generator="Ninja"
 fi
 
 engine_dir="${project_dir}/sono"
 build_dir="${project_dir}/build"
-build_type=Debug
 
-echo "================================================================================"
-echo "Configuring Sono"
-echo "================================================================================"
-echo "Build directory: $build_dir"
-echo "Build type: $build_type"
-echo "Generator: $generator"
+build_type=RelWithDebInfo
 
-if cmake -B "$build_dir" -S "$project_dir" -G "$generator"; then
-    echo "CMake configuration successful."
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    "--norun") norun=1 ;;
+    "--debug") build_type=Debug ;;
+    "--release") build_type=Release ;;
+    "--rebuild") rebuild=1 ;;
+    "--force" | "-f") force=1 ;;
+  esac
+  shift
+done
+
+if [[ -d "$build_dir" && ! $force ]]; then
+  echo "Build directory already exists: $build_dir"
+  echo "Skipping CMake configuration..."
 else
+  echo "================================================================================"
+  echo "Configuring Sono"
+  echo "================================================================================"
+
+  echo "Build directory: $build_dir"
+  echo "Build type: $build_type"
+
+  if cmake -B "$build_dir" -S "$project_dir" -G "Ninja" \
+    -DCMAKE_BUILD_TYPE=$build_type \
+    ; then
+    echo "CMake configuration successful."
+  else
     echo "CMake configuration failed."
     exit 1
+  fi
 fi
+
 
 echo "================================================================================"
 echo "Building Sono"
 echo "================================================================================"
 
+if [[ $rebuild ]]; then
+  cmake --build "$build_dir" -- clean;
+fi
+
 if cmake --build "$build_dir"; then
-    echo "Build successful."
+  echo "Build successful."
 else
-    echo "Build failed."
-    exit 1
+  echo "Build failed."
+  exit 1
+fi
+
+echo "================================================================================"
+echo "Sono build completed successfully."
+echo "================================================================================"
+
+if [[ $is_win -eq 1 ]]; then exe=.exe; else exe= ; fi
+exec="$build_dir/tests/sono/SonoTest$exe"
+
+if [[ ! $norun ]]; then
+  echo "\"--norun\" flag not set, running the application..."
+  $exec
+else
+  echo "You can find the built files in the $build_dir directory."
+  echo "To run the built application, use the following command:"
+  echo "  $exec"
 fi

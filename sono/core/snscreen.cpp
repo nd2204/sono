@@ -4,9 +4,6 @@
 #include "GLFW/glfw3.h"
 #include <memory>
 #include <utility>
-#include <windows.h>
-
-using namespace Sono;
 
 SNScreen::SNScreen(i32 width, i32 height, const char *title, WindowMode mode)
   : m_Mode(mode)

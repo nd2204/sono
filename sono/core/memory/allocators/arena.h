@@ -3,8 +3,6 @@
 
 #include "core/common/types.h"
 
-namespace Sono::Memory {
-
 class ArenaAllocator {
 public:
   /// @brief: Stack marker: Represents the current top of the
@@ -46,7 +44,5 @@ private:
   u32 m_BufSize;
   Marker m_Offset;
 };
-
-} // namespace Sono::Memory
 
 #endif // !ARENA_H
