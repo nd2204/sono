@@ -5,6 +5,7 @@
 #include <memory>
 #include <utility>
 
+// --------------------------------------------------------------------------------
 SNScreen::SNScreen(i32 width, i32 height, const char *title, WindowMode mode)
   : m_Mode(mode)
   , m_PosX(0)
@@ -35,7 +36,7 @@ SNScreen::SNScreen(i32 width, i32 height, const char *title, WindowMode mode)
     SetWindowMode(mode);
   }
 }
-
+// --------------------------------------------------------------------------------
 void SNScreen::SetWindowMode(WindowMode mode) {
   GLFWmonitor *monitor = glfwGetPrimaryMonitor();
   const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
@@ -43,35 +44,18 @@ void SNScreen::SetWindowMode(WindowMode mode) {
   case WINDOWMODE_FULLSCREEN: {
     // Change position base on aspect ratio
     glfwSetWindowMonitor(
-      this->m_Context,
-      monitor,
-      20,
-      20,
-      vidmode->width,
-      vidmode->height,
-      vidmode->refreshRate
+      this->m_Context, monitor, 20, 20, vidmode->width, vidmode->height, vidmode->refreshRate
     );
     break;
   }
   case WINDOWMODE_BORDERLESS:
     glfwSetWindowMonitor(
-      this->m_Context,
-      monitor,
-      20,
-      20,
-      vidmode->width,
-      vidmode->height,
-      vidmode->refreshRate
+      this->m_Context, monitor, 20, 20, vidmode->width, vidmode->height, vidmode->refreshRate
     );
     break;
   default:
     glfwSetWindowMonitor(
-      this->m_Context,
-      NULL,
-      this->m_PosX,
-      this->m_PosY,
-      this->m_Width,
-      this->m_Height,
+      this->m_Context, NULL, this->m_PosX, this->m_PosY, this->m_Width, this->m_Height,
       vidmode->refreshRate
     );
     break;
@@ -79,7 +63,7 @@ void SNScreen::SetWindowMode(WindowMode mode) {
 
   this->m_Mode = mode;
 }
-
+// --------------------------------------------------------------------------------
 void SNScreen::SetFullScreen(i32 fullscreen) {
   if (fullscreen) {
     SetWindowMode(WINDOWMODE_FULLSCREEN);
@@ -87,52 +71,46 @@ void SNScreen::SetFullScreen(i32 fullscreen) {
     SetWindowMode(WINDOWMODE_WINDOWED);
   }
 }
-
+// --------------------------------------------------------------------------------
 void SNScreen::SetFrameBufferSizeCallback(SNFrameBufferSizeCallback cb) {
   m_CallbackState = std::make_shared<CallbackState>(this, std::move(cb));
 
   glfwSetWindowUserPointer(this->m_Context, m_CallbackState.get());
-  glfwSetFramebufferSizeCallback(
-    this->m_Context,
-    [](GLFWwindow *window, int width, int height) {
-      CallbackState *win =
-        static_cast<CallbackState *>(glfwGetWindowUserPointer(window));
+  glfwSetFramebufferSizeCallback(this->m_Context, [](GLFWwindow *window, int width, int height) {
+    CallbackState *win = static_cast<CallbackState *>(glfwGetWindowUserPointer(window));
 
-      win->thisPtr->OnFrameBufferResize(width, height);
-      if (win->cb) {
-        win->cb(*(win->thisPtr), width, height);
-      }
+    win->thisPtr->OnFrameBufferResize(width, height);
+    if (win->cb) {
+      win->cb(*(win->thisPtr), width, height);
     }
-  );
+  });
 }
-
+// --------------------------------------------------------------------------------
 u32 SNScreen::GetWidth() const { return this->m_Width; }
-
+// --------------------------------------------------------------------------------
 u32 SNScreen::GetHeight() const { return this->m_Height; }
-
+// --------------------------------------------------------------------------------
+f32 SNScreen::GetAspect() const { return (f32)this->m_Height / (f32)this->m_Width; }
+// --------------------------------------------------------------------------------
 i32 SNScreen::GetKey(i32 key) const { return glfwGetKey(this->m_Context, key); }
-
+// --------------------------------------------------------------------------------
 const GLFWwindow *SNScreen::GetContext() const { return this->m_Context; }
-
+// --------------------------------------------------------------------------------
 void SNScreen::OnFrameBufferResize(i32 width, i32 height) {
   this->m_Width = width;
   this->m_Height = height;
 }
-
+// --------------------------------------------------------------------------------
 WindowMode SNScreen::GetCurrentWindowMode() const { return this->m_Mode; }
-
+// --------------------------------------------------------------------------------
 void SNScreen::EnableVsync(i32 vsync) { glfwSwapInterval(vsync); }
-
-void SNScreen::SetShouldClose(i32 value) {
-  glfwSetWindowShouldClose(this->m_Context, value);
-}
-
+// --------------------------------------------------------------------------------
+void SNScreen::SetShouldClose(i32 value) { glfwSetWindowShouldClose(this->m_Context, value); }
+// --------------------------------------------------------------------------------
 void SNScreen::PollEvents() const { glfwPollEvents(); }
-
-i32 SNScreen::ShouldClose() const {
-  return glfwWindowShouldClose(this->m_Context);
-};
-
+// --------------------------------------------------------------------------------
+i32 SNScreen::ShouldClose() const { return glfwWindowShouldClose(this->m_Context); };
+// --------------------------------------------------------------------------------
 void SNScreen::SwapBuffers() const { glfwSwapBuffers(this->m_Context); }
-
+// --------------------------------------------------------------------------------
 SNScreen::operator GLFWwindow *() const { return this->m_Context; }

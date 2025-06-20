@@ -31,9 +31,12 @@ const std::unordered_map<u32, const char *> ShaderTypeStr = {
   {GL_GEOMETRY_SHADER, "GL_GEOMETRY_SHADER"}
 };
 
+// ================================================================================
+// GLShader Implementation
+// ================================================================================
 GLShader::GLShader(u32 type)
   : m_Type(type) {}
-
+// --------------------------------------------------------------------------------
 GLShader::GLShader(const char *srcPath, u32 type) {
   std::ifstream srcFile(srcPath);
   std::stringstream srcStream;
@@ -54,9 +57,7 @@ GLShader::GLShader(const char *srcPath, u32 type) {
 
   m_Type = type;
 }
-
-GLShader::~GLShader() { DeleteShader(); }
-
+// --------------------------------------------------------------------------------
 u32 GLShader::_Compile(const char *src, u32 type) {
   u32 shaderId = glCreateShader(type);
   i32 success;
@@ -88,28 +89,31 @@ u32 GLShader::_Compile(const char *src, u32 type) {
 
   return shaderId;
 }
-
-u32 GLShader::GetType() const { return this->m_Type; }
-
-u32 GLShader::GetId() const { return this->m_ID; }
-
-void GLShader::DeleteShader() { glDeleteShader(this->m_ID); }
-
+// --------------------------------------------------------------------------------
 void GLShader::SetSource(const char **src) {
   this->m_ID = _Compile(*src, m_Type);
 }
-
+// --------------------------------------------------------------------------------
+u32 GLShader::GetType() const { return this->m_Type; }
+// --------------------------------------------------------------------------------
+u32 GLShader::GetId() const { return this->m_ID; }
+// --------------------------------------------------------------------------------
+void GLShader::DeleteShader() { glDeleteShader(this->m_ID); }
+// --------------------------------------------------------------------------------
 GLShader::operator u32() const { return this->m_ID; }
+// --------------------------------------------------------------------------------
+GLShader::~GLShader() { DeleteShader(); }
 
+// ================================================================================
+// GLShaderProgram Implementation
+// ================================================================================
 GLShaderProgram::GLShaderProgram(GLShader &s1, GLShader &s2) {
   this->m_ID = glCreateProgram();
   AttachShader(s1);
   AttachShader(s2);
   LinkProgram();
 }
-
-GLShaderProgram::~GLShaderProgram() { glDeleteProgram(this->m_ID); }
-
+// --------------------------------------------------------------------------------
 void GLShaderProgram::AttachShader(GLShader &shader) {
   glAttachShader(this->m_ID, shader);
 
@@ -132,39 +136,135 @@ void GLShaderProgram::AttachShader(GLShader &shader) {
     break;
   }
 }
-
+// --------------------------------------------------------------------------------
 void GLShaderProgram::SetVec4(
   const char *uniform, f32 x, f32 y, f32 z, f32 w
 ) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniform4f(glGetUniformLocation(this->m_ID, uniform), x, y, z, w);
 }
-
+// --------------------------------------------------------------------------------
 void GLShaderProgram::SetVec3(const char *uniform, f32 x, f32 y, f32 z) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniform3f(glGetUniformLocation(this->m_ID, uniform), x, y, z);
 }
-
+// --------------------------------------------------------------------------------
 void GLShaderProgram::SetVec2(const char *uniform, f32 x, f32 y) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniform2f(glGetUniformLocation(this->m_ID, uniform), x, y);
 }
-
+// --------------------------------------------------------------------------------
 void GLShaderProgram::SetFloat(const char *uniform, f32 v) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniform1f(glGetUniformLocation(this->m_ID, uniform), v);
 }
-
+// --------------------------------------------------------------------------------
 void GLShaderProgram::SetBool(const char *uniform, u8 v) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniform1i(glGetUniformLocation(this->m_ID, uniform), v);
 }
-
+// --------------------------------------------------------------------------------
 void GLShaderProgram::SetInt(const char *uniform, i32 v) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniform1i(glGetUniformLocation(this->m_ID, uniform), v);
 }
-
+// --------------------------------------------------------------------------------
+void GLShaderProgram::SetMat4(const char *uniform, f32 *mat4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4fv(
+    glGetUniformLocation(this->m_ID, uniform),
+    1,
+    GL_FALSE,
+    mat4
+  );
+}
+// --------------------------------------------------------------------------------
+void GLShaderProgram::SetMat4x3(const char *uniform, f32 *mat4x3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4x3fv(
+    glGetUniformLocation(this->m_ID, uniform),
+    1,
+    GL_FALSE,
+    mat4x3
+  );
+}
+// --------------------------------------------------------------------------------
+void GLShaderProgram::SetMat4x2(const char *uniform, f32 *mat4x2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4x2fv(
+    glGetUniformLocation(this->m_ID, uniform),
+    1,
+    GL_FALSE,
+    mat4x2
+  );
+}
+// --------------------------------------------------------------------------------
+void GLShaderProgram::SetMat3x4(const char *uniform, f32 *mat3x4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3x4fv(
+    glGetUniformLocation(this->m_ID, uniform),
+    1,
+    GL_FALSE,
+    mat3x4
+  );
+}
+// --------------------------------------------------------------------------------
+void GLShaderProgram::SetMat3(const char *uniform, f32 *mat3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3fv(
+    glGetUniformLocation(this->m_ID, uniform),
+    1,
+    GL_FALSE,
+    mat3
+  );
+}
+// --------------------------------------------------------------------------------
+void GLShaderProgram::SetMat3x2(const char *uniform, f32 *mat3x2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3x2fv(
+    glGetUniformLocation(this->m_ID, uniform),
+    1,
+    GL_FALSE,
+    mat3x2
+  );
+}
+// --------------------------------------------------------------------------------
+void GLShaderProgram::SetMat2(const char *uniform, f32 *mat2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix2fv(
+    glGetUniformLocation(this->m_ID, uniform),
+    1,
+    GL_FALSE,
+    mat2
+  );
+}
+// --------------------------------------------------------------------------------
+void GLShaderProgram::SetMat2x4(const char *uniform, f32 *mat2x4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix2x4fv(
+    glGetUniformLocation(this->m_ID, uniform),
+    1,
+    GL_FALSE,
+    mat2x4
+  );
+}
+// --------------------------------------------------------------------------------
+void GLShaderProgram::SetMat2x3(const char *uniform, f32 *mat2x3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix2x3fv(
+    glGetUniformLocation(this->m_ID, uniform),
+    1,
+    GL_FALSE,
+    mat2x3
+  );
+}
+// --------------------------------------------------------------------------------
+void GLShaderProgram::Use() const { glUseProgram(this->m_ID); }
+// --------------------------------------------------------------------------------
+u32 GLShaderProgram::GetId() const { return this->m_ID; }
+// --------------------------------------------------------------------------------
+GLShaderProgram::operator u32() const { return this->m_ID; }
+// --------------------------------------------------------------------------------
 void GLShaderProgram::LinkProgram() const {
   i32 success;
   char infoLog[512];
@@ -175,16 +275,12 @@ void GLShaderProgram::LinkProgram() const {
     glGetProgramInfoLog(this->m_ID, 512, NULL, infoLog);
   }
 }
-
-void GLShaderProgram::Use() const { glUseProgram(this->m_ID); }
-
-u32 GLShaderProgram::GetId() const { return this->m_ID; }
-
-GLShaderProgram::operator u32() const { return this->m_ID; }
-
+// --------------------------------------------------------------------------------
 GLShaderProgram &GLShaderProgram::DefaultPipeLine() {
   static GLShader vsId("./assets/shaders/vertex.glsl", GL_VERTEX_SHADER);
   static GLShader fsId("./assets/shaders/fragment.glsl", GL_FRAGMENT_SHADER);
   static GLShaderProgram program(vsId, fsId);
   return program;
 }
+// --------------------------------------------------------------------------------
+GLShaderProgram::~GLShaderProgram() { glDeleteProgram(this->m_ID); }

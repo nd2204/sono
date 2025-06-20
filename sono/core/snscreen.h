@@ -11,26 +11,17 @@
 
 class SNScreen;
 
-enum WindowMode {
-  WINDOWMODE_WINDOWED,
-  WINDOWMODE_FULLSCREEN,
-  WINDOWMODE_BORDERLESS
-};
+enum WindowMode { WINDOWMODE_WINDOWED, WINDOWMODE_FULLSCREEN, WINDOWMODE_BORDERLESS };
 
 class SNScreen {
 public:
-  using SNFrameBufferSizeCallback =
-    std::function<void(SNScreen &win, i32 w, i32 h)>;
+  using SNFrameBufferSizeCallback = std::function<void(SNScreen &win, i32 w, i32 h)>;
 
-  SNScreen(
-    i32 width,
-    i32 height,
-    const char *Title,
-    WindowMode mode = WINDOWMODE_WINDOWED
-  );
+  SNScreen(i32 width, i32 height, const char *Title, WindowMode mode = WINDOWMODE_WINDOWED);
 
   u32 GetWidth() const;
   u32 GetHeight() const;
+  f32 GetAspect() const;
   i32 GetKey(i32 key) const;
   void PollEvents() const;
   i32 ShouldClose() const;
