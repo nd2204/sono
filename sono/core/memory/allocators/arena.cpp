@@ -13,8 +13,7 @@ using Marker = ArenaAllocator::Marker;
 ArenaAllocator::ArenaAllocator(u32 arenaSizeBytes) {
   this->m_BufSize = arenaSizeBytes;
   this->m_Offset = 0;
-  this->m_Buf =
-    (u8 *)SN_ALLOC(arenaSizeBytes, AllocationType::SN_ALLOCATION_TYPE_DEFAULT);
+  this->m_Buf = (u8 *)SN_ALLOC(arenaSizeBytes, AllocationType::SN_ALLOCATION_TYPE_ALLOCATOR_ARENA);
 }
 
 ArenaAllocator::ArenaAllocator(u8 *backingBuffer, u32 backingBufferSize)

@@ -1,10 +1,30 @@
 #include "global.h"
+#include "render/sngl/gl_render_system.h"
+#include <memory>
+
+using namespace Sono;
+
+template <>
+Global *Singleton<Global>::m_sInstance = nullptr;
 
 //--------------------------------------------------------------------------------
-SonoGlobal::SonoGlobal() {
+Global::Global() {}
+
+//--------------------------------------------------------------------------------
+Global::~Global() {}
+
+//--------------------------------------------------------------------------------
+void Global::Init() {
   m_MemSys = std::make_unique<MemorySystem>();
   m_MemSys->Init();
+  m_RenderSystem = std::make_unique<GLRenderSystem>();
+  m_RenderSystem->Init();
 }
 
 //--------------------------------------------------------------------------------
-SonoGlobal::~SonoGlobal() { m_MemSys->Shutdown(); }
+
+// shutting down in the reverse order
+void Global::Shutdown() {
+  m_RenderSystem->Shutdown();
+  m_MemSys->Shutdown();
+}

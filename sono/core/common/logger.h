@@ -10,7 +10,7 @@
 #include <sstream>
 #include <vector>
 
-#if defined(WIN32_BUILD)
+#ifdef SONO_PLATFORM_WINDOWS
 #include <windows.h>
 #endif
 
@@ -20,11 +20,23 @@
 #define LOG_ERROR_F(fmt, ...) Logger::LogF(LOG_LEVEL_ERROR, fmt, __VA_ARGS__)
 #define LOG_DEBUG_F(fmt, ...) Logger::LogF(LOG_LEVEL_DEBUG, fmt, __VA_ARGS__)
 
+#define S_LOG_F(fmt, ...)       Logger::LogF(LOG_LEVEL_NONE, (fmt).c_str(), __VA_ARGS__)
+#define S_LOG_INFO_F(fmt, ...)  Logger::LogF(LOG_LEVEL_INFO, (fmt).c_str(), __VA_ARGS__)
+#define S_LOG_WARN_F(fmt, ...)  Logger::LogF(LOG_LEVEL_WARNING, (fmt).c_str(), __VA_ARGS__)
+#define S_LOG_ERROR_F(fmt, ...) Logger::LogF(LOG_LEVEL_ERROR, (fmt).c_str(), __VA_ARGS__)
+#define S_LOG_DEBUG_F(fmt, ...) Logger::LogF(LOG_LEVEL_DEBUG, (fmt).c_str(), __VA_ARGS__)
+
 #define LOG(msg)       Logger::Log(LOG_LEVEL_NONE, msg)
 #define LOG_INFO(msg)  Logger::Log(LOG_LEVEL_INFO, msg)
 #define LOG_WARN(msg)  Logger::Log(LOG_LEVEL_WARNING, msg)
 #define LOG_ERROR(msg) Logger::Log(LOG_LEVEL_ERROR, msg)
 #define LOG_DEBUG(msg) Logger::Log(LOG_LEVEL_DEBUG, msg)
+
+#define S_LOG(msg)       Logger::Log(LOG_LEVEL_NONE, (msg).c_str())
+#define S_LOG_INFO(msg)  Logger::Log(LOG_LEVEL_INFO, (msg).c_str())
+#define S_LOG_WARN(msg)  Logger::Log(LOG_LEVEL_WARNING, (msg).c_str())
+#define S_LOG_ERROR(msg) Logger::Log(LOG_LEVEL_ERROR, (msg).c_str())
+#define S_LOG_DEBUG(msg) Logger::Log(LOG_LEVEL_DEBUG, (msg).c_str())
 
 enum LogLevel {
   LOG_LEVEL_INFO,
@@ -36,15 +48,13 @@ enum LogLevel {
 
 class Logger {
 public:
-  static void Init(
-    const std::string &filename = "", LogLevel minLevel = LOG_LEVEL_INFO
-  ) {
+  static void Init(const std::string &filename = "", LogLevel minLevel = LOG_LEVEL_INFO) {
     minLogLevel = minLevel;
     if (!filename.empty()) {
       logFile.open(filename, std::ios::app);
     }
 
-#if defined(WIN32_BUILD)
+#ifdef SONO_PLATFORM_WINDOWS
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD dwMode = 0;
     GetConsoleMode(hOut, &dwMode);
@@ -54,8 +64,7 @@ public:
   }
 
   static void LogF(LogLevel level, const char *fmt, ...) {
-    if (level < minLogLevel)
-      return;
+    if (level < minLogLevel) return;
 
     constexpr size_t initialSize = 1024;
     std::vector<char> buffer(initialSize);
@@ -100,8 +109,7 @@ public:
   static void Log(LogLevel level, const char *message) { LogF(level, message); }
 
   static void Shutdown() {
-    if (logFile.is_open())
-      logFile.close();
+    if (logFile.is_open()) logFile.close();
   }
 
 private:
