@@ -28,17 +28,18 @@
 #define MEBIBYTES(byte) (byte / SN_MEM_MIB)
 #define KIBIBYTES(byte) (byte / SN_MEM_KIB)
 
-enum AllocationType {
-  SN_ALLOCATION_TYPE_DEFAULT = 0,
+enum AllocationType : u8 {
+  SN_ALLOCATION_TYPE_GENERAL = 0,
 
   // Allocator
   SN_ALLOCATION_TYPE_ALLOCATOR_ARENA = 1,
-  SN_ALLOCATION_TYPE_ALLOCATOR_POOL,
+  SN_ALLOCATION_TYPE_ALLOCATOR_POOL = 2,
 
   // Resource
-  SN_ALLOCATION_TYPE_RESOURCE,
+  SN_ALLOCATION_TYPE_RESOURCE = 3,
 
   // Render
+  SN_ALLOCATION_TYPE_RENDER_SYSTEM = 4,
 
   // Max value for using in arrays
   SN_ALLOCATION_TYPE_MAX
@@ -56,15 +57,9 @@ struct AllocationInfo {
     , func(nullptr)
     , size(0)
     , line(0)
-    , type(SN_ALLOCATION_TYPE_DEFAULT) {}
+    , type(SN_ALLOCATION_TYPE_GENERAL) {}
 
-  AllocationInfo(
-    const char *file,
-    const char *func,
-    usize size,
-    i32 line,
-    AllocationType type
-  )
+  AllocationInfo(const char *file, const char *func, usize size, i32 line, AllocationType type)
     : file(file)
     , func(func)
     , size(size)
@@ -84,22 +79,17 @@ public:
 
   /// @brief: update memory allocation
   void ReportAllocation(
-    void *ptr,
-    const char *file,
-    const char *func,
-    usize size,
-    int line,
-    AllocationType type
+    void *ptr, const char *file, const char *func, usize size, int line, AllocationType type
   );
 
   /// @brief update memory deallocation
   void ReportDeallocation(void *ptr, const char *file, i32 line);
 
   /// @brief: Generate a report of all tracked allocations
-  std::string &&GetMemoryReport();
+  std::string &&GetAllocsReport();
 
-  /// @brief: Prints a report of all tracked allocations
-  void PrintMemoryReport();
+  /// @brief: Generate a report of memory leaks
+  std::string &&GetLeaksReport();
 
 private:
   std::string &&ToHumanReadable(u64 byte);
@@ -113,34 +103,26 @@ private:
   u32 m_DeallocationCount;
 };
 
-void *SNAlloc(
-  usize sizeBytes,
-  const char *file,
-  const char *func,
-  i32 line,
-  AllocationType type
-);
-
+void *SNAlloc(usize sizeBytes, const char *file, const char *func, i32 line, AllocationType type);
 void SNFree(void *mem, const char *file, i32 line);
 
-void *operator new(usize size);
-void *operator new(usize size);
-
-#if !defined(SN_NDEBUG) && !defined(SN_NO_MEMTRACKING)
-#define SN_ALLOC(size, type)                                                   \
-  SNAlloc((size), __FILE__, __FUNCTION__, __LINE__, (type))
-#define SN_FREE(ptr) SNFree(ptr, __FILE__, __LINE__)
-#define SN_NEW       new
-#define SN_DELETE    delete
-#else
-#define SN_ALLOC(size, type) malloc(size)
-#define SN_FREE(ptr)         free(ptr)
-#define SN_NEW               new
-#define SN_DELETE            delete
-#endif
+void *operator new(usize size, const char *file, const char *func, i32 line, AllocationType type);
+void operator delete(void *mem, const char *file, i32 line);
 
 uintptr_t AlignAddress(uintptr_t addr, usize align);
 
 uintptr_t AlignSize(uintptr_t size, usize align);
+
+#if !defined(SN_NDEBUG) && !defined(SN_NO_MEMTRACKING)
+#define SN_ALLOC(size, type) SNAlloc((size), __FILE__, __FUNCTION__, __LINE__, (type))
+#define SN_FREE(ptr)         SNFree(ptr, __FILE__, __LINE__)
+#define SN_NEW(type)         new (__FILE__, __FUNCTION__, __LINE__, (type))
+#define SN_DELETE            delete (__FILE__, __LINE__)
+#else
+#define SN_ALLOC(size, type) malloc(size)
+#define SN_FREE(ptr)         free(ptr)
+#define SN_NEW(type)         new
+#define SN_DELETE            delete
+#endif
 
 #endif // !MEMORY_SYSTEM_H

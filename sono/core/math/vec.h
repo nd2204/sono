@@ -72,7 +72,7 @@ struct Vec : public VecBase<N, T> {
   Vec &operator/=(f32 rhs) {
     rhs = 1.0f / rhs; // Inverse
     for (int i = 0; i < N; i++) {
-      ValuePtr()[i] /= rhs;
+      ValuePtr()[i] *= rhs;
     }
     return *this;
   }
@@ -122,53 +122,53 @@ struct Vec : public VecBase<N, T> {
   // Vector, vector operations
   // =========================================================================================
 
-  Vec &operator+=(const Vec &rhs) {
+  Vec &operator+=(const Vec<N, T> &rhs) {
     for (int i = 0; i < N; i++) {
       ValuePtr()[i] += rhs[i];
     }
     return *this;
   }
   // -----------------------------------------------------------------------------------------
-  Vec &operator-=(const Vec &rhs) {
+  Vec &operator-=(const Vec<N, T> &rhs) {
     for (int i = 0; i < N; i++) {
       ValuePtr()[i] -= rhs[i];
     }
     return *this;
   }
   // -----------------------------------------------------------------------------------------
-  Vec &operator*=(const Vec &rhs) {
+  Vec &operator*=(const Vec<N, T> &rhs) {
     for (int i = 0; i < N; i++) {
       ValuePtr()[i] *= rhs[i];
     }
     return *this;
   }
   // -----------------------------------------------------------------------------------------
-  Vec &operator/=(const Vec &rhs) {
+  Vec &operator/=(const Vec<N, T> &rhs) {
     for (int i = 0; i < N; i++) {
       ValuePtr()[i] /= rhs[i];
     }
     return *this;
   }
   // -----------------------------------------------------------------------------------------
-  Vec operator+(const Vec &rhs) {
+  Vec operator+(const Vec<N, T> &rhs) {
     Vec result = *this;
     result += rhs;
     return result;
   }
   // -----------------------------------------------------------------------------------------
-  Vec operator-(const Vec &rhs) {
+  Vec operator-(const Vec<N, T> &rhs) {
     Vec result = *this;
     result -= rhs;
     return result;
   }
   // -----------------------------------------------------------------------------------------
-  Vec operator*(const Vec &rhs) {
+  Vec operator*(const Vec<N, T> &rhs) {
     Vec result = *this;
     result *= rhs;
     return result;
   }
   // -----------------------------------------------------------------------------------------
-  Vec operator/(const Vec &rhs) {
+  Vec operator/(const Vec<N, T> &rhs) {
     Vec result = *this;
     result /= rhs;
     return result;
@@ -176,8 +176,17 @@ struct Vec : public VecBase<N, T> {
   // -----------------------------------------------------------------------------------------
   constexpr T Dot(const Vec<N, T> &rhs) const {
     T result = T{};
-    for (int i = 0; i < N; ++i)
+    for (int i = 0; i < N; ++i) {
       result += ValuePtr()[i] * rhs[i];
+    }
+    return result;
+  }
+  // -----------------------------------------------------------------------------------------
+  constexpr T Cross(const Vec<N, T> &rhs) const {
+    T result = T{};
+    for (int i = 0; i < N; ++i) {
+      result += ValuePtr()[i] * rhs[i];
+    }
     return result;
   }
 
@@ -186,7 +195,7 @@ struct Vec : public VecBase<N, T> {
   // =========================================================================================
 
   T Normalize() {
-    T len = LengthSquared();
+    T len = Length();
     if (len > T(0.0f)) {
       *this /= len;
     }

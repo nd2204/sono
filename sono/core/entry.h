@@ -1,33 +1,18 @@
 #ifndef ENTRY_H
 #define ENTRY_H
 
-#include "snscreen.h"
-#include <cstdlib>
+#include "global.h"
+#include <memory>
 
 int main(int argc, char **argv) {
-  // Initialize the SonoEngine library
-  if (!glfwInit())
-    exit(EXIT_FAILURE);
-
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#ifdef MACOS_BUILD
-  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
+  std::unique_ptr<Sono::Global> global = std::make_unique<Sono::Global>();
+  global->Init();
 
   // Create a screen/window with specified dimensions and title
-  Sono::SNScreen screen(800, 600, "Hello Sono");
+  Window screen(800, 600, "Hello Sono");
 
   // Enable vertical synchronization
   screen.EnableVsync(true);
-
-  // Set a callback for framebuffer size changes
-  screen.SetFrameBufferSizeCallback(
-    [](Sono::SNScreen &window, i32 width, i32 height) {
-      glViewport(0, 0, width, height);
-    }
-  );
 
   // Main loop to keep the application running
   while (!screen.ShouldClose()) {
@@ -40,8 +25,7 @@ int main(int argc, char **argv) {
   }
 
   // Shutdown the Sono library
-  // Sono::Shutdown();
-
+  global->Shutdown();
   return 0;
 }
 

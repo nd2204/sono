@@ -5,6 +5,7 @@
 #include "mat_base.h"
 #include "vec3.h"
 #include "vec4.h"
+#include "math.h"
 
 struct Mat4 : public MatBase<4, 4, f32> {
   Mat4() = default;
@@ -30,9 +31,20 @@ struct Mat4 : public MatBase<4, 4, f32> {
   /// @param far The distance from the origin to the far plane in float
   static Mat4 Ortho(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far);
 
-  static Mat4 Rotate(const Vec3 &vec);
+  /// @brief create a rotation matrix
+  /// @params angle angle in radians
+  /// @params axis the axis vector to rotate
+  static Mat4 Rotation(Radian angle, const Vec3 &axis);
 
-  // static Mat4 Rotate(const Quaternion &o);
+  // static Mat4 Rotate(const Quaternion &rotation);
+
+  /// @brief create a translation matrix
+  /// @brief tv a translation vector
+  static Mat4 Translation(const Vec3 &tv);
+
+  /// @brief create a translation matrix
+  /// @brief tv a translation vector
+  static Mat4 Scale(f32 scalar);
 
   // clang-format off
   Mat4(
@@ -107,29 +119,39 @@ struct Mat4 : public MatBase<4, 4, f32> {
     return r;
   }
 
+  // clang-format off
+  
+  Mat4 &operator*=(const Mat4 &rhs) {
+    Mat4 lhs = *this;
+
+    n[0][0] = lhs[0][0] * rhs[0][0] + lhs[0][1] * rhs[1][0] + lhs[0][2] * rhs[2][0] + lhs[0][3] * rhs[3][0];
+    n[0][1] = lhs[0][0] * rhs[0][1] + lhs[0][1] * rhs[1][1] + lhs[0][2] * rhs[2][1] + lhs[0][3] * rhs[3][1];
+    n[0][2] = lhs[0][0] * rhs[0][2] + lhs[0][1] * rhs[1][2] + lhs[0][2] * rhs[2][2] + lhs[0][3] * rhs[3][2];
+    n[0][3] = lhs[0][0] * rhs[0][3] + lhs[0][1] * rhs[1][3] + lhs[0][2] * rhs[2][3] + lhs[0][3] * rhs[3][3];
+
+    n[1][0] = lhs[1][0] * rhs[0][0] + lhs[1][1] * rhs[1][0] + lhs[1][2] * rhs[2][0] + lhs[1][3] * rhs[3][0];
+    n[1][1] = lhs[1][0] * rhs[0][1] + lhs[1][1] * rhs[1][1] + lhs[1][2] * rhs[2][1] + lhs[1][3] * rhs[3][1];
+    n[1][2] = lhs[1][0] * rhs[0][2] + lhs[1][1] * rhs[1][2] + lhs[1][2] * rhs[2][2] + lhs[1][3] * rhs[3][2];
+    n[1][3] = lhs[1][0] * rhs[0][3] + lhs[1][1] * rhs[1][3] + lhs[1][2] * rhs[2][3] + lhs[1][3] * rhs[3][3];
+
+    n[2][0] = lhs[2][0] * rhs[0][0] + lhs[2][1] * rhs[1][0] + lhs[2][2] * rhs[2][0] + lhs[2][3] * rhs[3][0];
+    n[2][1] = lhs[2][0] * rhs[0][1] + lhs[2][1] * rhs[1][1] + lhs[2][2] * rhs[2][1] + lhs[2][3] * rhs[3][1];
+    n[2][2] = lhs[2][0] * rhs[0][2] + lhs[2][1] * rhs[1][2] + lhs[2][2] * rhs[2][2] + lhs[2][3] * rhs[3][2];
+    n[2][3] = lhs[2][0] * rhs[0][3] + lhs[2][1] * rhs[1][3] + lhs[2][2] * rhs[2][3] + lhs[2][3] * rhs[3][3];
+
+    n[3][0] = lhs[3][0] * rhs[0][0] + lhs[3][1] * rhs[1][0] + lhs[3][2] * rhs[2][0] + lhs[3][3] * rhs[3][0];
+    n[3][1] = lhs[3][0] * rhs[0][1] + lhs[3][1] * rhs[1][1] + lhs[3][2] * rhs[2][1] + lhs[3][3] * rhs[3][1];
+    n[3][2] = lhs[3][0] * rhs[0][2] + lhs[3][1] * rhs[1][2] + lhs[3][2] * rhs[2][2] + lhs[3][3] * rhs[3][2];
+    n[3][3] = lhs[3][0] * rhs[0][3] + lhs[3][1] * rhs[1][3] + lhs[3][2] * rhs[2][3] + lhs[3][3] * rhs[3][3];
+
+    return *this;
+  }
+
+  // clang-format on
+
   Mat4 operator*(const Mat4 &rhs) {
-    Mat4 r;
-
-    r[0][0] = n[0][0] * rhs[0][0] + n[0][1] * rhs[1][0] + n[0][2] * rhs[2][0] + n[0][3] * rhs[3][0];
-    r[0][1] = n[0][0] * rhs[0][1] + n[0][1] * rhs[1][1] + n[0][2] * rhs[2][1] + n[0][3] * rhs[3][1];
-    r[0][2] = n[0][0] * rhs[0][2] + n[0][1] * rhs[1][2] + n[0][2] * rhs[2][2] + n[0][3] * rhs[3][2];
-    r[0][3] = n[0][0] * rhs[0][3] + n[0][1] * rhs[1][3] + n[0][2] * rhs[2][3] + n[0][3] * rhs[3][3];
-
-    r[1][0] = n[1][0] * rhs[0][0] + n[1][1] * rhs[1][0] + n[1][2] * rhs[2][0] + n[1][3] * rhs[3][0];
-    r[1][1] = n[1][0] * rhs[0][1] + n[1][1] * rhs[1][1] + n[1][2] * rhs[2][1] + n[1][3] * rhs[3][1];
-    r[1][2] = n[1][0] * rhs[0][2] + n[1][1] * rhs[1][2] + n[1][2] * rhs[2][2] + n[1][3] * rhs[3][2];
-    r[1][3] = n[1][0] * rhs[0][3] + n[1][1] * rhs[1][3] + n[1][2] * rhs[2][3] + n[1][3] * rhs[3][3];
-
-    r[2][0] = n[2][0] * rhs[0][0] + n[2][1] * rhs[1][0] + n[2][2] * rhs[2][0] + n[2][3] * rhs[3][0];
-    r[2][1] = n[2][0] * rhs[0][1] + n[2][1] * rhs[1][1] + n[2][2] * rhs[2][1] + n[2][3] * rhs[3][1];
-    r[2][2] = n[2][0] * rhs[0][2] + n[2][1] * rhs[1][2] + n[2][2] * rhs[2][2] + n[2][3] * rhs[3][2];
-    r[2][3] = n[2][0] * rhs[0][3] + n[2][1] * rhs[1][3] + n[2][2] * rhs[2][3] + n[2][3] * rhs[3][3];
-
-    r[3][0] = n[3][0] * rhs[0][0] + n[3][1] * rhs[1][0] + n[3][2] * rhs[2][0] + n[3][3] * rhs[3][0];
-    r[3][1] = n[3][0] * rhs[0][1] + n[3][1] * rhs[1][1] + n[3][2] * rhs[2][1] + n[3][3] * rhs[3][1];
-    r[3][2] = n[3][0] * rhs[0][2] + n[3][1] * rhs[1][2] + n[3][2] * rhs[2][2] + n[3][3] * rhs[3][2];
-    r[3][3] = n[3][0] * rhs[0][3] + n[3][1] * rhs[1][3] + n[3][2] * rhs[2][3] + n[3][3] * rhs[3][3];
-
+    Mat4 r = *this;
+    r *= rhs;
     return r;
   }
 

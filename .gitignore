@@ -12,6 +12,7 @@ _deps
 build
 bin
 CMakeUserPresets.json
+.DS_STORE
 
 # clangd cache
 .cache
