@@ -1,7 +1,9 @@
 #include "render_context.h"
 
 // --------------------------------------------------------------------------------
-RenderContext::RenderContext() {};
+RenderContext::RenderContext(u32 width, u32 height)
+  : m_Width(width)
+  , m_Height(height) {};
 // --------------------------------------------------------------------------------
 RenderContext::~RenderContext() {};
 // --------------------------------------------------------------------------------

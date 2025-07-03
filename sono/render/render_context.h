@@ -2,13 +2,18 @@
 #define SN_RENDER_CONTEXT_H
 
 #include "core/common/types.h"
+#include "core/math/vec4.h"
+#include "render/buffer_base.h"
+#include "render/texture.h"
+#include "render/shader.h"
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 class RenderContext {
 public:
-  RenderContext();
+  RenderContext(u32 width, u32 height);
+
   virtual ~RenderContext();
 
   /// @return the width of the rendering context
@@ -20,8 +25,10 @@ public:
   /// @return the context's aspect ratio in float
   f32 GetAspect() const;
 
+  virtual void MakeCurrent() = 0;
+
   /// @brief swap front and back buffer
-  virtual void SwapBuffers() {}
+  virtual void SwapBuffers() = 0;
 
 protected:
   u32 m_Width, m_Height;

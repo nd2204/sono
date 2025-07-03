@@ -2,25 +2,33 @@
 #define TYPES_H
 
 #include <cstddef>
+#include <cstdint>
 
-typedef unsigned char b8;
-typedef signed char i8;
-typedef signed short i16;
-typedef signed int i32;
-typedef signed long long i64;
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long long u64;
-typedef size_t usize;
-typedef float f32;
-typedef double f64;
+// clang-format off
 
-inline u32 PackU32(u8 a, u8 b, u8 c, u8 d) {
+typedef unsigned char         b8;
+
+typedef signed char           i8;
+typedef signed short          i16;
+typedef signed int            i32;
+typedef signed long long      i64;
+
+typedef unsigned char         u8;
+typedef unsigned short        u16;
+typedef unsigned int          u32;
+typedef unsigned long long    u64;
+typedef size_t                usize;
+
+typedef float                 f32;
+typedef double                f64;
+
+inline u32 Pack4U8ToU32(u8 a, u8 b, u8 c, u8 d) {
   return ((u32)a << 24) + ((u32)b << 16) + ((u32)c << 8) + d;
 }
 
-inline u32 PackU32(u16 ab, u16 cd) { return ((u32)ab << 16) + cd; }
+inline u32 Pack2U16ToU32(u16 ab, u16 cd) {
+  return ((u32)ab << 16) + cd;
+}
 
 #define I8_MIN  -128
 #define I16_MIN ((i16)(1 << 15))

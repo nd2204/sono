@@ -1,39 +1,19 @@
-#include "snwindow.h"
+#include "render/render_window.h"
+#include "GLFW/glfw3.h"
 #include "core/common/logger.h"
+#include "core/common/snassert.h"
 
 // --------------------------------------------------------------------------------
-Window::Window(i32 width, i32 height, const char *title, WindowMode mode)
-  : m_Mode(mode)
-  , m_CallbackState(nullptr)
+RenderWindow::RenderWindow()
+  : RenderContext(0, 0)
+  , m_Mode(WIN_MODE_WINDOWED)
   , m_PosX(0)
-  , m_PosY(0) {
-
-  this->m_Context = glfwCreateWindow(width, height, title, NULL, NULL);
-  this->m_Width = width;
-  this->m_Height = height;
-
-  if (!this->m_Context) {
-    LOG_ERROR("Failed to create window");
-    glfwTerminate();
-    exit(-1);
-  }
-
-  SetFrameBufferSizeCallback(nullptr);
-
-  glfwMakeContextCurrent(this->m_Context);
-
-  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    LOG_ERROR("Failed to initialize GLAD");
-    exit(-1);
-  }
-
-  // TODO: remove condition after handled switching to windowed mode
-  if (mode != WIN_MODE_WINDOWED) {
-    SetWindowMode(mode);
-  }
-}
+  , m_PosY(0)
+  , m_CallbackState(nullptr) {}
 // --------------------------------------------------------------------------------
-void Window::SetWindowMode(WindowMode mode) {
+RenderWindow::~RenderWindow() {}
+// --------------------------------------------------------------------------------
+void RenderWindow::SetWindowMode(WindowMode mode) {
   GLFWmonitor *monitor = glfwGetPrimaryMonitor();
   const GLFWvidmode *vidmode = glfwGetVideoMode(monitor);
   switch (mode) {
@@ -60,7 +40,7 @@ void Window::SetWindowMode(WindowMode mode) {
   this->m_Mode = mode;
 }
 // --------------------------------------------------------------------------------
-void Window::SetFullScreen(i32 fullscreen) {
+void RenderWindow::SetFullScreen(i32 fullscreen) {
   if (fullscreen) {
     SetWindowMode(WIN_MODE_FULLSCREEN);
   } else {
@@ -68,7 +48,7 @@ void Window::SetFullScreen(i32 fullscreen) {
   }
 }
 // --------------------------------------------------------------------------------
-void Window::SetFrameBufferSizeCallback(SNFrameBufferSizeCallback cb) {
+void RenderWindow::SetFrameBufferSizeCallback(SNFrameBufferSizeCallback cb) {
   m_CallbackState = std::make_shared<CallbackState>(this, std::move(cb));
 
   glfwSetWindowUserPointer(this->m_Context, m_CallbackState.get());
@@ -82,23 +62,25 @@ void Window::SetFrameBufferSizeCallback(SNFrameBufferSizeCallback cb) {
   });
 }
 // --------------------------------------------------------------------------------
-void Window::OnFrameBufferResize(i32 width, i32 height) {
+void RenderWindow::OnFrameBufferResize(i32 width, i32 height) {
   this->m_Width = width;
   this->m_Height = height;
 }
 // --------------------------------------------------------------------------------
-WindowMode Window::GetCurrentWindowMode() const { return this->m_Mode; }
+WindowMode RenderWindow::GetCurrentWindowMode() const { return this->m_Mode; }
 // --------------------------------------------------------------------------------
-i32 Window::GetKey(i32 key) const { return glfwGetKey(this->m_Context, key); }
+i32 RenderWindow::GetKey(i32 key) const { return glfwGetKey(this->m_Context, key); }
 // --------------------------------------------------------------------------------
-void Window::EnableVsync(i32 vsync) { glfwSwapInterval(vsync); }
+void RenderWindow::EnableVsync(i32 vsync) { glfwSwapInterval(vsync); }
 // --------------------------------------------------------------------------------
-void Window::SetShouldClose(i32 value) { glfwSetWindowShouldClose(this->m_Context, value); }
+void RenderWindow::SetShouldClose(i32 value) { glfwSetWindowShouldClose(this->m_Context, value); }
 // --------------------------------------------------------------------------------
-void Window::PollEvents() const { glfwPollEvents(); }
+void RenderWindow::PollEvents() const { glfwPollEvents(); }
 // --------------------------------------------------------------------------------
-b8 Window::ShouldClose() const { return glfwWindowShouldClose(this->m_Context); };
+b8 RenderWindow::ShouldClose() const { return glfwWindowShouldClose(this->m_Context); };
 // --------------------------------------------------------------------------------
-void Window::SwapBuffers() { glfwSwapBuffers(this->m_Context); }
+void RenderWindow::MakeCurrent() { glfwMakeContextCurrent(this->m_Context); }
 // --------------------------------------------------------------------------------
-Window::operator GLFWwindow *() const { return this->m_Context; }
+void RenderWindow::SwapBuffers() { glfwSwapBuffers(this->m_Context); }
+// --------------------------------------------------------------------------------
+RenderWindow::operator GLFWwindow *() const { return this->m_Context; }

@@ -24,25 +24,25 @@
 #define SN_MEM_MIB_STR "MiB"
 #define SN_MEM_GIB_STR "GiB"
 
-#define GIBIBYTES(byte) (byte / SN_MEM_GIB)
-#define MEBIBYTES(byte) (byte / SN_MEM_MIB)
-#define KIBIBYTES(byte) (byte / SN_MEM_KIB)
+#define GIB(byte) (byte / SN_MEM_GIB)
+#define MIB(byte) (byte / SN_MEM_MIB)
+#define KIB(byte) (byte / SN_MEM_KIB)
 
 enum AllocationType : u8 {
-  SN_ALLOCATION_TYPE_GENERAL = 0,
+  ALLOC_TYPE_GENERAL = 0,
 
   // Allocator
-  SN_ALLOCATION_TYPE_ALLOCATOR_ARENA = 1,
-  SN_ALLOCATION_TYPE_ALLOCATOR_POOL = 2,
+  ALLOC_TYPE_ALLOCATOR_ARENA = 1,
+  ALLOC_TYPE_ALLOCATOR_POOL = 2,
 
   // Resource
-  SN_ALLOCATION_TYPE_RESOURCE = 3,
+  ALLOC_TYPE_RESOURCE = 3,
 
   // Render
-  SN_ALLOCATION_TYPE_RENDER_SYSTEM = 4,
+  ALLOC_TYPE_RENDER_SYSTEM = 4,
 
   // Max value for using in arrays
-  SN_ALLOCATION_TYPE_MAX
+  ALLOC_TYPE_MAX
 };
 
 struct AllocationInfo {
@@ -57,7 +57,7 @@ struct AllocationInfo {
     , func(nullptr)
     , size(0)
     , line(0)
-    , type(SN_ALLOCATION_TYPE_GENERAL) {}
+    , type(ALLOC_TYPE_GENERAL) {}
 
   AllocationInfo(const char *file, const char *func, usize size, i32 line, AllocationType type)
     : file(file)
@@ -108,6 +108,7 @@ void SNFree(void *mem, const char *file, i32 line);
 
 void *operator new(usize size, const char *file, const char *func, i32 line, AllocationType type);
 void operator delete(void *mem, const char *file, i32 line);
+void operator delete[](void *mem, const char *file, i32 line);
 
 uintptr_t AlignAddress(uintptr_t addr, usize align);
 

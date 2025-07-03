@@ -11,11 +11,21 @@
 
 enum WindowMode { WIN_MODE_WINDOWED, WIN_MODE_FULLSCREEN, WIN_MODE_BORDERLESS };
 
-class Window : public RenderContext {
+class RenderWindow : public RenderContext {
 public:
-  using SNFrameBufferSizeCallback = std::function<void(Window &win, i32 w, i32 h)>;
+  using SNFrameBufferSizeCallback = std::function<void(RenderWindow &win, i32 w, i32 h)>;
 
-  Window(i32 width, i32 height, const char *Title, WindowMode mode = WIN_MODE_WINDOWED);
+  RenderWindow();
+
+  virtual ~RenderWindow();
+
+  // Delegate the actual window creation to concrete implementation
+  // since they need to setup window hints for supported graphics api
+  virtual void Create(
+    i32 width, i32 height, const char *Title, WindowMode mode = WIN_MODE_WINDOWED
+  ) = 0;
+
+  virtual void Destroy() = 0;
 
   // TODO: Delegate this method to input manager class
   i32 GetKey(i32 key) const;
@@ -47,22 +57,24 @@ public:
 
   void OnFrameBufferResize(i32 width, i32 height);
 
-  void SwapBuffers() override;
+  virtual void MakeCurrent() override;
 
-private:
+  virtual void SwapBuffers() override;
+
+protected:
   struct CallbackState {
-    Window *thisPtr;
+    RenderWindow *thisPtr;
     SNFrameBufferSizeCallback cb;
 
-    CallbackState(Window *screen, SNFrameBufferSizeCallback cb)
+    CallbackState(RenderWindow *screen, SNFrameBufferSizeCallback cb)
       : thisPtr(screen)
       , cb(std::move(cb)) {}
   };
 
-  GLFWwindow *m_Context;
-  WindowMode m_Mode;
   std::shared_ptr<CallbackState> m_CallbackState;
+  GLFWwindow *m_Context;
   u32 m_PosX, m_PosY;
+  WindowMode m_Mode;
 };
 
 #endif // !SN_WINDOW_CONTEXT_H

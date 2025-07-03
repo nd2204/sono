@@ -1,5 +1,5 @@
-#include "core/memory/memory_system.h"
 #include "arena.h"
+#include "core/memory/memory_system.h"
 
 #include <cstdint>
 #include <cstring>
@@ -11,9 +11,11 @@
 using Marker = ArenaAllocator::Marker;
 
 ArenaAllocator::ArenaAllocator(u32 arenaSizeBytes) {
-  this->m_BufSize = arenaSizeBytes;
-  this->m_Offset = 0;
-  this->m_Buf = (u8 *)SN_ALLOC(arenaSizeBytes, AllocationType::SN_ALLOCATION_TYPE_ALLOCATOR_ARENA);
+  ASSERT(arenaSizeBytes > 0);
+  m_BufSize = arenaSizeBytes;
+  m_Offset = 0;
+  m_Buf = (u8 *)SN_ALLOC(arenaSizeBytes, ALLOC_TYPE_ALLOCATOR_ARENA);
+  SN_ASSERT_F(m_Buf, "Error when allocating memory for arena of size %d", arenaSizeBytes);
 }
 
 ArenaAllocator::ArenaAllocator(u8 *backingBuffer, u32 backingBufferSize)
@@ -41,7 +43,8 @@ void *ArenaAllocator::AllocAlign(u32 sizeBytes, usize align) {
 }
 
 void *ArenaAllocator::Alloc(u32 sizeBytes) {
-  return this->AllocAlign(sizeBytes, DEFAULT_ALIGNMENT);
+  // LOG_DEBUG_F("arena [offset=%d, arenaSize=%d]", m_Offset, m_BufSize);
+  return this->AllocAlign(sizeBytes, 1);
 }
 
 void ArenaAllocator::FreeToMarker(Marker marker) {

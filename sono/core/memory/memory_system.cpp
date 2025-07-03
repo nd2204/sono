@@ -86,7 +86,7 @@ std::string &&MemorySystem::GetLeaksReport() {
         << std::endl;
     }
   } else {
-    oss << "\n=== No Leaks Detected ===" << std::endl;
+    oss << "\n=== No Leaks Detected ===";
   }
 
   buffer = oss.str();
@@ -106,7 +106,7 @@ std::string &&MemorySystem::GetAllocsReport() {
   oss << "Peak usage: " << ToHumanReadable(m_PeakUsage) << std::endl;
   oss << "Allocation count: " << m_AllocationCount << std::endl;
   oss << "Deallocation count: " << m_DeallocationCount << std::endl;
-  oss << "Active allocations: " << m_AllocTracker.size() << std::endl;
+  oss << "Active allocations: " << m_AllocTracker.size();
 
   buffer = oss.str();
   return std::move(buffer);
@@ -133,7 +133,7 @@ void SNFree(void *mem, const char *file, i32 line) {
 }
 
 uintptr_t AlignAddress(uintptr_t ptr, usize align) {
-  SN_ASSERT((ptr & (ptr - 1)) == 0, "alignment must be a power of two");
+  SN_ASSERT((align & (align - 1)) == 0, "alignment must be a power of two");
   SN_ASSERT(align > 0 && align <= 128, "alignment must be in range [1, 128]");
 
   uintptr_t a, mod;
@@ -155,3 +155,5 @@ void *operator new(usize size, const char *file, const char *func, i32 line, All
 }
 
 void operator delete(void *mem, const char *file, i32 line) { SNFree(mem, file, line); }
+
+void operator delete[](void *mem, const char *file, i32 line) { SNFree(mem, file, line); }

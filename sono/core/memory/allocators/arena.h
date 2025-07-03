@@ -2,6 +2,7 @@
 #define ARENA_H
 
 #include "core/common/types.h"
+#include <utility>
 
 class ArenaAllocator {
 public:
@@ -28,6 +29,18 @@ public:
   /// @param sizeBytes the size in bytes
   /// @return the pointer to the zeroed out, aligned, preallocated memory
   void *AllocAlign(u32 sizeBytes, usize align);
+
+  template <typename T, typename... Args>
+  T *Create(Args &&...args) {
+    void *mem = Alloc(sizeof(T));
+    return new (mem) T(std::forward<Args>(args)...);
+  }
+
+  template <typename T, int Alignment = 16, typename... Args>
+  T *CreateAligned(Args &&...args) {
+    void *mem = AllocAlign(sizeof(T), Alignment);
+    return new (mem) T(std::forward<Args>(args)...);
+  }
 
   /// @return: the offset in bytes from the buffer to the current stack top.
   Marker GetMarker() const;

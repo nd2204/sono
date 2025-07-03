@@ -1,41 +1,49 @@
-#ifndef SHADERS_H
-#define SHADERS_H
+#ifndef SN_GL_SHADERS_H
+#define SN_GL_SHADERS_H
 
 #include "core/common/types.h"
+#include "glad/glad.h"
 
-class GLShader {
+#include "render/shader.h"
+
+class GLShader : public Shader {
 public:
-  GLShader(u32 type);
-  GLShader(const char *filename, u32 type);
+  GLShader();
+
+  GLShader(const ShaderDesc *desc);
+
   ~GLShader();
 
-  u32 GetType() const;
-  u32 GetId() const;
+  virtual void CompileFromSrc(const std::string &src, ShaderStage stage) override;
+
+  virtual void CompileFromFile(const std::string &filePath, ShaderStage stage) override;
+
+  virtual ShaderStage GetStage() const override;
+
+  GLuint GetID() const;
+
   void SetSource(const char **src);
+
   void DeleteShader();
-  operator u32() const;
+
+  operator GLuint() const;
 
 private:
-  u32 m_ID;
-  u32 m_Type;
+  static GLuint _Compile(const char *src, u32 type);
 
-  static u32 _Compile(const char *src, u32 type);
+private:
+  GLuint m_ShaderID;
 };
 
 #define VERTEX_SHADER_BIT   1
 #define FRAGMENT_SHADER_BIT 1 << 1
 #define GEOMETRY_SHADER_BIT 1 << 2
 
-class GLShaderProgram {
-private:
-  u32 m_ID;
-  u8 m_AttachedShaders;
-
+class GLRenderPipeline : public RenderPipeline {
 public:
-  GLShaderProgram(GLShader &s1, GLShader &s2);
+  GLRenderPipeline(Shader *s1, Shader *s2);
 
-  void AttachShader(GLShader &shader);
-  void LinkProgram() const;
+  ~GLRenderPipeline();
 
   void SetVec4(const char *uniform, f32 x, f32 y, f32 z, f32 w) const;
   void SetVec3(const char *uniform, f32 x, f32 y, f32 z) const;
@@ -57,13 +65,21 @@ public:
   void SetMat2x4(const char *uniform, f32 *mat2x4) const;
   void SetMat2x3(const char *uniform, f32 *mat2x3) const;
 
-  void Use() const;
-  u32 GetId() const;
+  void Bind() const;
+
+  void Unbind() const;
+
+  u32 GetID() const;
 
   operator u32() const;
 
-  static GLShaderProgram &DefaultPipeLine();
-  ~GLShaderProgram();
+private:
+  void LinkProgram() const;
+  void AttachShader(Shader *shader);
+
+private:
+  u32 m_ID;
+  u8 m_AttachedShaders;
 };
 
-#endif // !_SHADERS_H
+#endif // !SN_GL_SHADERS_H
