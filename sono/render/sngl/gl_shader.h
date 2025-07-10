@@ -2,7 +2,7 @@
 #define SN_GL_SHADERS_H
 
 #include "core/common/types.h"
-#include "glad/glad.h"
+#include <glad/glad.h>
 
 #include "render/shader.h"
 
@@ -45,40 +45,43 @@ public:
 
   ~GLRenderPipeline();
 
-  void SetVec4(const char *uniform, f32 x, f32 y, f32 z, f32 w) const;
-  void SetVec3(const char *uniform, f32 x, f32 y, f32 z) const;
-  void SetVec2(const char *uniform, f32 x, f32 y) const;
+  void SetVec4(const char *uniform, f32 x, f32 y, f32 z, f32 w) const override;
+  void SetVec4(const char *uniform, const Vec4 &v4) const override;
+  void SetVec3(const char *uniform, f32 x, f32 y, f32 z) const override;
+  void SetVec3(const char *uniform, const Vec3 &v3) const override;
+  void SetVec2(const char *uniform, f32 x, f32 y) const override;
+  void SetVec2(const char *uniform, const Vec2 &v2) const override;
 
-  void SetFloat(const char *uniform, f32 v) const;
-  void SetInt(const char *uniform, i32 v) const;
-  void SetBool(const char *uniform, u8 v) const;
+  void SetFloat(const char *uniform, f32 v) const override;
+  void SetInt(const char *uniform, i32 v) const override;
+  void SetBool(const char *uniform, b8 v) const override;
 
-  void SetMat4(const char *uniform, f32 *mat4) const;
-  void SetMat4x3(const char *uniform, f32 *mat4x3) const;
-  void SetMat4x2(const char *uniform, f32 *mat4x2) const;
+  void SetMat4(const char *uniform, f32 *mat4) const override;
+  void SetMat4(const char *uniform, const Mat4 &mat4) const override;
 
-  void SetMat3x4(const char *uniform, f32 *mat3x4) const;
-  void SetMat3(const char *uniform, f32 *mat3) const;
-  void SetMat3x2(const char *uniform, f32 *mat3x2) const;
+  void SetMat4x3(const char *uniform, f32 *mat4x3) const override;
+  void SetMat4x2(const char *uniform, f32 *mat4x2) const override;
 
-  void SetMat2(const char *uniform, f32 *mat2) const;
-  void SetMat2x4(const char *uniform, f32 *mat2x4) const;
-  void SetMat2x3(const char *uniform, f32 *mat2x3) const;
+  void SetMat3x4(const char *uniform, f32 *mat3x4) const override;
+  void SetMat3(const char *uniform, f32 *mat3) const override;
+  void SetMat3(const char *uniform, const Mat3 &mat3) const override;
+  void SetMat3x2(const char *uniform, f32 *mat3x2) const override;
+
+  void SetMat2(const char *uniform, f32 *mat2) const override;
+  void SetMat2x4(const char *uniform, f32 *mat2x4) const override;
+  void SetMat2x3(const char *uniform, f32 *mat2x3) const override;
 
   void Bind() const;
-
   void Unbind() const;
-
-  u32 GetID() const;
-
-  operator u32() const;
+  GLuint GetID() const;
+  operator GLuint() const;
 
 private:
   void LinkProgram() const;
   void AttachShader(Shader *shader);
 
 private:
-  u32 m_ID;
+  GLuint m_ID;
   u8 m_AttachedShaders;
 };
 

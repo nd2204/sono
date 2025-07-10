@@ -1,6 +1,19 @@
 #include "render_command.h"
 #include "render_system.h"
 
+DrawCommand::DrawCommand(VertexArray *va, u32 vertCount, Texture *tex, PrimitiveType topology)
+  : m_VAO(va)
+  , m_Tex(tex)
+  , m_NumVertices(vertCount)
+  , m_Topology(topology) {}
+
+void DrawCommand::Execute(RenderSystem &renderSys) const {
+  if (m_Tex) {
+    renderSys.BindTexture(m_Tex, 0);
+  }
+  renderSys.Draw(m_Topology, m_VAO, m_NumVertices);
+}
+
 DrawIndexedCommand::DrawIndexedCommand(
   VertexArray *va, u32 idxCount, Texture *tex, PrimitiveType topology
 )
@@ -17,6 +30,6 @@ void DrawIndexedCommand::Execute(RenderSystem &renderSys) const {
 }
 
 ClearCommand::ClearCommand(const Vec4 &color)
-  : m_Color(color) {}
+  : m_Color(color.Normalized()) {}
 
 void ClearCommand::Execute(RenderSystem &renderSys) const { renderSys.Clear(m_Color); }

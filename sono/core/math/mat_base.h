@@ -39,6 +39,16 @@ struct MatBase {
     return n[row];
   }
 
+  MatBase<R, C, T> &operator=(const MatBase<R, C, T> &rhs) {
+    const T *ptr = rhs.ValuePtr();
+    for (int i = 0; i < R; i++) {
+      for (int j = 0; j < C; j++) {
+        n[i][j] = T(ptr[i * 4 + j]);
+      }
+    }
+    return *this;
+  }
+
   /// @brief setup an identity matrix with the value of v in the diagonal cells
   explicit MatBase(T v) {
     SN_ASSERT(R == C, "Must be a square matrix");
@@ -52,18 +62,16 @@ struct MatBase {
   std::string ToString() const {
     std::stringstream ss;
     ss << "mat" << R << "x" << C << "[";
-    for (int i = 0; i < R - 1; i++) {
+    for (int i = 0; i < R; ++i) {
       ss << "[";
-      for (int j = 0; j < C - 1; j++) {
-        ss << n[i][j] << ",";
+      for (int j = 0; j < C; ++j) {
+        ss << std::to_string(n[i][j]);
+        if (j < C - 1) ss << ",";
       }
-      ss << n[i][C - 1] << "]";
+      ss << "]";
+      if (i < R - 1) ss << ",";
     }
-    ss << "[";
-    for (int j = 0; j < C - 1; j++) {
-      ss << n[R - 1][j] << ",";
-    }
-    ss << n[R - 1][C - 1] << "]]";
+    ss << "]";
     return ss.str();
   }
 };

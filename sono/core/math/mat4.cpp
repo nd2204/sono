@@ -11,14 +11,14 @@ const Mat4 Mat4::Zero {
   0.0f, 0.0f, 0.0f, 0.0f,
   0.0f, 0.0f, 0.0f, 0.0f,
 };
-
+// --------------------------------------------------------------------------------
 const Mat4 Mat4::Identity {
   1.0f, 0.0f, 0.0f, 0.0f,
   0.0f, 1.0f, 0.0f, 0.0f,
   0.0f, 0.0f, 1.0f, 0.0f,
   0.0f, 0.0f, 0.0f, 1.0f,
 };
-
+// --------------------------------------------------------------------------------
 Mat4 Mat4::Rotation(Radian angle, const Vec3 &axis) {
   Vec3 a = axis.Normalized();
   float c = std::cos(angle);
@@ -43,7 +43,14 @@ Mat4 Mat4::Rotation(Radian angle, const Vec3 &axis) {
   rot[2][2] = c + z * z * oneMinusC;
   return rot;
 }
-
+// --------------------------------------------------------------------------------
+Mat4 Mat4::FromEuler(const Vec3 &eulerAngle) {
+  ASSERT(false);
+  return Mat4(
+    0.0f
+  );
+}
+// --------------------------------------------------------------------------------
 Mat4 Mat4::Scale(const Vec3 &sv) {
   Mat4 scale(1.0f);
   scale[0][0] = sv.x;
@@ -51,7 +58,15 @@ Mat4 Mat4::Scale(const Vec3 &sv) {
   scale[2][2] = sv.z;
   return scale;
 }
-
+// --------------------------------------------------------------------------------
+Mat4 Mat4::Translation(f32 tx, f32 ty, f32 tz) {
+  Mat4 trans(1.0f);
+  trans[3][0] = tx;
+  trans[3][1] = ty;
+  trans[3][2] = tz;
+  return trans;
+}
+// --------------------------------------------------------------------------------
 Mat4 Mat4::Translation(const Vec3 &tv) {
   Mat4 trans(1.0f);
   trans[3][0] = tv.x;
@@ -59,28 +74,45 @@ Mat4 Mat4::Translation(const Vec3 &tv) {
   trans[3][2] = tv.z;
   return trans;
 }
+// --------------------------------------------------------------------------------
+Mat4 Mat4::LookAt(const Vec3 &P, const Vec3 &T, const Vec3 &U) {
+  Vec3 _D = (P - T).Normalized();
+  Vec3 _R = (U.Cross(_D)).Normalized();
+  Vec3 _U = _D.Cross(_R);
+  return Mat4(
+          _R.x,       _U.x,       _D.x, 0.0f,
+          _R.y,       _U.y,       _D.y, 0.0f,
+          _R.z,       _U.z,       _D.z, 0.0f,
+    -_R.Dot(P), -_U.Dot(P), -_D.Dot(P), 1.0f
+  );
+}
+// --------------------------------------------------------------------------------
+Mat4 Mat4::Perspective(Radian fov, f32 aspect, f32 zNear, f32 zFar) {
+  // Row major order matrix
+  // 1/(aspect*tan(fov/2))                   0                   0                   0
+  //                     0        1/tan(fov/2)                   0                   0
+  //                     0                   0        -(f+n)/(f-n)        -(2fn)/(f-n)
+  //                     0                   0                  -1                   0
 
-Mat4 Mat4::Perspective(f32 fov, f32 aspect, f32 zNear, f32 zFar) {
-  // aspect*1/tan(fov/2)                   0                   0                   0
-  //                   0        1/tan(fov/2)                   0                   0
-  //                   0                   0             f/(f-n)        (-f*n)/(f-n)
-  //                   0                   0                   1                   0
-  Mat4 m = Mat4::Zero;
-  f32 f = fov/2;
-  f32 d = zFar - zNear;
-  m[0][0] = aspect * (1/tan(f));
-  m[1][1] = 1 / tan(f);
-  m[2][2] = zFar / d;
-  m[2][3] = -1.0f * (zFar * zNear) / d;
-  m[3][2] = 1;
+  // Column major order matrix
+  Mat4 m(Mat4::Zero);
+  f32 tanHalfFov = tan(fov * 0.5f); // fov must be in radians!
+  m[0][0] = 1.0f / (aspect * tanHalfFov);
+  m[1][1] = 1.0f / tanHalfFov;
+  m[2][2] = -(zFar + zNear) / (zFar - zNear);
+  m[2][3] = -1.0f;
+  m[3][2] = -(2.0f * zFar * zNear) / (zFar - zNear);
   return m;
 }
-
+// --------------------------------------------------------------------------------
 Mat4 Mat4::Ortho(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar) {
+  // Row major order matrix 
   // 2/(right-left)                 0                0    -right-left/right-left
   //              0    2/(top-bottom)                0    -top-bottom/top-bottom
   //              0                 0    -2/(far-near)        -far-near/far-near
   //              0                 0                0                         1
+
+  // Column major order matrix
   Mat4 m = Mat4::Identity;
   m[0][0] = 2/(right-left);
   m[0][3] = (-right-left)/(right-left);

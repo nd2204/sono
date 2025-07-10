@@ -174,9 +174,19 @@ void GLRenderPipeline::SetVec4(const char *uniform, f32 x, f32 y, f32 z, f32 w) 
   glUniform4f(glGetUniformLocation(this->m_ID, uniform), x, y, z, w);
 }
 // --------------------------------------------------------------------------------
+void GLRenderPipeline::SetVec4(const char *uniform, const Vec4 &v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform4f(glGetUniformLocation(this->m_ID, uniform), v.x, v.y, v.z, v.w);
+}
+// --------------------------------------------------------------------------------
 void GLRenderPipeline::SetVec3(const char *uniform, f32 x, f32 y, f32 z) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniform3f(glGetUniformLocation(this->m_ID, uniform), x, y, z);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetVec3(const char *uniform, const Vec3 &v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform3f(glGetUniformLocation(this->m_ID, uniform), v.x, v.y, v.z);
 }
 // --------------------------------------------------------------------------------
 void GLRenderPipeline::SetVec2(const char *uniform, f32 x, f32 y) const {
@@ -184,12 +194,17 @@ void GLRenderPipeline::SetVec2(const char *uniform, f32 x, f32 y) const {
   glUniform2f(glGetUniformLocation(this->m_ID, uniform), x, y);
 }
 // --------------------------------------------------------------------------------
+void GLRenderPipeline::SetVec2(const char *uniform, const Vec2 &v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform2f(glGetUniformLocation(this->m_ID, uniform), v.x, v.y);
+}
+// --------------------------------------------------------------------------------
 void GLRenderPipeline::SetFloat(const char *uniform, f32 v) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniform1f(glGetUniformLocation(this->m_ID, uniform), v);
 }
 // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetBool(const char *uniform, u8 v) const {
+void GLRenderPipeline::SetBool(const char *uniform, b8 v) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniform1i(glGetUniformLocation(this->m_ID, uniform), v);
 }
@@ -202,6 +217,11 @@ void GLRenderPipeline::SetInt(const char *uniform, i32 v) const {
 void GLRenderPipeline::SetMat4(const char *uniform, f32 *mat4) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniformMatrix4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat4(const char *uniform, const Mat4 &mat4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4.ValuePtr());
 }
 // --------------------------------------------------------------------------------
 void GLRenderPipeline::SetMat4x3(const char *uniform, f32 *mat4x3) const {
@@ -222,6 +242,11 @@ void GLRenderPipeline::SetMat3x4(const char *uniform, f32 *mat3x4) const {
 void GLRenderPipeline::SetMat3(const char *uniform, f32 *mat3) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniformMatrix3fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat3);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat3(const char *uniform, const Mat3 &mat3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat3.ValuePtr());
 }
 // --------------------------------------------------------------------------------
 void GLRenderPipeline::SetMat3x2(const char *uniform, f32 *mat3x2) const {
@@ -248,9 +273,9 @@ void GLRenderPipeline::Bind() const { glUseProgram(this->m_ID); }
 // --------------------------------------------------------------------------------
 void GLRenderPipeline::Unbind() const { glUseProgram(0); }
 // --------------------------------------------------------------------------------
-u32 GLRenderPipeline::GetID() const { return this->m_ID; }
+GLuint GLRenderPipeline::GetID() const { return this->m_ID; }
 // --------------------------------------------------------------------------------
-GLRenderPipeline::operator u32() const { return this->m_ID; }
+GLRenderPipeline::operator GLuint() const { return this->m_ID; }
 // --------------------------------------------------------------------------------
 void GLRenderPipeline::LinkProgram() const {
   i32 success;

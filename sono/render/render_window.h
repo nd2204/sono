@@ -1,20 +1,19 @@
 #ifndef SN_WINDOW_CONTEXT_H
 #define SN_WINDOW_CONTEXT_H
 
+#include "GLFW/glfw3.h"
 #include "render_context.h"
+
 #include <memory>
 #include <utility>
 
 #include <functional>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <core/input/key_code.h>
 
 enum WindowMode { WIN_MODE_WINDOWED, WIN_MODE_FULLSCREEN, WIN_MODE_BORDERLESS };
 
 class RenderWindow : public RenderContext {
 public:
-  using SNFrameBufferSizeCallback = std::function<void(RenderWindow &win, i32 w, i32 h)>;
-
   RenderWindow();
 
   virtual ~RenderWindow();
@@ -28,7 +27,7 @@ public:
   virtual void Destroy() = 0;
 
   // TODO: Delegate this method to input manager class
-  i32 GetKey(i32 key) const;
+  i32 GetKey(KeyCode key) const;
 
   // @brief poll events for input handling
   void PollEvents() const;
@@ -50,28 +49,15 @@ public:
 
   void ToggleFullScreen();
 
-  void SetFrameBufferSizeCallback(SNFrameBufferSizeCallback cb);
-
-  // Convert this screen object to GLFW window ptr
   operator GLFWwindow *() const;
 
-  void OnFrameBufferResize(i32 width, i32 height);
+  GLFWwindow *GetHandle() { return m_Context; }
 
   virtual void MakeCurrent() override;
 
   virtual void SwapBuffers() override;
 
 protected:
-  struct CallbackState {
-    RenderWindow *thisPtr;
-    SNFrameBufferSizeCallback cb;
-
-    CallbackState(RenderWindow *screen, SNFrameBufferSizeCallback cb)
-      : thisPtr(screen)
-      , cb(std::move(cb)) {}
-  };
-
-  std::shared_ptr<CallbackState> m_CallbackState;
   GLFWwindow *m_Context;
   u32 m_PosX, m_PosY;
   WindowMode m_Mode;

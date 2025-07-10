@@ -2,6 +2,7 @@
 #define MEMORY_SYSTEM_H
 
 #include "core/common/types.h"
+#include "core/common/defines.h"
 #include "core/common/singleton.h"
 #include <mutex>
 #include <string>
@@ -28,22 +29,22 @@
 #define MIB(byte) (byte / SN_MEM_MIB)
 #define KIB(byte) (byte / SN_MEM_KIB)
 
-enum AllocationType : u8 {
-  ALLOC_TYPE_GENERAL = 0,
+// clang-format off
 
-  // Allocator
-  ALLOC_TYPE_ALLOCATOR_ARENA = 1,
-  ALLOC_TYPE_ALLOCATOR_POOL = 2,
+#define __FOREACH_ALLOCATION_TYPES(F)                                                              \
+  F(0, ALLOC_TYPE_GENERAL),                                                                         \
+  F(1, ALLOC_TYPE_SYSTEM_EVENT),                                                                         \
+  F(2, ALLOC_TYPE_ALLOCATOR_ARENA),                                                                 \
+  F(3, ALLOC_TYPE_ALLOCATOR_POOL),                                                                  \
+  F(4, ALLOC_TYPE_RESOURCE),                                                                        \
+  F(5, ALLOC_TYPE_RENDER_SYSTEM),                                                                   \
+  F(6, ALLOC_TYPE_MAX)
 
-  // Resource
-  ALLOC_TYPE_RESOURCE = 3,
+// clang-format on
 
-  // Render
-  ALLOC_TYPE_RENDER_SYSTEM = 4,
+DEFINE_ENUMS(AllocationType, __FOREACH_ALLOCATION_TYPES);
 
-  // Max value for using in arrays
-  ALLOC_TYPE_MAX
-};
+// enum AllocationType : u8 {};
 
 struct AllocationInfo {
   const char *file;
@@ -103,6 +104,8 @@ private:
   u32 m_DeallocationCount;
 };
 
+void SNZero(void *mem, usize sizeInBytes);
+
 void *SNAlloc(usize sizeBytes, const char *file, const char *func, i32 line, AllocationType type);
 void SNFree(void *mem, const char *file, i32 line);
 
@@ -113,6 +116,8 @@ void operator delete[](void *mem, const char *file, i32 line);
 uintptr_t AlignAddress(uintptr_t addr, usize align);
 
 uintptr_t AlignSize(uintptr_t size, usize align);
+
+#define SN_ZERO(ptr, size) memset((ptr), 0, (size));
 
 #if !defined(SN_NDEBUG) && !defined(SN_NO_MEMTRACKING)
 #define SN_ALLOC(size, type) SNAlloc((size), __FILE__, __FUNCTION__, __LINE__, (type))

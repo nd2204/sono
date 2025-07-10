@@ -13,6 +13,18 @@ struct VecBase {
   // Default constructor for Vec struct
   VecBase() {}
 
+  VecBase(const VecBase<N, T> &other) {
+    for (int i = 0; i < N; i++) {
+      data[i] = other.data[i];
+    }
+  }
+
+  VecBase &operator=(const VecBase<N, T> &other) {
+    for (int i = 0; i < N; i++) {
+      data[i] = other.data[i];
+    }
+  }
+
   constexpr VecBase(T x, T y, T z, T w) {
     SN_ASSERT_F(N > 2, "expected at least 4 dimensions (current: %d)", N);
     data[0] = x;

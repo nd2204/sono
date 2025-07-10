@@ -23,17 +23,23 @@ public:
 
   virtual void SetVertexLayout(VertexLayout *buffer) override;
 
-  void Draw(GLenum mode = GL_TRIANGLES);
+  GLuint GetID() const;
 
-  void DrawIndexed(GLenum mode = GL_TRIANGLES);
+  const GLIndexBuffer *GetCurrentIndexBuffer() const;
+
+  const std::vector<GLVertexBuffer *> &GetVertexBuffers() const;
+
+  GLVertexBuffer *operator[](usize index);
+
+  const GLVertexBuffer *operator[](usize index) const;
 
   ~GLVertexArray();
 
 private:
-  u32 m_ID;
   std::vector<GLVertexBuffer *> m_VertexBuffers;
-  VertexLayout *m_pVertexLayout;
   GLIndexBuffer *m_pIndexBuffer;
+  VertexLayout *m_pVertexLayout;
+  GLuint m_ID;
 };
 
 #endif

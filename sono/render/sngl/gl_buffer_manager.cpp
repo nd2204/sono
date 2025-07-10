@@ -44,8 +44,9 @@ IBuffer *GLBufferManager::CreateVertexBuffer(BufferUsage usage, usize vertCount,
 
 void GLBufferManager::DeleteVertexBuffer(IBuffer *pBuf) {
   ASSERT(pBuf);
+  GLVertexBuffer *mem = static_cast<GLVertexBuffer *>(pBuf);
   m_VertexBuffers.erase(pBuf);
-  SN_FREE(pBuf);
+  SN_FREE(mem);
 };
 
 IBuffer *GLBufferManager::CreateIndexBuffer(BufferUsage usage, IndexType type, usize idxCount) {
@@ -56,6 +57,7 @@ IBuffer *GLBufferManager::CreateIndexBuffer(BufferUsage usage, IndexType type, u
 
 void GLBufferManager::DeleteIndexBuffer(IBuffer *pBuf) {
   ASSERT(pBuf);
+  GLIndexBuffer *mem = static_cast<GLIndexBuffer *>(pBuf);
   m_IndexBuffers.erase(pBuf);
-  SN_FREE(pBuf);
+  SN_FREE(mem);
 }

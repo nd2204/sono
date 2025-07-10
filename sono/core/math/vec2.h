@@ -19,6 +19,8 @@ struct VecBase<2, f32> {
   f32 *ValuePtr() { return &x; }
   const f32 *ValuePtr() const { return &x; }
 
+  constexpr f32 Cross(const Vec<2, f32> &rhs) { return x * rhs.y - y * rhs.x; }
+
   static const Vec2 &Up;
   static const Vec2 &Down;
   static const Vec2 &Left;

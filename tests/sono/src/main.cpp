@@ -1,24 +1,71 @@
+#include <algorithm>
 #include <core/global.h>
-#include <core/memory/memory_system.h>
 #include <core/common/time.h>
 #include <core/common/logger.h>
 #include <core/math/mat4.h>
 #include <core/math/vec3.h>
 
-#include <render/render_system.h>
-#include <render/sngl/gl_shader.h>
-
-#include <GLFW/glfw3.h>
-#include <glad/glad.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <core/common/sys_event_queue.h>
+#include "GLFW/glfw3.h"
+#include "core/input/mouse.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-void ProcessInput(RenderWindow &ctx) {
-  if (ctx.GetKey(GLFW_KEY_ESCAPE) == GLFW_PRESS) ctx.SetShouldClose(true);
+Camera cam;
+
+void ProcessInput() {
+  static RenderSystem *renderSys = RenderSystem::GetPtr();
+  static RenderWindow *win = static_cast<RenderWindow *>(renderSys->GetCurrentContext());
+
+  if (win->GetKey(KeyCode::KEY_ESC) == GLFW_PRESS) win->SetShouldClose(true);
+
+  const float cameraSpeed = 10.0f * Time::DeltaTime(); // adjust accordingly
+  if (win->GetKey(KeyCode::KEY_W) == GLFW_PRESS) {
+    cam.Move(cameraSpeed * cam.GetForward());
+  }
+  if (win->GetKey(KeyCode::KEY_A) == GLFW_PRESS) {
+    cam.Move(-cameraSpeed * cam.GetRight());
+  }
+  if (win->GetKey(KeyCode::KEY_S) == GLFW_PRESS) {
+    cam.Move(-cameraSpeed * cam.GetForward());
+  }
+  if (win->GetKey(KeyCode::KEY_D) == GLFW_PRESS) {
+    cam.Move(cameraSpeed * cam.GetRight());
+  }
+
+  Vec3 currentEuler = cam.GetEulerAngles();
+
+  Vec2 mouseDelta = Mouse::GetDelta();
+  float sensitivity = 0.1f;
+
+  // Apply rotation deltas
+  float yawDelta = mouseDelta.x * sensitivity;
+  float pitchDelta = -mouseDelta.y * sensitivity;
+
+  // Apply clamped pitch
+  float newPitch = std::clamp(currentEuler.y + pitchDelta, -89.9f, 89.9f);
+  float newYaw = currentEuler.x + yawDelta;
+
+  cam.SetEulerAngles(Vec3(newPitch, newYaw, 0.0f));
+}
+
+void HandleEvent(const Event &ev) {
+  static InputSystem *inputSys = InputSystem::GetPtr();
+  // S_LOG_TRACE(ev.ToString());
+
+  switch (ev.type) {
+    case EventType::KEY:
+    case EventType::MOUSE_MOVE:
+    case EventType::MOUSE_BUTTON:
+    case EventType::MOUSE_SCROLL:
+      inputSys->InjectEvent(ev);
+      break;
+    case EventType::TEXT:
+    case EventType::QUIT:
+    case EventType::WINDOW_RESIZE:
+      break;
+  }
 }
 
 i32 main(void) {
@@ -26,105 +73,152 @@ i32 main(void) {
   Sono::Global::GetPtr()->Init();
 
   RenderSystem *renderSys = RenderSystem::GetPtr();
+  InputSystem *inputSys = InputSystem::GetPtr();
   BufferManager *bufferMgr = renderSys->GetBufferManager();
+  SystemEventQueue *eventQueue = SystemEventQueue::GetPtr();
 
   RenderWindow *window = renderSys->CreateRenderWindow(800, 600, "Hello Sono");
-  window->EnableVsync(false);
-  window->SetFrameBufferSizeCallback([](RenderWindow &window, i32 width, i32 height) {
-    glViewport(0, 0, width, height);
-  });
+  window->EnableVsync(true);
 
-  f32 vertices[] = {
-    // positions          // colors           // texture coords
-    0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
-    0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bottom right
-    -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom left
-    -0.5f, 0.5f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left
-  };
+  float vertices[] = {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
+                      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+                      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+
+                      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+                      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+                      -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
+
+                      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
+                      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
+
+                      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+                      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
+                      0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+                      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
+                      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+                      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+
+                      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+                      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+                      -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
+
+  Vec3 cubePositions[] = {Vec3(0.0f, 0.0f, 0.0f),    Vec3(2.0f, 5.0f, -15.0f),
+                          Vec3(-1.5f, -2.2f, -2.5f), Vec3(-3.8f, -2.0f, -12.3f),
+                          Vec3(2.4f, -0.4f, -3.5f),  Vec3(-1.7f, 3.0f, -7.5f),
+                          Vec3(1.3f, -2.0f, -2.5f),  Vec3(1.5f, 2.0f, -2.5f),
+                          Vec3(1.5f, 0.2f, -1.5f),   Vec3(-1.3f, 1.0f, -1.5f)};
 
   u32 indices[] = {0, 1, 3, 1, 2, 3};
 
-  LOG_DEBUG("Creating buffers");
-  IBuffer *vb =
-    bufferMgr->CreateVertexBuffer(BufferUsage::STATIC, sizeof(vertices) / sizeof(f32), sizeof(f32));
-  vb->Update(vertices, sizeof(vertices));
+  IBuffer *vb;
+  {
+    PROFILE_SCOPE("Create Buffers");
+    vb = bufferMgr->CreateVertexBuffer(
+      BufferUsage::STATIC, sizeof(vertices) / sizeof(f32), sizeof(f32)
+    );
+    vb->Update(vertices, sizeof(vertices));
+  }
 
-  IBuffer *ib = bufferMgr->CreateIndexBuffer(
-    BufferUsage::STATIC, INDEX_TYPE_U32, sizeof(indices) / sizeof(u32)
-  );
-  ib->Update(indices, sizeof(indices));
+  // IBuffer *ib = bufferMgr->CreateIndexBuffer(
+  //   BufferUsage::STATIC, INDEX_TYPE_U32, sizeof(indices) / sizeof(u32)
+  // );
+  // ib->Update(indices, sizeof(indices));
 
-  LOG_DEBUG("Creating VertexLayout");
+  // glm::mat4 v =
+  //   glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+  // for (int i = 0; i < 4; i++) {
+  //   std::stringstream ss;
+  //   for (int j = 0; j < 4; j++) {
+  //     ss << std::to_string(v[i][j]) << " ";
+  //   }
+  //   S_LOG_DEBUG(ss.str());
+  // }
+
   VertexLayout layout;
   layout.Push(VAS_POSITION, VAT_FLOAT3); // 3 floats per vertex
-  layout.Push(VAS_COLOR, VAT_FLOAT3);    // 3 floats per vertex
   layout.Push(VAS_TEXCOORD, VAT_FLOAT2); // 2 floats per vertex
 
-  LOG_DEBUG("Creating VertexArray");
-  VertexArray *vao = renderSys->CreateVertexArray();
-  vao->AddVertexBuffer(vb);
-  vao->SetIndexBuffer(ib);
-  vao->SetVertexLayout(&layout);
+  VertexArray *vao;
+  {
+    PROFILE_SCOPE("Create VertexArray");
+    vao = renderSys->CreateVertexArray();
+    vao->AddVertexBuffer(vb);
+    // vao->SetIndexBuffer(ib);
+    vao->SetVertexLayout(&layout);
+  }
 
   LOG_DEBUG("Binding VertexArray");
   renderSys->BindVertexArray(vao);
 
-  LOG_DEBUG("Creating Textures");
-  int width, height, nrChannels;
-  stbi_set_flip_vertically_on_load(true);
-  unsigned char *data = stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels, 0);
-  Texture *texture =
-    renderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB, width, height);
-  texture->Update(data, 0);
-  texture->GenerateMipmaps();
-  stbi_image_free(data);
+  Texture *texture, *texture2;
+  {
+    PROFILE_SCOPE("Create Textures");
+    unsigned char *data;
+    int width, height, nrChannels;
 
-  data = stbi_load("assets/textures/awesomeface.png", &width, &height, &nrChannels, 0);
-  Texture *texture2 =
-    renderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA, TEX_FORMAT_RGBA, width, height);
-  texture2->Update(data, 0);
-  texture2->GenerateMipmaps();
-  stbi_image_free(data);
+    stbi_set_flip_vertically_on_load(true);
+    data = stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels, 0);
+    texture = renderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB, width, height);
+    texture->Update(data, 0);
+    texture->GenerateMipmaps();
+    stbi_image_free(data);
 
-  LOG_DEBUG("Creating Shader");
+    data = stbi_load("assets/textures/awesomeface.png", &width, &height, &nrChannels, 0);
+    texture2 =
+      renderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA, TEX_FORMAT_RGBA, width, height);
+    texture2->Update(data, 0);
+    texture2->GenerateMipmaps();
+    stbi_image_free(data);
+  }
+
   Shader *vs = renderSys->CreateShader(nullptr);
-  vs->CompileFromFile("./assets/shaders/vertex.glsl", ShaderStage::VERTEX);
   Shader *fs = renderSys->CreateShader(nullptr);
-  fs->CompileFromFile("./assets/shaders/fragment.glsl", ShaderStage::FRAGMENT);
+  RenderPipeline *pipeline;
+  {
+    PROFILE_SCOPE("Compile Shaders");
+    vs->CompileFromFile("./assets/shaders/vertex.glsl", ShaderStage::VERTEX);
+    fs->CompileFromFile("./assets/shaders/fragment.glsl", ShaderStage::FRAGMENT);
+    pipeline = renderSys->CreatePipeline(vs, fs);
+    renderSys->BindPipeline(pipeline, 0);
+    renderSys->BindTexture(texture, 0);
+    renderSys->BindTexture(texture2, 1);
+  }
 
-  GLRenderPipeline *pipeline =
-    reinterpret_cast<GLRenderPipeline *>(renderSys->CreatePipeline(vs, fs));
-  renderSys->BindPipeline(pipeline, 0);
-  renderSys->BindTexture(texture, 0);
-  renderSys->BindTexture(texture2, 1);
+  cam.SetPosition(0.0f, 0.0f, 3.0f);
+  cam.LookAt(Vec3::Zero);
+  cam.SetPerspective(Sono::Radians(60.0f), window->GetAspect(), 0.1f, 100.0f);
 
-  f32 opacity = 0.2f;
   /* Loop until the user closes the window */
   while (!window->ShouldClose()) {
-    ProcessInput(*window);
-
     /* Poll for and process events */
     glfwPollEvents();
-
-    if (window->GetKey(GLFW_KEY_UP) == GLFW_PRESS) {
-      opacity += Time::DeltaTime();
-    } else if (window->GetKey(GLFW_KEY_DOWN) == GLFW_PRESS) {
-      opacity -= Time::DeltaTime();
+    while (auto *ev = eventQueue->Pop()) {
+      HandleEvent(*ev);
     }
+    ProcessInput();
 
     /* Render here */
     renderSys->BeginFrame();
+    renderSys->Submit<ClearCommand>(Vec4(255, 255, 255, 255));
 
-    pipeline->SetFloat("uOpacity", opacity);
-    Mat4 trans = Mat4::Rotation((float)glfwGetTime(), Vec3(0.0, 0.0, 1.0f))
-      * Mat4::Translation(Vec3(0.5f, 0.5f, 0.0f));
-    pipeline->SetMat4("uTransform", trans.ValuePtr());
+    pipeline->SetMat4("uView", cam.GetViewMatrix());
+    pipeline->SetMat4("uProj", cam.GetProjectionMatrix());
 
-    renderSys->Submit<ClearCommand>(Vec4(0.2f, 0.3f, 0.3f, 1.0f));
-    renderSys->Submit<DrawIndexedCommand>(vao, 6, texture, PrimitiveType::TRIANGLES);
+    Mat4 model;
+    for (int i = 0; i < 10; i++) {
+      model = Mat4::Translation(cubePositions[i]);
+      f32 angle = 20.0f * i;
+      model = Mat4::Rotation(Sono::Radians(angle), Vec3(1.0f, 0.3f, 0.5f)) * model;
+      pipeline->SetMat4("uModel", model);
+      renderSys->Submit<DrawCommand>(vao, 36, texture, PrimitiveType::TRIANGLES);
+      renderSys->Flush();
+    }
 
     renderSys->Flush();
     renderSys->EndFrame();
+    inputSys->EndFrame();
 
     /* Swap front and back buffers */
     renderSys->Present();

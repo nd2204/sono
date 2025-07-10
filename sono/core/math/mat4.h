@@ -17,30 +17,42 @@ struct Mat4 : public MatBase<4, 4, f32> {
   Mat4(f32 v)
     : MatBase(v) {}
 
+  /// @brief Construct a lookAt matrix
+  /// @param pos the position of the look object
+  /// @param targetPos the position of the target object
+  /// @param up the vector represent the upward direction
+  static Mat4 LookAt(const Vec3 &pos, const Vec3 &targetPos, const Vec3 &up);
+
   /// @brief Construct a perspective projection matrix
   /// @param fov The field of view in float
   /// @param aspec The aspect ratio in float
   /// @param near The distance from the origin to the near plane in float
   /// @param far The distance from the origin to the far plane in float
-  static Mat4 Perspective(f32 fov, f32 aspect, f32 near, f32 far);
+  static Mat4 Perspective(Radian fov, f32 aspect, f32 zNear, f32 zFar);
 
   /// @brief Construct a orthogonal projection matrix
   /// @param fov The field of view in float
   /// @param aspec The aspect ratio in float
   /// @param near The distance from the origin to the near plane in float
   /// @param far The distance from the origin to the far plane in float
-  static Mat4 Ortho(f32 left, f32 right, f32 bottom, f32 top, f32 near, f32 far);
+  static Mat4 Ortho(f32 left, f32 right, f32 bottom, f32 top, f32 zNear, f32 zFar);
 
   /// @brief create a rotation matrix
   /// @params angle angle in radians
   /// @params axis the axis vector to rotate
   static Mat4 Rotation(Radian angle, const Vec3 &axis);
 
+  /// @brief create a rotation matrix
+  /// @params angle angle in radians
+  /// @params axis the axis vector to rotate
+  static Mat4 FromEuler(const Vec3 &euler);
+
   // static Mat4 Rotate(const Quaternion &rotation);
 
   /// @brief create a translation matrix
   /// @brief tv a translation vector
   static Mat4 Translation(const Vec3 &tv);
+  static Mat4 Translation(f32 tx, f32 ty, f32 tz);
 
   /// @brief create a translation matrix
   /// @brief tv a translation vector

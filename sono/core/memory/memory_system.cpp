@@ -2,9 +2,14 @@
 #include "../common/snassert.h"
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
+#include <iomanip>
 #include <sstream>
+#include <unordered_map>
 
 #define DEFAULT_ALIGNMENT (2 * sizeof(void *))
+
+DEFINE_STRING_CONSTANTS(kAllocationTypeStr, __FOREACH_ALLOCATION_TYPES);
 
 template <>
 MemorySystem *Singleton<MemorySystem>::m_sInstance = nullptr;
@@ -96,13 +101,27 @@ std::string &&MemorySystem::GetLeaksReport() {
 std::string &&MemorySystem::GetAllocsReport() {
   std::lock_guard<std::mutex> lock(m_Mutex);
 
+  static std::unordered_map<AllocationType, i32> allocTypeSums;
+  allocTypeSums.clear();
+  for (const auto &pair : m_AllocTracker) {
+    const AllocationInfo &info = pair.second;
+    if (allocTypeSums.find(info.type) != allocTypeSums.end()) {
+      allocTypeSums[info.type] += info.size;
+    } else {
+      allocTypeSums[info.type] = info.size;
+    }
+  }
+
   static std::string buffer;
   std::stringstream oss;
-
-  oss << "\n=== Memory Tracking Statistics ===" << std::endl;
+  oss << "=== Memory Tracking Statistics ===" << std::endl;
   oss << "Total allocated: " << ToHumanReadable(m_TotalAllocated) << std::endl;
   oss << "Total freed: " << ToHumanReadable(m_TotalFreed) << std::endl;
   oss << "Current usage: " << ToHumanReadable(m_CurrentUsage) << std::endl;
+  for (const auto &pair : allocTypeSums) {
+    const i32 sum = pair.second;
+    oss << "  " << kAllocationTypeStr[pair.first] << ": " << ToHumanReadable(sum) << std::endl;
+  }
   oss << "Peak usage: " << ToHumanReadable(m_PeakUsage) << std::endl;
   oss << "Allocation count: " << m_AllocationCount << std::endl;
   oss << "Deallocation count: " << m_DeallocationCount << std::endl;
@@ -122,12 +141,18 @@ std::string &&MemorySystem::ToHumanReadable(u64 byte) {
 }
 
 void *SNAlloc(usize sizeBytes, const char *file, const char *func, i32 line, AllocationType type) {
+#ifndef SN_NDEBUG
+  SN_ASSERT(MemorySystem::GetPtr(), "Memory system is not initialized");
+#endif // !SN_NDEBUG
   void *ptr = malloc(sizeBytes);
   MemorySystem::Get().ReportAllocation(ptr, file, func, sizeBytes, line, type);
   return ptr;
 }
 
 void SNFree(void *mem, const char *file, i32 line) {
+#ifndef SN_NDEBUG
+  SN_ASSERT(MemorySystem::GetPtr(), "Memory system is not initialized");
+#endif // !SN_NDEBUG
   MemorySystem::Get().ReportDeallocation(mem, file, line);
   free(mem);
 }

@@ -44,8 +44,12 @@ static GLenum ConvertToGLType(VertexAttribType type) {
 // GLVertexArray implementation
 // ===============================================================================
 
-GLVertexArray::GLVertexArray() { glGenVertexArrays(1, &m_ID); }
-
+GLVertexArray::GLVertexArray()
+  : m_pIndexBuffer(nullptr)
+  , m_pVertexLayout(nullptr) {
+  glGenVertexArrays(1, &m_ID);
+}
+// --------------------------------------------------------------------------------
 void GLVertexArray::Bind() const {
   LOG_DEBUG_F("__ Vertex Array [id=%d]", m_ID);
   glBindVertexArray(m_ID);
@@ -72,41 +76,38 @@ void GLVertexArray::Bind() const {
   }
   if (m_pIndexBuffer) m_pIndexBuffer->Bind();
 }
-
+// --------------------------------------------------------------------------------
 void GLVertexArray::Unbind() const { glBindVertexArray(0); }
-
+// --------------------------------------------------------------------------------
 void GLVertexArray::AddVertexBuffer(IBuffer *buffer) {
   ASSERT(buffer);
   m_VertexBuffers.push_back(static_cast<GLVertexBuffer *>(buffer));
 }
-
+// --------------------------------------------------------------------------------
 void GLVertexArray::SetIndexBuffer(IBuffer *buffer) {
   ASSERT(buffer);
   m_pIndexBuffer = static_cast<GLIndexBuffer *>(buffer);
   glBindVertexArray(m_ID);
   m_pIndexBuffer->Bind();
 }
-
+// --------------------------------------------------------------------------------
 void GLVertexArray::SetVertexLayout(VertexLayout *layout) {
   ASSERT(layout);
   m_pVertexLayout = layout;
 }
-
-void GLVertexArray::Draw(u32 mode) {
-  glBindVertexArray(m_ID);
-  for (auto *vb : m_VertexBuffers) {
-    glDrawArrays(mode, 0, vb->GetVertexCount());
-  }
+// --------------------------------------------------------------------------------
+GLuint GLVertexArray::GetID() const { return m_ID; }
+// --------------------------------------------------------------------------------
+const GLIndexBuffer *GLVertexArray::GetCurrentIndexBuffer() const { return m_pIndexBuffer; }
+// --------------------------------------------------------------------------------
+const std::vector<GLVertexBuffer *> &GLVertexArray::GetVertexBuffers() const {
+  return m_VertexBuffers;
 }
-
-void GLVertexArray::DrawIndexed(GLenum mode) {
-  ASSERT(m_pIndexBuffer);
-  glBindVertexArray(m_ID);
-  m_pIndexBuffer->Bind();
-  glDrawElements(
-    mode, m_pIndexBuffer->GetIndexCount(),
-    GLIndexBuffer::ConvertIndexType(m_pIndexBuffer->GetIndexType()), 0
-  );
+// --------------------------------------------------------------------------------
+GLVertexBuffer *GLVertexArray::operator[](usize index) { return m_VertexBuffers[index]; }
+// --------------------------------------------------------------------------------
+const GLVertexBuffer *GLVertexArray::operator[](usize index) const {
+  return m_VertexBuffers[index];
 }
-
+// --------------------------------------------------------------------------------
 GLVertexArray::~GLVertexArray() { glDeleteVertexArrays(1, &m_ID); }

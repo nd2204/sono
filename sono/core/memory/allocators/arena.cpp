@@ -10,24 +10,49 @@
 
 using Marker = ArenaAllocator::Marker;
 
-ArenaAllocator::ArenaAllocator(u32 arenaSizeBytes) {
+ArenaAllocator::ArenaAllocator() {}
+// ------------------------------------------------------------------------------------------
+ArenaAllocator::ArenaAllocator(u32 arenaSizeBytes) { AllocateArena(arenaSizeBytes); }
+// ------------------------------------------------------------------------------------------
+ArenaAllocator::ArenaAllocator(u8 *backingBuffer, u32 backingBufferSize) {
+  AssignArena(backingBuffer, backingBufferSize);
+}
+// ------------------------------------------------------------------------------------------
+void ArenaAllocator::AllocateArena(u32 arenaSizeBytes) {
   ASSERT(arenaSizeBytes > 0);
+  m_IsHeapAlloc = true;
   m_BufSize = arenaSizeBytes;
   m_Offset = 0;
   m_Buf = (u8 *)SN_ALLOC(arenaSizeBytes, ALLOC_TYPE_ALLOCATOR_ARENA);
   SN_ASSERT_F(m_Buf, "Error when allocating memory for arena of size %d", arenaSizeBytes);
 }
-
-ArenaAllocator::ArenaAllocator(u8 *backingBuffer, u32 backingBufferSize)
-  : m_Buf(backingBuffer)
-  , m_BufSize(backingBufferSize)
-  , m_Offset(0) {};
-
-ArenaAllocator::~ArenaAllocator() { SN_FREE(m_Buf); }
-
+// ------------------------------------------------------------------------------------------
+void ArenaAllocator::AssignArena(u8 *backingBuffer, u32 backingBufferSize) {
+  ASSERT(backingBuffer);
+  ASSERT(backingBufferSize > 0);
+  m_IsHeapAlloc = false;
+  m_Buf = backingBuffer;
+  m_BufSize = backingBufferSize;
+  m_Offset = 0;
+}
+// ------------------------------------------------------------------------------------------
+ArenaAllocator::~ArenaAllocator() {
+  if (m_IsHeapAlloc && m_Buf) {
+    FreeInternalBuffer();
+  }
+}
+// ------------------------------------------------------------------------------------------
 Marker ArenaAllocator::GetMarker() const { return m_Offset; }
-
-void *ArenaAllocator::AllocAlign(u32 sizeBytes, usize align) {
+// ------------------------------------------------------------------------------------------
+void ArenaAllocator::FreeInternalBuffer() {
+  ASSERT(m_IsHeapAlloc);
+  SN_FREE(m_Buf);
+  m_Offset = 0;
+  m_BufSize = 0;
+  m_Buf = nullptr;
+}
+// ------------------------------------------------------------------------------------------
+void *ArenaAllocator::AllocAlign(usize sizeBytes, u16 align) {
   uintptr_t current_ptr = (uintptr_t)m_Buf + (uintptr_t)m_Offset;
   uintptr_t offset = AlignAddress(current_ptr, align);
   offset -= (uintptr_t)m_Buf; // Change to relative offset
@@ -41,12 +66,12 @@ void *ArenaAllocator::AllocAlign(u32 sizeBytes, usize align) {
 
   return nullptr;
 }
-
-void *ArenaAllocator::Alloc(u32 sizeBytes) {
+// ------------------------------------------------------------------------------------------
+void *ArenaAllocator::Alloc(usize sizeBytes) {
   // LOG_DEBUG_F("arena [offset=%d, arenaSize=%d]", m_Offset, m_BufSize);
   return this->AllocAlign(sizeBytes, 1);
 }
-
+// ------------------------------------------------------------------------------------------
 void ArenaAllocator::FreeToMarker(Marker marker) {
   uintptr_t buf_ptr = (usize)m_BufSize;
   uintptr_t current_ptr = (usize)m_BufSize + (usize)m_Offset;
@@ -58,5 +83,5 @@ void ArenaAllocator::FreeToMarker(Marker marker) {
     m_Offset = marker;
   }
 }
-
+// ------------------------------------------------------------------------------------------
 void ArenaAllocator::Clear() { this->m_Offset = 0; }

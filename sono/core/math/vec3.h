@@ -4,18 +4,18 @@
 #include "vec_base.h"
 #include "vec.h"
 
-typedef Vec<3, float> Vec3;
+typedef Vec<3, f32> Vec3;
 
 template <>
 struct VecBase<3, f32> {
   union {
-    f32 x, r, s;
+    f32 x, r, s, pitch;
   };
   union {
-    f32 y, g, t;
+    f32 y, g, t, yaw;
   };
   union {
-    f32 z, b, p;
+    f32 z, b, p, roll;
   };
 
   VecBase() {}
@@ -28,7 +28,15 @@ struct VecBase<3, f32> {
   f32 *ValuePtr() { return &x; }
   const f32 *ValuePtr() const { return &x; }
 
-  Vec3 Cross(const Vec3 &rhs) const;
+  Vec3 Cross(const Vec3 &rhs) const {
+    // clang-format off
+    return Vec3(
+      y * rhs.z - z * rhs.y,
+      z * rhs.x - x * rhs.z,
+      x * rhs.y - y * rhs.x
+    );
+    // clang-format on
+  }
 
   static const Vec3 &Up;
   static const Vec3 &Down;
@@ -38,9 +46,5 @@ struct VecBase<3, f32> {
   static const Vec3 &Back;
   static const Vec3 &Zero;
 };
-
-inline Vec3 VecBase<3, f32>::Cross(const Vec3 &rhs) const {
-  return Vec3(y * rhs.z - z * rhs.y, z * rhs.x - x * rhs.z, x * rhs.y - y * rhs.x);
-}
 
 #endif // !SN_VEC3_H

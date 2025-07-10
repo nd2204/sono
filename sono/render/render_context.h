@@ -2,12 +2,7 @@
 #define SN_RENDER_CONTEXT_H
 
 #include "core/common/types.h"
-#include "core/math/vec4.h"
-#include "render/buffer_base.h"
-#include "render/texture.h"
-#include "render/shader.h"
 
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 class RenderContext {

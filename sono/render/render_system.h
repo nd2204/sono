@@ -12,6 +12,7 @@
 #include "shader.h"
 #include "texture.h"
 #include "vertex_array.h"
+#include "camera.h"
 
 struct BufferDesc;
 
@@ -27,13 +28,17 @@ public:
 
   virtual void SetRenderContext(RenderContext *ctx) = 0;
 
+  RenderContext *GetCurrentContext() { return m_pActiveCtx; };
+
   virtual void BeginFrame() = 0;
 
   template <class Cmd, typename... Args>
   void Submit(Args &&...args) {
-    auto *cmd = m_Arena.Create<Cmd>(std::forward<Args>(args)...);
+    auto *cmd = m_Arena.New<Cmd>(std::forward<Args>(args)...);
     m_RenderQueue.Submit(cmd);
   };
+
+  virtual void Draw(PrimitiveType topology, VertexArray *va, u32 maxVertCount) = 0;
 
   virtual void DrawIndexed(PrimitiveType topology, VertexArray *va, u32 idxCount) = 0;
 

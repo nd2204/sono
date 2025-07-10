@@ -20,6 +20,8 @@ public:
 
   // virtual void Flush() override;
 
+  void Draw(PrimitiveType topology, VertexArray *va, u32 mMaxVertCount) override;
+
   void DrawIndexed(PrimitiveType topology, VertexArray *va, u32 idxCount) override;
 
   void Clear(const Vec4 &color) override;
