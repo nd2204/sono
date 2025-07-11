@@ -30,10 +30,10 @@ VertexLayout *GLBufferManager::CreateVertexLayout() {
   return layout;
 }
 
-void GLBufferManager::DeleteVertexLayout(VertexLayout *pLayout) {
+b8 GLBufferManager::DeleteVertexLayout(VertexLayout *pLayout) {
   ASSERT(pLayout);
-  m_VertexLayouts.erase(pLayout);
   SN_FREE(pLayout);
+  return true;
 }
 
 IBuffer *GLBufferManager::CreateVertexBuffer(BufferUsage usage, usize vertCount, usize vertSize) {
@@ -42,11 +42,11 @@ IBuffer *GLBufferManager::CreateVertexBuffer(BufferUsage usage, usize vertCount,
   return buffer;
 }
 
-void GLBufferManager::DeleteVertexBuffer(IBuffer *pBuf) {
+b8 GLBufferManager::DeleteVertexBuffer(IBuffer *pBuf) {
   ASSERT(pBuf);
   GLVertexBuffer *mem = static_cast<GLVertexBuffer *>(pBuf);
-  m_VertexBuffers.erase(pBuf);
   SN_FREE(mem);
+  return true;
 };
 
 IBuffer *GLBufferManager::CreateIndexBuffer(BufferUsage usage, IndexType type, usize idxCount) {
@@ -55,9 +55,9 @@ IBuffer *GLBufferManager::CreateIndexBuffer(BufferUsage usage, IndexType type, u
   return buffer;
 }
 
-void GLBufferManager::DeleteIndexBuffer(IBuffer *pBuf) {
+b8 GLBufferManager::DeleteIndexBuffer(IBuffer *pBuf) {
   ASSERT(pBuf);
   GLIndexBuffer *mem = static_cast<GLIndexBuffer *>(pBuf);
-  m_IndexBuffers.erase(pBuf);
   SN_FREE(mem);
+  return true;
 }

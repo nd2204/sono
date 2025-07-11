@@ -12,15 +12,15 @@ public:
 
   VertexLayout *CreateVertexLayout() override;
 
-  void DeleteVertexLayout(VertexLayout *pLayout) override;
+  b8 DeleteVertexLayout(VertexLayout *pLayout) override;
 
   IBuffer *CreateVertexBuffer(BufferUsage usage, usize vertCount, usize vertSize) override;
 
-  void DeleteVertexBuffer(IBuffer *pBuf) override;
+  b8 DeleteVertexBuffer(IBuffer *pBuf) override;
 
   IBuffer *CreateIndexBuffer(BufferUsage usage, IndexType type, usize idxCount) override;
 
-  void DeleteIndexBuffer(IBuffer *pBuf) override;
+  b8 DeleteIndexBuffer(IBuffer *pBuf) override;
 };
 
 // ------------------------------------------------------------------------------------------

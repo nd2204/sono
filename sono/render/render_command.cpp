@@ -30,6 +30,6 @@ void DrawIndexedCommand::Execute(RenderSystem &renderSys) const {
 }
 
 ClearCommand::ClearCommand(const Vec4 &color)
-  : m_Color(color.Normalized()) {}
+  : m_Color(color) {}
 
 void ClearCommand::Execute(RenderSystem &renderSys) const { renderSys.Clear(m_Color); }

@@ -1,9 +1,0 @@
-{
-"otherData": {},
-"traceEvents": [
-{"cat": "PERF","name":"Create Buffers","ph": "B","ts":195.161,"pid":7464,"tid":2850328247},{"cat": "PERF","name":"Create Buffers","ph": "E","ts":195.196,"pid":7464,"tid":2850328247},
-{"cat": "PERF","name":"Create VertexArray","ph": "B","ts":195.436,"pid":7464,"tid":2850328247},{"cat": "PERF","name":"Create VertexArray","ph": "E","ts":195.869,"pid":7464,"tid":2850328247},
-{"cat": "PERF","name":"Create Textures","ph": "B","ts":196.707,"pid":7464,"tid":2850328247},{"cat": "PERF","name":"Create Textures","ph": "E","ts":207.893,"pid":7464,"tid":2850328247},
-{"cat": "PERF","name":"Compile Shaders","ph": "B","ts":208.083,"pid":7464,"tid":2850328247},{"cat": "PERF","name":"Compile Shaders","ph": "E","ts":210.54,"pid":7464,"tid":2850328247}
-]
-}

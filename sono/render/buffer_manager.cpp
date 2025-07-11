@@ -12,22 +12,31 @@ BufferManager::BufferManager() {}
 BufferManager::~BufferManager() {}
 // --------------------------------------------------------------------------------
 void BufferManager::DeleteAllVertexBuffers() {
-  for (IBuffer *buffer : m_VertexBuffers) {
-    DeleteVertexBuffer(buffer);
+  for (auto it = m_VertexBuffers.begin(); it != m_VertexBuffers.end();) {
+    if (DeleteVertexBuffer(*it))
+      it = m_VertexBuffers.erase(it);
+    else {
+      it++;
+    }
   }
-  m_VertexBuffers.clear();
 }
 
 void BufferManager::DeleteAllIndexBuffers() {
-  for (IBuffer *buffer : m_IndexBuffers) {
-    DeleteIndexBuffer(buffer);
+  for (auto it = m_IndexBuffers.begin(); it != m_IndexBuffers.end();) {
+    if (DeleteIndexBuffer(*it))
+      it = m_IndexBuffers.erase(it);
+    else {
+      it++;
+    }
   }
-  m_IndexBuffers.clear();
 }
 
 void BufferManager::DeleteAllLayout() {
-  for (VertexLayout *layout : m_VertexLayouts) {
-    DeleteVertexLayout(layout);
+  for (auto it = m_VertexLayouts.begin(); it != m_VertexLayouts.end();) {
+    if (DeleteVertexLayout(*it))
+      it = m_VertexLayouts.erase(it);
+    else {
+      it++;
+    }
   }
-  m_VertexLayouts.clear();
 }

@@ -56,7 +56,6 @@ void InputSystem::InjectEvent(const Event &e) {
 
         m_MouseState->prePosX = m_MouseState->posX;
         m_MouseState->prePosY = m_MouseState->posY;
-        LOG_TRACE_F("Mouse delta: x=%.3f, y=%.3f", m_MouseState->deltaX, m_MouseState->deltaY);
       }
 
       break;

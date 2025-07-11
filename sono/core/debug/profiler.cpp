@@ -5,6 +5,10 @@
 #include <mutex>
 #include <thread>
 
+#ifndef SONO_PLATFORM_WINDOW
+#include <unistd.h>
+#endif // SONO_PLATFORM_WINDOW
+
 template <>
 Sono::Profiler *Singleton<Sono::Profiler>::m_sInstance = nullptr;
 

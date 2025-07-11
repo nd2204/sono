@@ -34,20 +34,14 @@ void ProcessInput() {
     cam.Move(cameraSpeed * cam.GetRight());
   }
 
-  Vec3 currentEuler = cam.GetEulerAngles();
-
   Vec2 mouseDelta = Mouse::GetDelta();
-  float sensitivity = 0.1f;
+  float sensitivity = 0.05f;
 
   // Apply rotation deltas
   float yawDelta = mouseDelta.x * sensitivity;
   float pitchDelta = -mouseDelta.y * sensitivity;
 
-  // Apply clamped pitch
-  float newPitch = std::clamp(currentEuler.y + pitchDelta, -89.9f, 89.9f);
-  float newYaw = currentEuler.x + yawDelta;
-
-  cam.SetEulerAngles(Vec3(newPitch, newYaw, 0.0f));
+  cam.Rotate(Vec3(pitchDelta, yawDelta, 0.0f));
 }
 
 void HandleEvent(const Event &ev) {
@@ -201,7 +195,7 @@ i32 main(void) {
 
     /* Render here */
     renderSys->BeginFrame();
-    renderSys->Submit<ClearCommand>(Vec4(255, 255, 255, 255));
+    renderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
 
     pipeline->SetMat4("uView", cam.GetViewMatrix());
     pipeline->SetMat4("uProj", cam.GetProjectionMatrix());

@@ -1,4 +1,5 @@
 #include "camera.h"
+#include <algorithm>
 
 Camera::Camera() {
   m_Position = Vec3(0.0f, 3.0f, 3.0f);
@@ -22,7 +23,7 @@ void Camera::LookAt(const Vec3 &target) {
   Vec3 dir = (m_Position - target).Normalized();
 
   m_Rotations.yaw = Sono::Degrees(atan2(-dir.z, dir.x));
-  m_Rotations.pitch = Sono::Degrees(asin(-dir.y));
+  m_Rotations.pitch = std::clamp(Sono::Degrees(asin(-dir.y)), -89.9f, 89.9f);
 
   UpdateView();
 }
@@ -38,19 +39,23 @@ void Camera::SetPosition(const Vec3 &newPos) {
 }
 // --------------------------------------------------------------------------------
 void Camera::SetEulerAngles(f32 yaw, f32 pitch, f32 roll) {
+  m_Rotations.pitch = std::clamp(pitch, -89.9f, 89.9f);
   m_Rotations.yaw = yaw;
-  m_Rotations.pitch = pitch;
   m_Rotations.roll = roll;
+
   UpdateView();
 }
 // --------------------------------------------------------------------------------
 void Camera::SetEulerAngles(const Vec3 &euler) {
-  m_Rotations = euler;
+  m_Rotations.pitch = std::clamp(euler.pitch, -89.9f, 89.9f);
+  m_Rotations.yaw = euler.yaw;
+  m_Rotations.roll = euler.roll;
   UpdateView();
 }
 // --------------------------------------------------------------------------------
 void Camera::Rotate(const Vec3 &euler) {
   m_Rotations += euler;
+  m_Rotations.pitch = std::clamp(m_Rotations.pitch, -89.9f, 89.9f);
   UpdateView();
 }
 // --------------------------------------------------------------------------------

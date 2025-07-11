@@ -19,15 +19,15 @@ public:
 
   virtual VertexLayout *CreateVertexLayout() = 0;
 
-  virtual void DeleteVertexLayout(VertexLayout *pLayout) = 0;
+  virtual b8 DeleteVertexLayout(VertexLayout *pLayout) = 0;
 
   virtual IBuffer *CreateVertexBuffer(BufferUsage usage, usize vertCount, usize vertSize) = 0;
 
-  virtual void DeleteVertexBuffer(IBuffer *pBuf) = 0;
+  virtual b8 DeleteVertexBuffer(IBuffer *pBuf) = 0;
 
   virtual IBuffer *CreateIndexBuffer(BufferUsage usage, IndexType type, usize idxCount) = 0;
 
-  virtual void DeleteIndexBuffer(IBuffer *pBuf) = 0;
+  virtual b8 DeleteIndexBuffer(IBuffer *pBuf) = 0;
 
   virtual void DeleteAllVertexBuffers();
 
