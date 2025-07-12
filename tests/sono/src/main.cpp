@@ -1,13 +1,12 @@
-#include <algorithm>
 #include <core/global.h>
 #include <core/common/time.h>
 #include <core/common/logger.h>
 #include <core/math/mat4.h>
 #include <core/math/vec3.h>
+#include <core/math/lerp.h>
 
-#include <core/common/sys_event_queue.h>
-#include "GLFW/glfw3.h"
-#include "core/input/mouse.h"
+#include <core/input/mouse.h>
+#include <core/event/event_dispatcher.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -33,15 +32,6 @@ void ProcessInput() {
   if (win->GetKey(KeyCode::KEY_D) == GLFW_PRESS) {
     cam.Move(cameraSpeed * cam.GetRight());
   }
-
-  Vec2 mouseDelta = Mouse::GetDelta();
-  float sensitivity = 0.05f;
-
-  // Apply rotation deltas
-  float yawDelta = mouseDelta.x * sensitivity;
-  float pitchDelta = -mouseDelta.y * sensitivity;
-
-  cam.Rotate(Vec3(pitchDelta, yawDelta, 0.0f));
 }
 
 void HandleEvent(const Event &ev) {
@@ -67,9 +57,9 @@ i32 main(void) {
   Sono::Global::GetPtr()->Init();
 
   RenderSystem *renderSys = RenderSystem::GetPtr();
+  EventSystem *eventSys = EventSystem::GetPtr();
   InputSystem *inputSys = InputSystem::GetPtr();
   BufferManager *bufferMgr = renderSys->GetBufferManager();
-  SystemEventQueue *eventQueue = SystemEventQueue::GetPtr();
 
   RenderWindow *window = renderSys->CreateRenderWindow(800, 600, "Hello Sono");
   window->EnableVsync(true);
@@ -184,38 +174,57 @@ i32 main(void) {
   cam.LookAt(Vec3::Zero);
   cam.SetPerspective(Sono::Radians(60.0f), window->GetAspect(), 0.1f, 100.0f);
 
+  EventDispatcher::Register<MouseMoveEvent>([](const MouseMoveEvent &e) {
+    Vec2 mouseDelta = Mouse::GetDelta();
+    float sensitivity = 0.05f;
+
+    // Apply rotation deltas
+    float yawDelta = mouseDelta.x * sensitivity;
+    float pitchDelta = -mouseDelta.y * sensitivity;
+
+    cam.Rotate(Vec3(pitchDelta, yawDelta, 0.0f));
+  });
+
+  Interpolated<Vec2> testPos(Vec2(1.0f), [](f32 t) -> f32 { return t; });
+  testPos = Vec2(2.0f);
+
   /* Loop until the user closes the window */
   while (!window->ShouldClose()) {
+    S_LOG_DEBUG(testPos.GetValue().ToString());
     /* Poll for and process events */
     glfwPollEvents();
-    while (auto *ev = eventQueue->Pop()) {
+    while (auto *ev = eventSys->Pop()) {
       HandleEvent(*ev);
+      EventDispatcher::Dispatch(*ev);
     }
     ProcessInput();
 
-    /* Render here */
-    renderSys->BeginFrame();
-    renderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
+    {
+      PROFILE_SCOPE("RENDER::RenderOneFrame");
+      /* Render here */
+      renderSys->BeginFrame();
+      renderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
 
-    pipeline->SetMat4("uView", cam.GetViewMatrix());
-    pipeline->SetMat4("uProj", cam.GetProjectionMatrix());
+      pipeline->SetMat4("uView", cam.GetViewMatrix());
+      pipeline->SetMat4("uProj", cam.GetProjectionMatrix());
 
-    Mat4 model;
-    for (int i = 0; i < 10; i++) {
-      model = Mat4::Translation(cubePositions[i]);
-      f32 angle = 20.0f * i;
-      model = Mat4::Rotation(Sono::Radians(angle), Vec3(1.0f, 0.3f, 0.5f)) * model;
-      pipeline->SetMat4("uModel", model);
-      renderSys->Submit<DrawCommand>(vao, 36, texture, PrimitiveType::TRIANGLES);
+      Mat4 model;
+      for (int i = 0; i < 10; i++) {
+        model = Mat4::Translation(cubePositions[i]);
+        f32 angle = 20.0f * i;
+        model = Mat4::Rotation(Sono::Radians(angle), Vec3(1.0f, 0.3f, 0.5f)) * model;
+        pipeline->SetMat4("uModel", model);
+        renderSys->Submit<DrawCommand>(vao, 36, texture, PrimitiveType::TRIANGLES);
+        renderSys->Flush();
+      }
+
       renderSys->Flush();
+      renderSys->EndFrame();
+      inputSys->EndFrame();
+
+      /* Swap front and back buffers */
+      renderSys->Present();
     }
-
-    renderSys->Flush();
-    renderSys->EndFrame();
-    inputSys->EndFrame();
-
-    /* Swap front and back buffers */
-    renderSys->Present();
 
     Time::Tick();
   }

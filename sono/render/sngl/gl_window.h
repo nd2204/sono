@@ -9,11 +9,11 @@ public:
 
   ~GLWindow();
 
-  virtual void Create(
+  void Create(
     i32 width, i32 height, const char *Title, WindowMode mode = WIN_MODE_WINDOWED
   ) override;
 
-  virtual void Destroy() override;
+  void Destroy() override;
 
 private:
 };

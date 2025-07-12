@@ -1,8 +1,8 @@
 #ifndef SN_SYS_EVENTS_H
 #define SN_SYS_EVENTS_H
 
-#include "snassert.h"
-#include "types.h"
+#include "core/common/snassert.h"
+#include "core/common/types.h"
 #include <variant>
 
 enum class EventType {

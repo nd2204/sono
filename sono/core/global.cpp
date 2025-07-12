@@ -8,32 +8,27 @@ using namespace Sono;
 
 template <>
 Global *Singleton<Global>::m_sInstance = nullptr;
-
 //--------------------------------------------------------------------------------
 Global::Global() {}
-
 //--------------------------------------------------------------------------------
 Global::~Global() {}
-
 //--------------------------------------------------------------------------------
 void Global::Init() {
   m_MemSys = std::make_unique<MemorySystem>();
   m_MemSys->Init();
 
-  // TODO: remove this
-  m_Allocator.AllocateArena(1024);
-
   m_RenderSystem = std::make_unique<GLRenderSystem>();
   m_RenderSystem->Init();
 
-  m_EventQueue = std::make_unique<SystemEventQueue>();
+  m_EventSystem = std::make_unique<EventSystem>();
+  m_EventSystem->Init();
 
-  m_InputSystem = std::make_unique<InputSystem>(&m_Allocator);
+  m_InputSystem = std::make_unique<InputSystem>(m_MemSys->GetGlobalAllocator());
   m_InputSystem->Init();
 
 #ifdef SN_DEBUG_PROFILER
   m_Profiler = std::make_unique<Profiler>();
-  m_Profiler->AddSinks<Sono::ConsoleProfileSink>();
+  // m_Profiler->AddSinks<Sono::ConsoleProfileSink>();
   m_Profiler->AddSinks<Sono::JsonTraceSink>("profile.json");
   m_Profiler->BeginSession();
   m_Profiler->Init();
@@ -41,22 +36,20 @@ void Global::Init() {
 
   Time::Start();
 }
-
 //--------------------------------------------------------------------------------
-
 // shutting down in the reverse order
 void Global::Shutdown() {
-  m_InputSystem->Shutdown();
-
 #ifdef SN_DEBUG_PROFILER
+  S_LOG(m_Profiler->GenerateSessionReport());
   m_Profiler->EndSession();
   m_Profiler->Shutdown();
 #endif
 
+  m_InputSystem->Shutdown();
+
+  m_EventSystem->Shutdown();
+
   m_RenderSystem->Shutdown();
 
-  m_Allocator.FreeInternalBuffer();
-  S_LOG(MemorySystem::GetPtr()->GetAllocsReport());
-  S_LOG(MemorySystem::GetPtr()->GetLeaksReport());
   m_MemSys->Shutdown();
 }

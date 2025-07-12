@@ -2,6 +2,7 @@
 #define SN_MOUSE_H
 
 #include "input_system.h"
+#include "core/math/vec2.h"
 
 enum class MouseButton { LMB, RMB, MMB, FMB, BMB };
 

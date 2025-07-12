@@ -13,7 +13,7 @@ DEFINE_STRING_CONSTANTS(kAllocationTypeStr, __FOREACH_ALLOCATION_TYPES);
 
 template <>
 MemorySystem *Singleton<MemorySystem>::m_sInstance = nullptr;
-
+// --------------------------------------------------------------------------------
 MemorySystem::MemorySystem()
   : m_TotalAllocated(0)
   , m_TotalFreed(0)
@@ -21,11 +21,26 @@ MemorySystem::MemorySystem()
   , m_CurrentUsage(0)
   , m_AllocationCount(0)
   , m_DeallocationCount(0) {}
+// --------------------------------------------------------------------------------
+MemorySystem::~MemorySystem() {}
+// --------------------------------------------------------------------------------
+void MemorySystem::Init() {
+  LOG_INFO("<-- Initializing MemorySystem -->");
 
-void MemorySystem::Init() { LOG_INFO("<-- Initializing MemorySystem -->"); }
+  m_GlobalAllocator.AllocateArena(SN_MEM_MIB);
+}
+// --------------------------------------------------------------------------------
+void MemorySystem::Shutdown() {
+  LOG_INFO("<-- Shutting down MemorySystem -->");
 
-void MemorySystem::Shutdown() { LOG_INFO("<-- Shutting down MemorySystem -->"); }
+  m_GlobalAllocator.FreeInternalBuffer();
 
+  S_LOG(MemorySystem::GetPtr()->GetAllocsReport());
+  S_LOG(MemorySystem::GetPtr()->GetLeaksReport());
+}
+// --------------------------------------------------------------------------------
+Allocator &MemorySystem::GetGlobalAllocator() { return m_GlobalAllocator; }
+// --------------------------------------------------------------------------------
 void MemorySystem::ReportAllocation(
   void *ptr, const char *file, const char *func, usize size, int line, AllocationType type
 ) {
@@ -47,7 +62,7 @@ void MemorySystem::ReportAllocation(
     m_PeakUsage = m_CurrentUsage;
   }
 }
-
+// --------------------------------------------------------------------------------
 void MemorySystem::ReportDeallocation(void *ptr, const char *file, i32 line) {
   if (!ptr) return;
 
@@ -64,7 +79,7 @@ void MemorySystem::ReportDeallocation(void *ptr, const char *file, i32 line) {
   m_DeallocationCount++;
   m_AllocTracker.erase(it);
 }
-
+// --------------------------------------------------------------------------------
 std::string &&MemorySystem::GetLeaksReport() {
   std::lock_guard<std::mutex> lock(m_Mutex);
 
@@ -97,7 +112,7 @@ std::string &&MemorySystem::GetLeaksReport() {
   buffer = oss.str();
   return std::move(buffer);
 }
-
+// --------------------------------------------------------------------------------
 std::string &&MemorySystem::GetAllocsReport() {
   std::lock_guard<std::mutex> lock(m_Mutex);
 
@@ -130,7 +145,7 @@ std::string &&MemorySystem::GetAllocsReport() {
   buffer = oss.str();
   return std::move(buffer);
 }
-
+// --------------------------------------------------------------------------------
 std::string &&MemorySystem::ToHumanReadable(u64 byte) {
   static std::string buffer;
   buffer = (byte < SN_MEM_KIB) ? std::to_string(byte) + SN_MEM_B_STR :
@@ -139,7 +154,7 @@ std::string &&MemorySystem::ToHumanReadable(u64 byte) {
                                  std::to_string(byte / SN_MEM_GIB) + SN_MEM_GIB_STR;
   return std::move(buffer);
 }
-
+// --------------------------------------------------------------------------------
 void *SNAlloc(usize sizeBytes, const char *file, const char *func, i32 line, AllocationType type) {
 #ifndef SN_NDEBUG
   SN_ASSERT(MemorySystem::GetPtr(), "Memory system is not initialized");
@@ -148,7 +163,7 @@ void *SNAlloc(usize sizeBytes, const char *file, const char *func, i32 line, All
   MemorySystem::Get().ReportAllocation(ptr, file, func, sizeBytes, line, type);
   return ptr;
 }
-
+// --------------------------------------------------------------------------------
 void SNFree(void *mem, const char *file, i32 line) {
 #ifndef SN_NDEBUG
   SN_ASSERT(MemorySystem::GetPtr(), "Memory system is not initialized");
@@ -156,7 +171,7 @@ void SNFree(void *mem, const char *file, i32 line) {
   MemorySystem::Get().ReportDeallocation(mem, file, line);
   free(mem);
 }
-
+// --------------------------------------------------------------------------------
 uintptr_t AlignAddress(uintptr_t ptr, usize align) {
   SN_ASSERT((align & (align - 1)) == 0, "alignment must be a power of two");
   SN_ASSERT(align > 0 && align <= 128, "alignment must be in range [1, 128]");
@@ -172,13 +187,13 @@ uintptr_t AlignAddress(uintptr_t ptr, usize align) {
 
   return ptr;
 }
-
+// --------------------------------------------------------------------------------
 uintptr_t AlignSize(uintptr_t size, usize align) { return (size + align - 1) & ~(align - 1); }
-
+// --------------------------------------------------------------------------------
 void *operator new(usize size, const char *file, const char *func, i32 line, AllocationType type) {
   return SNAlloc(size, file, func, line, type);
 }
-
+// --------------------------------------------------------------------------------
 void operator delete(void *mem, const char *file, i32 line) { SNFree(mem, file, line); }
-
+// --------------------------------------------------------------------------------
 void operator delete[](void *mem, const char *file, i32 line) { SNFree(mem, file, line); }

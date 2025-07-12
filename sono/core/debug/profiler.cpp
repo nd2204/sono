@@ -1,8 +1,12 @@
 #include "core/common/time.h"
 #include "profiler.h"
+#include <algorithm>
 #include <cstdio>
+#include <cstring>
+#include <iomanip>
 #include <ios>
 #include <mutex>
+#include <sstream>
 #include <thread>
 
 #ifndef SONO_PLATFORM_WINDOW
@@ -37,6 +41,48 @@ void Profiler::Record(const ProfileEvent &event) {
   for (auto *sink : m_Sinks) {
     sink->WriteEvent(event);
   }
+
+  m_EventDurationSecMap[event.name] += event.endTime - event.startTime;
+}
+// --------------------------------------------------------------------------------
+std::string Profiler::GenerateSessionReport() const {
+  // Calculate total time
+  f32 totalTime = 0.0f;
+  i32 maxStrLen = 0;
+  for (const auto &[name, time] : m_EventDurationSecMap) {
+    totalTime += time;
+    maxStrLen = std::max<i32>(strlen(name), maxStrLen);
+  }
+
+  // Sort entries by time descending
+  std::vector<std::pair<const char *, f32>> sortedEvents(
+    m_EventDurationSecMap.begin(), m_EventDurationSecMap.end()
+  );
+  std::sort(sortedEvents.begin(), sortedEvents.end(), [](const auto &a, const auto &b) {
+    return a.second > b.second;
+  });
+
+  // Build the report string
+  std::ostringstream oss;
+  oss << "Top CPU Hotspots:\n";
+
+  for (const auto &[name, time] : sortedEvents) {
+    f32 percentage = (totalTime > 0.0f) ? (time / totalTime * 100.0f) : 0.0f;
+    oss
+      << "|__ "
+      << std::left
+      << std::setw(maxStrLen + 1)
+      << name
+      << " - "
+      << std::fixed
+      << std::setprecision(2)
+      << Sono::FormatSeconds(time)
+      << " ("
+      << percentage
+      << "%)\n";
+  }
+
+  return oss.str();
 }
 // --------------------------------------------------------------------------------
 void Profiler::EndSession() {

@@ -21,6 +21,7 @@ void Time::Tick() {
 
 f32 Time::DeltaTime() { return m_DeltaTime; }
 
+/// return the curent time fragment in seconds
 f32 Time::Now() { return Duration(HiResClock::now() - m_StartTime).count(); }
 
 f32 Time::TotalTime() { return m_TotalTime; }

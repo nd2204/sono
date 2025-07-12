@@ -6,6 +6,7 @@
 #include "core/memory/allocators/arena.h"
 
 #include <mutex>
+#include <unordered_map>
 
 // TODO: add this definition to build system as option
 #define SN_DEBUG_PROFILER
@@ -68,6 +69,7 @@ public:
   void Init();
   void Shutdown();
   void BeginSession();
+  std::string GenerateSessionReport() const;
 
   template <typename T, typename... Args>
   void AddSinks(Args &&...args) {
@@ -82,6 +84,8 @@ public:
 private:
   std::mutex m_Mutex;
   std::vector<IProfileSink *> m_Sinks;
+
+  std::unordered_map<const char *, f32> m_EventDurationSecMap;
   ArenaAllocator m_SessionAlloc;
 };
 

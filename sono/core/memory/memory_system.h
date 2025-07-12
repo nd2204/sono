@@ -1,6 +1,8 @@
 #ifndef MEMORY_SYSTEM_H
 #define MEMORY_SYSTEM_H
 
+#include "allocator.h"
+#include "allocators/arena.h"
 #include "core/common/types.h"
 #include "core/common/defines.h"
 #include "core/common/singleton.h"
@@ -71,11 +73,15 @@ struct AllocationInfo {
 class MemorySystem : public Singleton<MemorySystem> {
 public:
   MemorySystem();
-  ~MemorySystem() = default;
+
+  ~MemorySystem();
+
   MemorySystem(MemorySystem &rhs) = delete;
+
   MemorySystem &operator=(MemorySystem &rhs) = delete;
 
   void Init();
+
   void Shutdown();
 
   /// @brief: update memory allocation
@@ -92,8 +98,15 @@ public:
   /// @brief: Generate a report of memory leaks
   std::string &&GetLeaksReport();
 
+  Allocator &GetGlobalAllocator();
+
 private:
   std::string &&ToHumanReadable(u64 byte);
+
+private:
+  // TODO: replace arena allocator with free list allocator;
+  ArenaAllocator m_GlobalAllocator;
+
   std::unordered_map<void *, AllocationInfo> m_AllocTracker;
   std::mutex m_Mutex;
   usize m_TotalAllocated;
@@ -114,7 +127,6 @@ void operator delete(void *mem, const char *file, i32 line);
 void operator delete[](void *mem, const char *file, i32 line);
 
 uintptr_t AlignAddress(uintptr_t addr, usize align);
-
 uintptr_t AlignSize(uintptr_t size, usize align);
 
 #define SN_ZERO(ptr, size) memset((ptr), 0, (size));

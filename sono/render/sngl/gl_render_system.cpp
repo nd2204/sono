@@ -47,8 +47,9 @@ void GLRenderSystem::EndFrame() { m_Arena.FreeToMarker(m_FrameBeginMark); }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Draw(PrimitiveType topology, VertexArray *va, u32 maxVertCount) {
   GLVertexArray *vao = reinterpret_cast<GLVertexArray *>(va);
+  i32 numBuffers = vao->GetVertexBuffers().size();
   glBindVertexArray(vao->GetID());
-  for (auto *vb : vao->GetVertexBuffers()) {
+  for (int i = 0; i < numBuffers; i++) {
     glDrawArrays(ConvertPrimitiveType(topology), 0, maxVertCount);
   }
 }
@@ -95,6 +96,7 @@ void GLRenderSystem::BindTexture(Texture *texture, u32 unit) {
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::BindBuffer(IBuffer *buffer, u32 index) {
+  (void)index;
   reinterpret_cast<GLBuffer *>(buffer)->Bind();
 }
 // --------------------------------------------------------------------------------

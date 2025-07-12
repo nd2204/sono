@@ -1,6 +1,6 @@
 #include "core/common/snassert.h"
-#include "core/common/sys_events.h"
-#include "core/common/sys_event_queue.h"
+#include "core/event/events.h"
+#include "core/event/event_system.h"
 #include "core/common/time.h"
 
 #include <glad/glad.h>

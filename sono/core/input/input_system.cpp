@@ -8,7 +8,7 @@ InputSystem *Singleton<InputSystem>::m_sInstance = nullptr;
 
 // --------------------------------------------------------------------------------
 
-InputSystem::InputSystem(Allocator *allocator)
+InputSystem::InputSystem(Allocator &allocator)
   : m_Allocator(allocator)
   , m_MouseState(nullptr)
   , m_KeyState(nullptr) {}
@@ -20,8 +20,8 @@ void InputSystem::Init() {
 
 void InputSystem::Shutdown() {
   LOG_INFO("<-- Shutting down InputSystem -->");
-  m_Allocator->Free(m_MouseState);
-  m_Allocator->Free(m_KeyState);
+  m_Allocator.Free(m_MouseState);
+  m_Allocator.Free(m_KeyState);
 }
 
 void InputSystem::InjectEvent(const Event &e) {
@@ -84,13 +84,13 @@ void InputSystem::InjectEvent(const Event &e) {
 
 void InputSystem::ActivateMouse() {
   if (!m_MouseState) {
-    m_MouseState = m_Allocator->New<MouseState>();
+    m_MouseState = m_Allocator.New<MouseState>();
   }
 }
 
 void InputSystem::ActivateKeyboard() {
   if (!m_KeyState) {
-    m_KeyState = m_Allocator->New<KeyState>();
+    m_KeyState = m_Allocator.New<KeyState>();
   }
 }
 
