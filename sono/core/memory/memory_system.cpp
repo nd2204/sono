@@ -24,17 +24,10 @@ MemorySystem::MemorySystem()
 // --------------------------------------------------------------------------------
 MemorySystem::~MemorySystem() {}
 // --------------------------------------------------------------------------------
-void MemorySystem::Init() {
-  LOG_INFO("<-- Initializing MemorySystem -->");
-
-  m_GlobalAllocator.AllocateArena(SN_MEM_MIB);
-}
+void MemorySystem::Init() { LOG_INFO("<-- Initializing MemorySystem -->"); }
 // --------------------------------------------------------------------------------
 void MemorySystem::Shutdown() {
   LOG_INFO("<-- Shutting down MemorySystem -->");
-
-  m_GlobalAllocator.FreeInternalBuffer();
-
   S_LOG(MemorySystem::GetPtr()->GetAllocsReport());
   S_LOG(MemorySystem::GetPtr()->GetLeaksReport());
 }

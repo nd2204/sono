@@ -5,8 +5,11 @@
 #include "gl_vertex_array.h"
 #include "gl_window.h"
 #include "gl_render_system.h"
-#include "core/memory/memory_system.h"
-#include <memory>
+
+#include <GL/gl.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_impl_glfw.h>
+
 #include <string>
 
 GLRenderSystem::GLRenderSystem()
@@ -31,19 +34,31 @@ void GLRenderSystem::Shutdown() {
   m_pBufferManager->DeleteAllLayout();
   m_Arena.FreeInternalBuffer();
 }
-
 // --------------------------------------------------------------------------------
-VertexArray *GLRenderSystem::CreateVertexArray() { return m_Arena.New<GLVertexArray>(); }
-// --------------------------------------------------------------------------------
-void GLRenderSystem::BindVertexArray(VertexArray *va) {
-  return reinterpret_cast<GLVertexArray *>(va)->Bind();
+RenderWindow *GLRenderSystem::CreateRenderWindow(
+  i32 width, i32 height, const char *title, WindowMode mode
+) {
+  RenderSystem::CreateRenderWindow(width, height, title, mode);
+  GLWindow *window = m_Arena.New<GLWindow>();
+  window->Create(width, height, title, mode);
+  window->MakeCurrent();
+  m_pActiveCtx = window;
+  return window;
 }
-// --------------------------------------------------------------------------------
-void GLRenderSystem::SetRenderContext(RenderContext *ctx) { m_pActiveCtx = ctx; }
-// --------------------------------------------------------------------------------
+
+// ================================================================================
+// Render operation
+// ================================================================================
+
 void GLRenderSystem::BeginFrame() { m_FrameBeginMark = m_Arena.GetMarker(); }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::EndFrame() { m_Arena.FreeToMarker(m_FrameBeginMark); }
+// --------------------------------------------------------------------------------
+void GLRenderSystem::Present() { m_pActiveCtx->SwapBuffers(); }
+// --------------------------------------------------------------------------------
+void GLRenderSystem::SetViewport(i32 posX, i32 posY, i32 width, i32 height) {
+  glViewport(posX, posY, width, height);
+}
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Draw(PrimitiveType topology, VertexArray *va, u32 maxVertCount) {
   GLVertexArray *vao = reinterpret_cast<GLVertexArray *>(va);
@@ -70,8 +85,16 @@ void GLRenderSystem::Clear(const Vec4 &c) {
   glClearColor(c.r, c.g, c.b, c.a);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
+
+// ================================================================================
+// Pipeline management
+// ================================================================================
+
+VertexArray *GLRenderSystem::CreateVertexArray() { return m_Arena.New<GLVertexArray>(); }
 // --------------------------------------------------------------------------------
-void GLRenderSystem::Present() { m_pActiveCtx->SwapBuffers(); }
+void GLRenderSystem::BindVertexArray(VertexArray *va) {
+  return reinterpret_cast<GLVertexArray *>(va)->Bind();
+}
 // --------------------------------------------------------------------------------
 Shader *GLRenderSystem::CreateShader(const ShaderDesc *desc) { return m_Arena.New<GLShader>(desc); }
 // --------------------------------------------------------------------------------
@@ -110,17 +133,42 @@ void GLRenderSystem::UnbindPipeline(RenderPipeline *pipeline, u32 index) {
   (void)index;
   reinterpret_cast<GLRenderPipeline *>(pipeline)->Unbind();
 }
-// --------------------------------------------------------------------------------
-RenderWindow *GLRenderSystem::CreateRenderWindow(
-  i32 width, i32 height, const char *title, WindowMode mode
-) {
-  RenderSystem::CreateRenderWindow(width, height, title, mode);
-  GLWindow *window = m_Arena.New<GLWindow>();
-  window->Create(width, height, title, mode);
-  window->MakeCurrent();
-  m_pActiveCtx = window;
-  return window;
+
+// ================================================================================
+// ImGui
+// ================================================================================
+
+void GLRenderSystem::InitImGui(RenderWindow *window) {
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGui::StyleColorsDark();
+  ImGui_ImplGlfw_InitForOpenGL(window->GetHandle(), true);
+  ImGui_ImplOpenGL3_Init("#version 330");
 }
+// --------------------------------------------------------------------------------
+void GLRenderSystem::ShutdownImGui() {
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+}
+// --------------------------------------------------------------------------------
+void GLRenderSystem::BeginImGuiFrame() {
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+}
+// --------------------------------------------------------------------------------
+void GLRenderSystem::EndImGuiFrame() {
+  ImGui::Render();
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+// ================================================================================
+// Getters & Setters
+// ================================================================================
+
+void GLRenderSystem::SetRenderContext(RenderContext *ctx) { m_pActiveCtx = ctx; }
+
 // --------------------------------------------------------------------------------
 // clang-format off
 

@@ -2,7 +2,7 @@
 #define MEMORY_SYSTEM_H
 
 #include "allocator.h"
-#include "allocators/arena.h"
+#include "allocators/heap.h"
 #include "core/common/types.h"
 #include "core/common/defines.h"
 #include "core/common/singleton.h"
@@ -104,8 +104,7 @@ private:
   std::string &&ToHumanReadable(u64 byte);
 
 private:
-  // TODO: replace arena allocator with free list allocator;
-  ArenaAllocator m_GlobalAllocator;
+  HeapAllocator m_GlobalAllocator;
 
   std::unordered_map<void *, AllocationInfo> m_AllocTracker;
   std::mutex m_Mutex;

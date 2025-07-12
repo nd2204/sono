@@ -12,6 +12,12 @@
 
 enum WindowMode { WIN_MODE_WINDOWED, WIN_MODE_FULLSCREEN, WIN_MODE_BORDERLESS };
 
+enum class CursorMode : i32 {
+  CAPTURED = GLFW_CURSOR_CAPTURED,
+  NORMAL = GLFW_CURSOR_NORMAL,
+  DISABLED = GLFW_CURSOR_DISABLED
+};
+
 class RenderWindow : public RenderContext {
 public:
   RenderWindow();
@@ -35,32 +41,47 @@ public:
   /// @return true if window is closing
   b8 ShouldClose() const;
 
-  /// @return the enum value of the current window mode
-  WindowMode GetCurrentWindowMode() const;
-
-  // TODO: Turn this to a flag when things get bigger
-  void EnableVsync(i32 vsync);
-
-  void SetWindowMode(WindowMode mode);
-
-  void SetFullScreen(i32 fullscreen);
-
-  void SetShouldClose(i32 value);
+  void EnableVsync(b8 vsync);
 
   void ToggleFullScreen();
 
-  operator GLFWwindow *() const;
+  // ================================================================================
+  // Getter & Setter
+  // ================================================================================
 
+  void SetWindowMode(WindowMode mode);
+
+  void SetFullScreen(b8 fullscreen);
+
+  /// @brief set the should close state
+  void SetShouldClose(b8 value);
+
+  /// @brief set cursor mode
+  void SetCursorMode(CursorMode mode);
+
+  /// @return the internal handler of glfw window context
   GLFWwindow *GetHandle() { return m_Context; }
 
-  virtual void MakeCurrent() override;
+  /// @return the enum value of the current window mode
+  WindowMode GetCurrentWindowMode() const;
 
-  virtual void SwapBuffers() override;
+  /// @return the enum value of the current cursor mode
+  CursorMode GetCurrentCursorMode() const;
+
+  // ================================================================================
+  // Overloaded function
+  // ================================================================================
+
+  void MakeCurrent() override;
+
+  void SwapBuffers() override;
 
 protected:
   GLFWwindow *m_Context;
   u32 m_PosX, m_PosY;
   WindowMode m_Mode;
+
+  CursorMode m_CurrentCursorMode;
 };
 
 #endif // !SN_WINDOW_CONTEXT_H

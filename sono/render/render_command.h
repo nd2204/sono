@@ -15,13 +15,22 @@ public:
   virtual void Execute(RenderSystem &renderSys) const = 0;
 };
 
+class SetViewportCommand : public RenderCommand {
+public:
+  SetViewportCommand(i32 xpos, i32 ypos, i32 width, i32 height);
+  void Execute(RenderSystem &renderSys) const override;
+
+private:
+  i32 m_PosX, m_PosY, m_Width, m_Height;
+};
+
 class DrawCommand : public RenderCommand {
 public:
   DrawCommand(
     VertexArray *va, u32 vertCount, Texture *tex = nullptr,
     PrimitiveType topology = PrimitiveType::TRIANGLES
   );
-  virtual void Execute(RenderSystem &renderSys) const override;
+  void Execute(RenderSystem &renderSys) const override;
 
 private:
   VertexArray *m_VAO;
@@ -36,7 +45,7 @@ public:
     VertexArray *va, u32 idxCount, Texture *tex = nullptr,
     PrimitiveType topology = PrimitiveType::TRIANGLES
   );
-  virtual void Execute(RenderSystem &renderSys) const override;
+  void Execute(RenderSystem &renderSys) const override;
 
 private:
   VertexArray *m_VAO;
@@ -48,7 +57,7 @@ private:
 class ClearCommand : public RenderCommand {
 public:
   ClearCommand(const Vec4 &color = Vec4(0.0f));
-  virtual void Execute(RenderSystem &renderSys) const override;
+  void Execute(RenderSystem &renderSys) const override;
 
 private:
   Vec4 m_Color;

@@ -34,11 +34,12 @@ void GLWindow::Create(i32 width, i32 height, const char *title, WindowMode mode)
     SetWindowMode(mode);
   }
 
-  glfwSetInputMode(m_Context, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  SetCursorMode(m_CurrentCursorMode);
+
+  glfwSetWindowUserPointer(this->m_Context, this);
 
   glfwSetFramebufferSizeCallback(m_Context, [](GLFWwindow *window, int width, int height) {
     (void)window;
-    glViewport(0, 0, width, height);
     Event e;
     e.time = Time::Now() * 1000;
     e.type = EventType::WINDOW_RESIZE;
@@ -47,7 +48,9 @@ void GLWindow::Create(i32 width, i32 height, const char *title, WindowMode mode)
   });
 
   glfwSetCursorPosCallback(m_Context, [](GLFWwindow *window, double xpos, double ypos) {
-    (void)window;
+    RenderWindow *win = (RenderWindow *)(glfwGetWindowUserPointer(window));
+    if (win->GetCurrentCursorMode() != CursorMode::DISABLED) return;
+
     Event e;
     e.time = Time::Now() * 1000;
     e.type = EventType::MOUSE_MOVE;

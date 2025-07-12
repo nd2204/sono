@@ -8,7 +8,8 @@ RenderWindow::RenderWindow()
   : RenderContext(0, 0)
   , m_PosX(0)
   , m_PosY(0)
-  , m_Mode(WIN_MODE_WINDOWED) {}
+  , m_Mode(WIN_MODE_WINDOWED)
+  , m_CurrentCursorMode(CursorMode::NORMAL) {}
 // --------------------------------------------------------------------------------
 RenderWindow::~RenderWindow() {}
 // --------------------------------------------------------------------------------
@@ -39,7 +40,7 @@ void RenderWindow::SetWindowMode(WindowMode mode) {
   this->m_Mode = mode;
 }
 // --------------------------------------------------------------------------------
-void RenderWindow::SetFullScreen(i32 fullscreen) {
+void RenderWindow::SetFullScreen(b8 fullscreen) {
   if (fullscreen) {
     SetWindowMode(WIN_MODE_FULLSCREEN);
   } else {
@@ -47,13 +48,20 @@ void RenderWindow::SetFullScreen(i32 fullscreen) {
   }
 }
 // --------------------------------------------------------------------------------
+void RenderWindow::SetCursorMode(CursorMode mode) {
+  m_CurrentCursorMode = mode;
+  glfwSetInputMode(m_Context, GLFW_CURSOR, static_cast<i32>(mode));
+}
+// --------------------------------------------------------------------------------
+CursorMode RenderWindow::GetCurrentCursorMode() const { return m_CurrentCursorMode; }
+// --------------------------------------------------------------------------------
 WindowMode RenderWindow::GetCurrentWindowMode() const { return this->m_Mode; }
 // --------------------------------------------------------------------------------
 i32 RenderWindow::GetKey(KeyCode key) const { return glfwGetKey(this->m_Context, (i32)key); }
 // --------------------------------------------------------------------------------
-void RenderWindow::EnableVsync(i32 vsync) { glfwSwapInterval(vsync); }
+void RenderWindow::EnableVsync(b8 vsync) { glfwSwapInterval(vsync); }
 // --------------------------------------------------------------------------------
-void RenderWindow::SetShouldClose(i32 value) { glfwSetWindowShouldClose(this->m_Context, value); }
+void RenderWindow::SetShouldClose(b8 value) { glfwSetWindowShouldClose(this->m_Context, value); }
 // --------------------------------------------------------------------------------
 void RenderWindow::PollEvents() const { glfwPollEvents(); }
 // --------------------------------------------------------------------------------
@@ -62,5 +70,3 @@ b8 RenderWindow::ShouldClose() const { return glfwWindowShouldClose(this->m_Cont
 void RenderWindow::MakeCurrent() { glfwMakeContextCurrent(this->m_Context); }
 // --------------------------------------------------------------------------------
 void RenderWindow::SwapBuffers() { glfwSwapBuffers(this->m_Context); }
-// --------------------------------------------------------------------------------
-RenderWindow::operator GLFWwindow *() const { return this->m_Context; }

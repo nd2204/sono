@@ -12,13 +12,21 @@ public:
 
   void Shutdown() override;
 
-  void SetRenderContext(RenderContext *renderContext) override;
+  RenderWindow *CreateRenderWindow(
+    i32 width, i32 height, const char *title, WindowMode mode = WIN_MODE_WINDOWED
+  ) override;
+
+  // ================================================================================
+  // Render operations
+  // ================================================================================
 
   void BeginFrame() override;
 
   void EndFrame() override;
 
-  // virtual void Flush() override;
+  void Present() override;
+
+  void SetViewport(i32 posX, i32 posY, i32 width, i32 height) override;
 
   void Draw(PrimitiveType topology, VertexArray *va, u32 mMaxVertCount) override;
 
@@ -26,7 +34,21 @@ public:
 
   void Clear(const Vec4 &color) override;
 
-  void Present() override;
+  // ================================================================================
+  // ImGui
+  // ================================================================================
+
+  void InitImGui(RenderWindow *window) override;
+
+  void ShutdownImGui() override;
+
+  void BeginImGuiFrame() override;
+
+  void EndImGuiFrame() override;
+
+  // ================================================================================
+  // Pipeline management
+  // ================================================================================
 
   VertexArray *CreateVertexArray() override;
 
@@ -48,9 +70,11 @@ public:
 
   void UnbindPipeline(RenderPipeline *pipeline, u32 index) override;
 
-  RenderWindow *CreateRenderWindow(
-    i32 width, i32 height, const char *title, WindowMode mode = WIN_MODE_WINDOWED
-  ) override;
+  // ================================================================================
+  // Getters & Setters
+  // ================================================================================
+
+  void SetRenderContext(RenderContext *renderContext) override;
 
 public:
   static GLenum ConvertPrimitiveType(PrimitiveType type);

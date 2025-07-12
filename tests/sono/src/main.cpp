@@ -1,3 +1,4 @@
+#include "imgui.h"
 #include <core/global.h>
 #include <core/common/time.h>
 #include <core/common/logger.h>
@@ -8,34 +9,43 @@
 #include <core/input/mouse.h>
 #include <core/event/event_dispatcher.h>
 
+#include <render/camera.h>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 Camera cam;
 
-void ProcessInput() {
-  static RenderSystem *renderSys = RenderSystem::GetPtr();
-  static RenderWindow *win = static_cast<RenderWindow *>(renderSys->GetCurrentContext());
+RenderSystem *g_RenderSys;
+EventSystem *g_EventSys;
+InputSystem *g_InputSys;
+BufferManager *g_BufferMgr;
+RenderWindow *g_Window;
 
-  if (win->GetKey(KeyCode::KEY_ESC) == GLFW_PRESS) win->SetShouldClose(true);
+void ProcessInput() {
+  if (g_Window->GetKey(KeyCode::KEY_ESC) == GLFW_PRESS) {
+    g_Window->SetCursorMode(CursorMode::NORMAL);
+  }
+  if (g_Window->GetKey(KeyCode::KEY_F) == GLFW_PRESS) {
+    g_Window->SetCursorMode(CursorMode::DISABLED);
+  }
 
   const float cameraSpeed = 10.0f * Time::DeltaTime(); // adjust accordingly
-  if (win->GetKey(KeyCode::KEY_W) == GLFW_PRESS) {
+  if (g_Window->GetKey(KeyCode::KEY_W) == GLFW_PRESS) {
     cam.Move(cameraSpeed * cam.GetForward());
   }
-  if (win->GetKey(KeyCode::KEY_A) == GLFW_PRESS) {
+  if (g_Window->GetKey(KeyCode::KEY_A) == GLFW_PRESS) {
     cam.Move(-cameraSpeed * cam.GetRight());
   }
-  if (win->GetKey(KeyCode::KEY_S) == GLFW_PRESS) {
+  if (g_Window->GetKey(KeyCode::KEY_S) == GLFW_PRESS) {
     cam.Move(-cameraSpeed * cam.GetForward());
   }
-  if (win->GetKey(KeyCode::KEY_D) == GLFW_PRESS) {
+  if (g_Window->GetKey(KeyCode::KEY_D) == GLFW_PRESS) {
     cam.Move(cameraSpeed * cam.GetRight());
   }
 }
 
 void HandleEvent(const Event &ev) {
-  static InputSystem *inputSys = InputSystem::GetPtr();
   // S_LOG_TRACE(ev.ToString());
 
   switch (ev.type) {
@@ -43,11 +53,15 @@ void HandleEvent(const Event &ev) {
     case EventType::MOUSE_MOVE:
     case EventType::MOUSE_BUTTON:
     case EventType::MOUSE_SCROLL:
-      inputSys->InjectEvent(ev);
+      g_InputSys->InjectEvent(ev);
       break;
+    case EventType::WINDOW_RESIZE: {
+      auto &k = std::get<WindowResizeEvent>(ev.payload);
+      g_RenderSys->Submit<SetViewportCommand>(0, 0, k.width, k.height);
+      break;
+    }
     case EventType::TEXT:
     case EventType::QUIT:
-    case EventType::WINDOW_RESIZE:
       break;
   }
 }
@@ -56,13 +70,13 @@ i32 main(void) {
   std::unique_ptr<Sono::Global> global = std::make_unique<Sono::Global>();
   Sono::Global::GetPtr()->Init();
 
-  RenderSystem *renderSys = RenderSystem::GetPtr();
-  EventSystem *eventSys = EventSystem::GetPtr();
-  InputSystem *inputSys = InputSystem::GetPtr();
-  BufferManager *bufferMgr = renderSys->GetBufferManager();
+  g_RenderSys = RenderSystem::GetPtr();
+  g_EventSys = EventSystem::GetPtr();
+  g_InputSys = InputSystem::GetPtr();
+  g_BufferMgr = g_RenderSys->GetBufferManager();
 
-  RenderWindow *window = renderSys->CreateRenderWindow(800, 600, "Hello Sono");
-  window->EnableVsync(true);
+  g_Window = g_RenderSys->CreateRenderWindow(800, 600, "Hello Sono");
+  g_Window->EnableVsync(true);
 
   float vertices[] = {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
                       0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
@@ -99,7 +113,7 @@ i32 main(void) {
   IBuffer *vb;
   {
     PROFILE_SCOPE("Create Buffers");
-    vb = bufferMgr->CreateVertexBuffer(
+    vb = g_BufferMgr->CreateVertexBuffer(
       BufferUsage::STATIC, sizeof(vertices) / sizeof(f32), sizeof(f32)
     );
     vb->Update(vertices, sizeof(vertices));
@@ -127,14 +141,14 @@ i32 main(void) {
   VertexArray *vao;
   {
     PROFILE_SCOPE("Create VertexArray");
-    vao = renderSys->CreateVertexArray();
+    vao = g_RenderSys->CreateVertexArray();
     vao->AddVertexBuffer(vb);
     // vao->SetIndexBuffer(ib);
     vao->SetVertexLayout(&layout);
   }
 
   LOG_DEBUG("Binding VertexArray");
-  renderSys->BindVertexArray(vao);
+  g_RenderSys->BindVertexArray(vao);
 
   Texture *texture, *texture2;
   {
@@ -144,37 +158,41 @@ i32 main(void) {
 
     stbi_set_flip_vertically_on_load(true);
     data = stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels, 0);
-    texture = renderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB, width, height);
+    texture =
+      g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB, width, height);
     texture->Update(data, 0);
     texture->GenerateMipmaps();
     stbi_image_free(data);
 
     data = stbi_load("assets/textures/awesomeface.png", &width, &height, &nrChannels, 0);
     texture2 =
-      renderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA, TEX_FORMAT_RGBA, width, height);
+      g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA, TEX_FORMAT_RGBA, width, height);
     texture2->Update(data, 0);
     texture2->GenerateMipmaps();
     stbi_image_free(data);
   }
 
-  Shader *vs = renderSys->CreateShader(nullptr);
-  Shader *fs = renderSys->CreateShader(nullptr);
+  Shader *vs = g_RenderSys->CreateShader(nullptr);
+  Shader *fs = g_RenderSys->CreateShader(nullptr);
   RenderPipeline *pipeline;
   {
     PROFILE_SCOPE("Compile Shaders");
     vs->CompileFromFile("./assets/shaders/vertex.glsl", ShaderStage::VERTEX);
     fs->CompileFromFile("./assets/shaders/fragment.glsl", ShaderStage::FRAGMENT);
-    pipeline = renderSys->CreatePipeline(vs, fs);
-    renderSys->BindPipeline(pipeline, 0);
-    renderSys->BindTexture(texture, 0);
-    renderSys->BindTexture(texture2, 1);
+    pipeline = g_RenderSys->CreatePipeline(vs, fs);
+    g_RenderSys->BindPipeline(pipeline, 0);
+    g_RenderSys->BindTexture(texture, 0);
+    g_RenderSys->BindTexture(texture2, 1);
   }
 
   cam.SetPosition(0.0f, 0.0f, 3.0f);
   cam.LookAt(Vec3::Zero);
-  cam.SetPerspective(Sono::Radians(60.0f), window->GetAspect(), 0.1f, 100.0f);
+  cam.SetPerspective(Sono::Radians(60.0f), g_Window->GetAspect(), 0.1f, 100.0f);
 
   EventDispatcher::Register<MouseMoveEvent>([](const MouseMoveEvent &e) {
+    ImGuiIO &io = ImGui::GetIO();
+    io.MousePos = ImVec2(e.xpos, e.ypos);
+
     Vec2 mouseDelta = Mouse::GetDelta();
     float sensitivity = 0.05f;
 
@@ -185,15 +203,12 @@ i32 main(void) {
     cam.Rotate(Vec3(pitchDelta, yawDelta, 0.0f));
   });
 
-  Interpolated<Vec2> testPos(Vec2(1.0f), [](f32 t) -> f32 { return t; });
-  testPos = Vec2(2.0f);
-
+  g_RenderSys->InitImGui(g_Window);
   /* Loop until the user closes the window */
-  while (!window->ShouldClose()) {
-    S_LOG_DEBUG(testPos.GetValue().ToString());
+  while (!g_Window->ShouldClose()) {
     /* Poll for and process events */
     glfwPollEvents();
-    while (auto *ev = eventSys->Pop()) {
+    while (auto *ev = g_EventSys->Pop()) {
       HandleEvent(*ev);
       EventDispatcher::Dispatch(*ev);
     }
@@ -202,8 +217,8 @@ i32 main(void) {
     {
       PROFILE_SCOPE("RENDER::RenderOneFrame");
       /* Render here */
-      renderSys->BeginFrame();
-      renderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
+      g_RenderSys->BeginFrame();
+      g_RenderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
 
       pipeline->SetMat4("uView", cam.GetViewMatrix());
       pipeline->SetMat4("uProj", cam.GetProjectionMatrix());
@@ -214,20 +229,27 @@ i32 main(void) {
         f32 angle = 20.0f * i;
         model = Mat4::Rotation(Sono::Radians(angle), Vec3(1.0f, 0.3f, 0.5f)) * model;
         pipeline->SetMat4("uModel", model);
-        renderSys->Submit<DrawCommand>(vao, 36, texture, PrimitiveType::TRIANGLES);
-        renderSys->Flush();
+        g_RenderSys->Submit<DrawCommand>(vao, 36, texture, PrimitiveType::TRIANGLES);
+        g_RenderSys->Flush();
       }
 
-      renderSys->Flush();
-      renderSys->EndFrame();
-      inputSys->EndFrame();
+      // g_RenderSys->Flush();
+      g_RenderSys->EndFrame();
+
+      g_RenderSys->BeginImGuiFrame();
+      ImGui::Begin("My Window"); // Start a new window (panel)
+      ImGui::Text("Hello, ImGui!");
+      ImGui::End();
+      g_RenderSys->EndImGuiFrame();
 
       /* Swap front and back buffers */
-      renderSys->Present();
+      g_RenderSys->Present();
+      g_InputSys->EndFrame();
     }
 
     Time::Tick();
   }
+  g_RenderSys->ShutdownImGui();
 
   Sono::Global::GetPtr()->Shutdown();
   return 0;
