@@ -29,9 +29,6 @@ private:
 #ifdef SN_DEBUG_PROFILER
   std::unique_ptr<Profiler> m_Profiler;
 #endif
-
-  // TODO: replace this with free list allocator or other
-  ArenaAllocator m_Allocator;
 };
 
 } // namespace Sono

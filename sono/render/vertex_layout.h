@@ -1,11 +1,13 @@
 #ifndef SN_VERTEX_LAYOUT_H
 #define SN_VERTEX_LAYOUT_H
 
+#include "render/colors.h"
 #include "core/common/types.h"
 #include "core/math/vec4.h"
 #include "core/math/vec3.h"
 #include "core/math/vec2.h"
 
+#include <initializer_list>
 #include <string>
 #include <vector>
 
@@ -83,6 +85,15 @@ public:
   VertexLayout()
     : m_Stride(0) {}
 
+  VertexLayout(
+    std::initializer_list<std::pair<VertexAttributeSemantic, VertexAttribType>> attribPairs
+  ) {
+    m_Stride = 0;
+    for (auto &[semantic, type] : attribPairs) {
+      Push(semantic, type);
+    }
+  }
+
   VertexLayout &Push(VertexAttributeSemantic semantic, VertexAttribType type);
 
   /// Query method
@@ -114,8 +125,6 @@ private:
 // TYPED VERTEX STRUCTURES
 // ================================================================================
 
-using Color = Vec<4, u8>;
-
 struct VertexP {
   Vec3 position;
 
@@ -128,10 +137,10 @@ struct VertexP {
     : position(x, y, z) {}
 };
 
-/// Vertex struct with 1 Position and 1 Color
+// Vertex struct with 1 Position and 1 Color
 struct VertexPC {
   Vec3 position;
-  Color color; // byte packed rgba
+  Color color;
 
   VertexPC() = default;
 
@@ -141,7 +150,7 @@ struct VertexPC {
 
   VertexPC(f32 x, f32 y, f32 z, u32 col)
     : position(x, y, z)
-    , color((col >> 24) & 255, (col >> 16) & 255, (col >> 8) & 255, (col) & 255) {}
+    , color(col) {}
 };
 
 struct VertexPT {

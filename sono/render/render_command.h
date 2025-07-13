@@ -1,9 +1,9 @@
 #ifndef SN_RENDER_OP_H
 #define SN_RENDER_OP_H
 
-#include "render_context.h"
 #include "vertex_array.h"
-#include "texture.h"
+#include "core/math/mat4.h"
+#include "render/resource/texture.h"
 
 class RenderSystem;
 
@@ -27,14 +27,14 @@ private:
 class DrawCommand : public RenderCommand {
 public:
   DrawCommand(
-    VertexArray *va, u32 vertCount, Texture *tex = nullptr,
+    const VertexArray *va, u32 vertCount, const Mat4 &model = Mat4::Identity,
     PrimitiveType topology = PrimitiveType::TRIANGLES
   );
   void Execute(RenderSystem &renderSys) const override;
 
 private:
-  VertexArray *m_VAO;
-  Texture *m_Tex;
+  const VertexArray *m_VAO;
+  const Mat4 &m_Transform;
   u32 m_NumVertices;
   PrimitiveType m_Topology;
 };
@@ -42,14 +42,14 @@ private:
 class DrawIndexedCommand : public RenderCommand {
 public:
   DrawIndexedCommand(
-    VertexArray *va, u32 idxCount, Texture *tex = nullptr,
+    const VertexArray *va, u32 idxCount, const Mat4 &model = Mat4::Identity,
     PrimitiveType topology = PrimitiveType::TRIANGLES
   );
   void Execute(RenderSystem &renderSys) const override;
 
 private:
-  VertexArray *m_VAO;
-  Texture *m_Tex;
+  const VertexArray *m_VAO;
+  const Mat4 &m_Transform;
   u32 m_NumIndex;
   PrimitiveType m_Topology;
 };

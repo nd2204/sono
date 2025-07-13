@@ -47,6 +47,20 @@ constexpr const char *TIME_UNIT_STR[] = {
 
 namespace Sono {
 
+inline f32 FormatSecondsToUnit(f32 seconds, TimeUnit unit) {
+  f32 formattedTime = seconds;
+  i32 currentUnit = TimeUnit::SECONDS;
+  while (formattedTime < 1.0f && unit < currentUnit) {
+    formattedTime *= 1000.0f;
+    currentUnit--;
+  }
+  while (formattedTime >= 60.0f && unit > currentUnit) {
+    formattedTime *= 0.0166666667f; // currentTime * 1/60
+    currentUnit++;
+  }
+  return formattedTime;
+}
+
 inline std::string FormatSeconds(f32 seconds) {
   std::ostringstream oss;
   i32 currentUnit = TimeUnit::SECONDS;

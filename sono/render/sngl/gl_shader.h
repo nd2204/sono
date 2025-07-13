@@ -4,7 +4,7 @@
 #include "core/common/types.h"
 #include <glad/glad.h>
 
-#include "render/shader.h"
+#include "render/shader/shader.h"
 
 class GLShader : public Shader {
 public:
@@ -71,8 +71,8 @@ public:
   void SetMat2x4(const char *uniform, f32 *mat2x4) const override;
   void SetMat2x3(const char *uniform, f32 *mat2x3) const override;
 
-  void Bind() const;
-  void Unbind() const;
+  void Bind() const override;
+  void Unbind() const override;
   GLuint GetID() const;
   operator GLuint() const;
 

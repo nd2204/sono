@@ -9,6 +9,12 @@ class IBuffer {
 public:
   virtual ~IBuffer() = default;
 
+  /// Bind the buffer
+  virtual void Bind() const = 0;
+
+  /// Unbind the buffer
+  virtual void Unbind() const = 0;
+
   /// Map this buffer to cpu
   virtual void *Map() = 0;
 

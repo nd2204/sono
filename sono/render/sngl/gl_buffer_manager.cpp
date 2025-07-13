@@ -36,8 +36,13 @@ b8 GLBufferManager::DeleteVertexLayout(VertexLayout *pLayout) {
   return true;
 }
 
-IBuffer *GLBufferManager::CreateVertexBuffer(BufferUsage usage, usize vertCount, usize vertSize) {
+IBuffer *GLBufferManager::CreateVertexBuffer(
+  BufferUsage usage, usize vertCount, usize vertSize, const void *vertices
+) {
   IBuffer *buffer = SN_NEW(ALLOC_TYPE_RENDER_SYSTEM) GLVertexBuffer(usage, vertSize, vertCount);
+  if (vertices) {
+    buffer->Update(vertices, vertCount * vertSize);
+  }
   m_VertexBuffers.insert(buffer);
   return buffer;
 }
@@ -49,8 +54,13 @@ b8 GLBufferManager::DeleteVertexBuffer(IBuffer *pBuf) {
   return true;
 };
 
-IBuffer *GLBufferManager::CreateIndexBuffer(BufferUsage usage, IndexType type, usize idxCount) {
+IBuffer *GLBufferManager::CreateIndexBuffer(
+  BufferUsage usage, IndexType type, usize idxCount, const void *indices
+) {
   IBuffer *buffer = SN_NEW(ALLOC_TYPE_RENDER_SYSTEM) GLIndexBuffer(usage, type, idxCount);
+  if (indices) {
+    buffer->Update(indices, idxCount * GLIndexBuffer::IndexTypeSize(type));
+  }
   m_IndexBuffers.insert(buffer);
   return buffer;
 }

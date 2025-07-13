@@ -13,15 +13,13 @@ class GLVertexArray : public VertexArray {
 public:
   GLVertexArray();
 
-  void Bind() const;
+  void Bind() const override;
 
-  void Unbind() const;
+  void Unbind() const override;
 
-  virtual void AddVertexBuffer(IBuffer *buffer) override;
+  void AddVertexBuffer(IBuffer *buffer, const VertexLayout &layout) override;
 
-  virtual void SetIndexBuffer(IBuffer *buffer) override;
-
-  virtual void SetVertexLayout(VertexLayout *buffer) override;
+  void SetIndexBuffer(IBuffer *buffer) override;
 
   GLuint GetID() const;
 
@@ -37,8 +35,9 @@ public:
 
 private:
   std::vector<GLVertexBuffer *> m_VertexBuffers;
+  // std::vector<VertexLayout> m_VertexLayouts;
+
   GLIndexBuffer *m_pIndexBuffer;
-  VertexLayout *m_pVertexLayout;
   GLuint m_ID;
 };
 

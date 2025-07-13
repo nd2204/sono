@@ -2,7 +2,6 @@
 #define SN_VERTEX_BUFFER_H
 
 #include "core/common/types.h"
-#include "render/buffer_base.h"
 
 // ================================================================================
 // VERTEX BUFFER ABSTRACTION

@@ -1,12 +1,13 @@
-#include "buffer_manager.h"
 #include "core/common/logger.h"
 #include "core/memory/memory_system.h"
+
+#include "render/buffer/buffer_manager.h"
 #include "render_system.h"
 
 #include <sstream>
 #include <GLFW/glfw3.h>
 
-#define RENDER_FRAME_ALLOC_SIZE 256 * SN_MEM_MIB
+#define RENDER_FRAME_ALLOC_SIZE (1 * SN_MEM_MIB)
 
 template <>
 RenderSystem *Singleton<RenderSystem>::m_sInstance = nullptr;
@@ -23,22 +24,22 @@ RenderSystem::RenderSystem()
 RenderWindow *RenderSystem::CreateRenderWindow(
   i32 width, i32 height, const char *title, WindowMode mode
 ) {
-  std::stringstream ss;
+  std::ostringstream oss;
 
-  ss << "Created render context (" << title << "," << width << "x" << height << ",";
+  oss << "Created render context (" << title << "," << width << "x" << height << ",";
   switch (mode) {
-  case WIN_MODE_WINDOWED:
-    ss << "windowed";
-    break;
-  case WIN_MODE_FULLSCREEN:
-    ss << "fullscreen";
-    break;
-  case WIN_MODE_BORDERLESS:
-    ss << "borderless";
-    break;
+    case WIN_MODE_WINDOWED:
+      oss << "windowed";
+      break;
+    case WIN_MODE_FULLSCREEN:
+      oss << "fullscreen";
+      break;
+    case WIN_MODE_BORDERLESS:
+      oss << "borderless";
+      break;
   }
-  ss << ")";
-  LOG_DEBUG(ss.str().c_str());
+  oss << ")";
+  LOG_DEBUG(oss.str().c_str());
 
   return nullptr;
 }

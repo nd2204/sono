@@ -11,31 +11,29 @@ void SetViewportCommand::Execute(RenderSystem &renderSys) const {
   renderSys.SetViewport(m_PosX, m_PosY, m_Width, m_Height);
 }
 // --------------------------------------------------------------------------------
-DrawCommand::DrawCommand(VertexArray *va, u32 vertCount, Texture *tex, PrimitiveType topology)
+DrawCommand::DrawCommand(
+  const VertexArray *va, u32 vertCount, const Mat4 &model, PrimitiveType topology
+)
   : m_VAO(va)
-  , m_Tex(tex)
+  , m_Transform(model)
   , m_NumVertices(vertCount)
   , m_Topology(topology) {}
 // --------------------------------------------------------------------------------
 void DrawCommand::Execute(RenderSystem &renderSys) const {
-  if (m_Tex) {
-    renderSys.BindTexture(m_Tex, 0);
-  }
+  renderSys.GetCurrentPipeline()->SetMat4("uModel", m_Transform);
   renderSys.Draw(m_Topology, m_VAO, m_NumVertices);
 }
 // --------------------------------------------------------------------------------
 DrawIndexedCommand::DrawIndexedCommand(
-  VertexArray *va, u32 idxCount, Texture *tex, PrimitiveType topology
+  const VertexArray *va, u32 idxCount, const Mat4 &model, PrimitiveType topology
 )
   : m_VAO(va)
-  , m_Tex(tex)
+  , m_Transform(model)
   , m_NumIndex(idxCount)
   , m_Topology(topology) {}
 // --------------------------------------------------------------------------------
 void DrawIndexedCommand::Execute(RenderSystem &renderSys) const {
-  if (m_Tex) {
-    renderSys.BindTexture(m_Tex, 0);
-  }
+  renderSys.GetCurrentPipeline()->SetMat4("uModel", m_Transform);
   renderSys.DrawIndexed(m_Topology, m_VAO, m_NumIndex);
 }
 // --------------------------------------------------------------------------------

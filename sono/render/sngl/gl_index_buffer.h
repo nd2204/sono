@@ -2,7 +2,7 @@
 #define GL_INDEX_BUFFER_H
 
 #include "core/common/types.h"
-#include "render/index_buffer.h"
+#include "render/buffer/index_buffer.h"
 #include "gl_buffer_base.h"
 
 #include "glad/glad.h"

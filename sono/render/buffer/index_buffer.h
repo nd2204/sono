@@ -1,7 +1,7 @@
 #ifndef SN_INDEX_BUFFER_H
 #define SN_INDEX_BUFFER_H
 
-#include "buffer_base.h"
+#include "core/common/types.h"
 
 enum IndexType : u8 { INDEX_TYPE_U16, INDEX_TYPE_U32 };
 

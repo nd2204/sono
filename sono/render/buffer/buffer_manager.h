@@ -1,11 +1,12 @@
 #ifndef SN_BUFFER_MANAGER_H
 #define SN_BUFFER_MANAGER_H
 
-#include "render/buffer_base.h"
-#include "render/index_buffer.h"
-#include "render/vertex_layout.h"
-#include "render/vertex_buffer.h"
 #include "core/common/singleton.h"
+
+#include "render/buffer/buffer_base.h"
+#include "render/buffer/index_buffer.h"
+#include "render/vertex_layout.h"
+
 #include <set>
 
 /// This class is responsible for managing buffers for rendering
@@ -21,11 +22,15 @@ public:
 
   virtual b8 DeleteVertexLayout(VertexLayout *pLayout) = 0;
 
-  virtual IBuffer *CreateVertexBuffer(BufferUsage usage, usize vertCount, usize vertSize) = 0;
+  virtual IBuffer *CreateVertexBuffer(
+    BufferUsage usage, usize vertCount, usize vertSize, const void *vertices = nullptr
+  ) = 0;
 
   virtual b8 DeleteVertexBuffer(IBuffer *pBuf) = 0;
 
-  virtual IBuffer *CreateIndexBuffer(BufferUsage usage, IndexType type, usize idxCount) = 0;
+  virtual IBuffer *CreateIndexBuffer(
+    BufferUsage usage, IndexType type, usize idxCount, const void *indices
+  ) = 0;
 
   virtual b8 DeleteIndexBuffer(IBuffer *pBuf) = 0;
 

@@ -37,6 +37,10 @@ class RenderPipeline {
 public:
   virtual ~RenderPipeline() = default;
 
+  virtual void Bind() const = 0;
+
+  virtual void Unbind() const = 0;
+
   virtual Shader *GetVertexShader() { return m_VertexShader; };
 
   virtual Shader *GetFragmentShader() { return m_FragmentShader; };

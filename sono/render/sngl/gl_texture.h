@@ -1,7 +1,7 @@
 #ifndef GLTEXTURE_H
 #define GLTEXTURE_H
 
-#include "render/texture.h"
+#include "render/resource/texture.h"
 #include "core/common/types.h"
 #include "glad/glad.h"
 

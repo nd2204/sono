@@ -1,7 +1,7 @@
 #ifndef SN_GL_BUFFER_BASE_H
 #define SN_GL_BUFFER_BASE_H
 
-#include "render/buffer_base.h"
+#include "render/buffer/buffer_base.h"
 
 #include "glad/glad.h"
 
@@ -23,9 +23,9 @@ public:
 
   virtual BufferUsage GetUsage() const override;
 
-  void Bind() const;
+  virtual void Bind() const override;
 
-  void Unbind() const;
+  virtual void Unbind() const override;
 
   GLuint GetID() const;
 

@@ -122,7 +122,6 @@ std::string &&MemorySystem::GetAllocsReport() {
 
   static std::string buffer;
   std::stringstream oss;
-  oss << "=== Memory Tracking Statistics ===" << std::endl;
   oss << "Total allocated: " << ToHumanReadable(m_TotalAllocated) << std::endl;
   oss << "Total freed: " << ToHumanReadable(m_TotalFreed) << std::endl;
   oss << "Current usage: " << ToHumanReadable(m_CurrentUsage) << std::endl;

@@ -50,9 +50,19 @@ RenderWindow *GLRenderSystem::CreateRenderWindow(
 // Render operation
 // ================================================================================
 
-void GLRenderSystem::BeginFrame() { m_FrameBeginMark = m_Arena.GetMarker(); }
+void GLRenderSystem::BeginFrame(const Camera &cam) {
+  m_FrameBeginMark = m_Arena.GetMarker();
+
+  m_pActivePipeline->SetMat4("uView", cam.GetViewMatrix());
+  m_pActivePipeline->SetMat4("uProj", cam.GetProjectionMatrix());
+}
 // --------------------------------------------------------------------------------
-void GLRenderSystem::EndFrame() { m_Arena.FreeToMarker(m_FrameBeginMark); }
+void GLRenderSystem::EndFrame() {
+  m_Arena.FreeToMarker(m_FrameBeginMark);
+  /* Swap front and back buffers */
+  Flush();
+  Present();
+}
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Present() { m_pActiveCtx->SwapBuffers(); }
 // --------------------------------------------------------------------------------
@@ -60,21 +70,19 @@ void GLRenderSystem::SetViewport(i32 posX, i32 posY, i32 width, i32 height) {
   glViewport(posX, posY, width, height);
 }
 // --------------------------------------------------------------------------------
-void GLRenderSystem::Draw(PrimitiveType topology, VertexArray *va, u32 maxVertCount) {
-  GLVertexArray *vao = reinterpret_cast<GLVertexArray *>(va);
+void GLRenderSystem::Draw(PrimitiveType topology, const VertexArray *va, u32 maxVertCount) {
+  const GLVertexArray *vao = reinterpret_cast<const GLVertexArray *>(va);
   i32 numBuffers = vao->GetVertexBuffers().size();
-  glBindVertexArray(vao->GetID());
+  va->Bind();
   for (int i = 0; i < numBuffers; i++) {
     glDrawArrays(ConvertPrimitiveType(topology), 0, maxVertCount);
   }
 }
 // --------------------------------------------------------------------------------
-void GLRenderSystem::DrawIndexed(PrimitiveType topology, VertexArray *va, u32 idxCount) {
-  GLVertexArray *vao = reinterpret_cast<GLVertexArray *>(va);
+void GLRenderSystem::DrawIndexed(PrimitiveType topology, const VertexArray *va, u32 idxCount) {
+  const GLVertexArray *vao = reinterpret_cast<const GLVertexArray *>(va);
   const GLIndexBuffer *ib = vao->GetCurrentIndexBuffer();
-  ASSERT(ib != nullptr);
-  glBindVertexArray(vao->GetID());
-  ib->Bind();
+  va->Bind();
   glDrawElements(
     ConvertPrimitiveType(topology), idxCount, GLIndexBuffer::ConvertIndexType(ib->GetIndexType()),
     reinterpret_cast<void *>(0)
@@ -112,26 +120,25 @@ void GLRenderSystem::BindTexture(Texture *texture, u32 unit) {
   reinterpret_cast<GLTexture *>(texture)->Bind(unit);
   std::string uniformName = "uTexture" + std::to_string(unit);
   if (m_pActivePipeline) {
-    GLRenderPipeline *pipeline = reinterpret_cast<GLRenderPipeline *>(m_pActivePipeline);
-    pipeline->Bind();
-    pipeline->SetInt(uniformName.c_str(), unit);
+    m_pActivePipeline->Bind();
+    m_pActivePipeline->SetInt(uniformName.c_str(), unit);
   }
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::BindBuffer(IBuffer *buffer, u32 index) {
   (void)index;
-  reinterpret_cast<GLBuffer *>(buffer)->Bind();
+  buffer->Bind();
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::BindPipeline(RenderPipeline *pipeline, u32 index) {
-  m_pActivePipeline = pipeline;
   (void)index;
-  reinterpret_cast<GLRenderPipeline *>(pipeline)->Bind();
+  m_pActivePipeline = pipeline;
+  pipeline->Bind();
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::UnbindPipeline(RenderPipeline *pipeline, u32 index) {
   (void)index;
-  reinterpret_cast<GLRenderPipeline *>(pipeline)->Unbind();
+  pipeline->Unbind();
 }
 
 // ================================================================================

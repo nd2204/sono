@@ -1,7 +1,4 @@
-#include "buffer_manager.h"
-#include "index_buffer.h"
-#include "vertex_buffer.h"
-#include "vertex_layout.h"
+#include "render/buffer/buffer_manager.h"
 
 template <>
 BufferManager *Singleton<BufferManager>::m_sInstance = nullptr;

@@ -1,17 +1,18 @@
 #ifndef SN_RENDER_SYSTEM_H
 #define SN_RENDER_SYSTEM_H
 
+#include "camera.h"
 #include "core/system.h"
 #include "core/common/singleton.h"
 #include "core/memory/allocators/arena.h"
-#include "render_command.h"
-#include "render_context.h"
-#include "buffer_manager.h"
+#include "render/render_command.h"
+#include "render/render_context.h"
+#include "render/buffer/buffer_manager.h"
+#include "render/shader/shader.h"
+#include "render/resource/texture.h"
 
 #include "render_queue.h"
 #include "render_window.h"
-#include "shader.h"
-#include "texture.h"
 #include "vertex_array.h"
 
 #include <imgui.h>
@@ -34,7 +35,7 @@ public:
   // Render operations
   // ================================================================================
 
-  virtual void BeginFrame() = 0;
+  virtual void BeginFrame(const Camera &cam) = 0;
 
   virtual void EndFrame() = 0;
 
@@ -48,9 +49,9 @@ public:
 
   virtual void SetViewport(i32 posX, i32 posY, i32 width, i32 height) = 0;
 
-  virtual void Draw(PrimitiveType topology, VertexArray *va, u32 maxVertCount) = 0;
+  virtual void Draw(PrimitiveType topology, const VertexArray *va, u32 maxVertCount) = 0;
 
-  virtual void DrawIndexed(PrimitiveType topology, VertexArray *va, u32 idxCount) = 0;
+  virtual void DrawIndexed(PrimitiveType topology, const VertexArray *va, u32 idxCount) = 0;
 
   virtual void Clear(const Vec4 &color) = 0;
 
@@ -60,7 +61,7 @@ public:
   // Pipeline management
   // ================================================================================
 
-  virtual Shader *CreateShader(const ShaderDesc *desc) = 0;
+  virtual Shader *CreateShader(const ShaderDesc *desc = nullptr) = 0;
 
   virtual VertexArray *CreateVertexArray() = 0;
 
@@ -99,6 +100,8 @@ public:
   virtual void SetRenderContext(RenderContext *ctx) = 0;
 
   RenderContext *GetCurrentContext() { return m_pActiveCtx; };
+
+  RenderPipeline *GetCurrentPipeline() { return m_pActivePipeline; }
 
   BufferManager *GetBufferManager() const;
 

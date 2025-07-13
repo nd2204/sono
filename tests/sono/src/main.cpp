@@ -4,7 +4,6 @@
 #include <core/common/logger.h>
 #include <core/math/mat4.h>
 #include <core/math/vec3.h>
-#include <core/math/lerp.h>
 
 #include <core/input/mouse.h>
 #include <core/event/event_dispatcher.h>
@@ -16,6 +15,7 @@
 
 Camera cam;
 
+MemorySystem *g_MemSys;
 RenderSystem *g_RenderSys;
 EventSystem *g_EventSys;
 InputSystem *g_InputSys;
@@ -70,6 +70,7 @@ i32 main(void) {
   std::unique_ptr<Sono::Global> global = std::make_unique<Sono::Global>();
   Sono::Global::GetPtr()->Init();
 
+  g_MemSys = MemorySystem::GetPtr();
   g_RenderSys = RenderSystem::GetPtr();
   g_EventSys = EventSystem::GetPtr();
   g_InputSys = InputSystem::GetPtr();
@@ -78,29 +79,29 @@ i32 main(void) {
   g_Window = g_RenderSys->CreateRenderWindow(800, 600, "Hello Sono");
   g_Window->EnableVsync(true);
 
-  float vertices[] = {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
-                      0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-                      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+  f32 vertices[] = {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
+                    0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+                    -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
 
-                      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-                      0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-                      -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
+                    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+                    -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
 
-                      -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
-                      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-                      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
+                    -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
+                    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
 
-                      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-                      0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
-                      0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+                    0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
+                    0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
 
-                      -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
-                      0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-                      -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+                    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
+                    0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
+                    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
 
-                      -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-                      0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-                      -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
+                    -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
+                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+                    -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
 
   Vec3 cubePositions[] = {Vec3(0.0f, 0.0f, 0.0f),    Vec3(2.0f, 5.0f, -15.0f),
                           Vec3(-1.5f, -2.2f, -2.5f), Vec3(-3.8f, -2.0f, -12.3f),
@@ -110,45 +111,24 @@ i32 main(void) {
 
   u32 indices[] = {0, 1, 3, 1, 2, 3};
 
-  IBuffer *vb;
-  {
-    PROFILE_SCOPE("Create Buffers");
-    vb = g_BufferMgr->CreateVertexBuffer(
-      BufferUsage::STATIC, sizeof(vertices) / sizeof(f32), sizeof(f32)
-    );
-    vb->Update(vertices, sizeof(vertices));
-  }
+  IBuffer *vb = g_BufferMgr->CreateVertexBuffer(
+    BufferUsage::STATIC, sizeof(vertices) / sizeof(f32), sizeof(f32), vertices
+  );
 
-  // IBuffer *ib = bufferMgr->CreateIndexBuffer(
-  //   BufferUsage::STATIC, INDEX_TYPE_U32, sizeof(indices) / sizeof(u32)
-  // );
-  // ib->Update(indices, sizeof(indices));
+  VertexLayout layout = {
+    {VAS_POSITION, VAT_FLOAT3},
+    {VAS_TEXCOORD, VAT_FLOAT2},
+  };
+  VertexArray *vao = g_RenderSys->CreateVertexArray();
+  vao->AddVertexBuffer(vb, layout);
+  // vao->SetIndexBuffer(ib);
 
-  // glm::mat4 v =
-  //   glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-  // for (int i = 0; i < 4; i++) {
-  //   std::stringstream ss;
-  //   for (int j = 0; j < 4; j++) {
-  //     ss << std::to_string(v[i][j]) << " ";
-  //   }
-  //   S_LOG_DEBUG(ss.str());
-  // }
-
-  VertexLayout layout;
-  layout.Push(VAS_POSITION, VAT_FLOAT3); // 3 floats per vertex
-  layout.Push(VAS_TEXCOORD, VAT_FLOAT2); // 2 floats per vertex
-
-  VertexArray *vao;
-  {
-    PROFILE_SCOPE("Create VertexArray");
-    vao = g_RenderSys->CreateVertexArray();
-    vao->AddVertexBuffer(vb);
-    // vao->SetIndexBuffer(ib);
-    vao->SetVertexLayout(&layout);
-  }
-
-  LOG_DEBUG("Binding VertexArray");
-  g_RenderSys->BindVertexArray(vao);
+  VertexLayout lightLayout = {
+    {VAS_POSITION, VAT_FLOAT3},
+  };
+  VertexArray *lightVAO = g_RenderSys->CreateVertexArray();
+  lightVAO->AddVertexBuffer(vb, lightLayout);
+  // vao->SetIndexBuffer(ib);
 
   Texture *texture, *texture2;
   {
@@ -172,8 +152,8 @@ i32 main(void) {
     stbi_image_free(data);
   }
 
-  Shader *vs = g_RenderSys->CreateShader(nullptr);
-  Shader *fs = g_RenderSys->CreateShader(nullptr);
+  Shader *vs = g_RenderSys->CreateShader();
+  Shader *fs = g_RenderSys->CreateShader();
   RenderPipeline *pipeline;
   {
     PROFILE_SCOPE("Compile Shaders");
@@ -187,11 +167,13 @@ i32 main(void) {
 
   cam.SetPosition(0.0f, 0.0f, 3.0f);
   cam.LookAt(Vec3::Zero);
-  cam.SetPerspective(Sono::Radians(60.0f), g_Window->GetAspect(), 0.1f, 100.0f);
+  cam.SetPerspective(Sono::Radians(80.0f), g_Window->GetAspect(), 0.1f, 100.0f);
 
   EventDispatcher::Register<MouseMoveEvent>([](const MouseMoveEvent &e) {
     ImGuiIO &io = ImGui::GetIO();
     io.MousePos = ImVec2(e.xpos, e.ypos);
+
+    if (g_Window->GetCurrentCursorMode() != CursorMode::DISABLED) return;
 
     Vec2 mouseDelta = Mouse::GetDelta();
     float sensitivity = 0.05f;
@@ -205,52 +187,50 @@ i32 main(void) {
 
   g_RenderSys->InitImGui(g_Window);
   /* Loop until the user closes the window */
-  while (!g_Window->ShouldClose()) {
-    /* Poll for and process events */
-    glfwPollEvents();
-    while (auto *ev = g_EventSys->Pop()) {
-      HandleEvent(*ev);
-      EventDispatcher::Dispatch(*ev);
-    }
-    ProcessInput();
-
-    {
-      PROFILE_SCOPE("RENDER::RenderOneFrame");
-      /* Render here */
-      g_RenderSys->BeginFrame();
-      g_RenderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
-
-      pipeline->SetMat4("uView", cam.GetViewMatrix());
-      pipeline->SetMat4("uProj", cam.GetProjectionMatrix());
-
-      Mat4 model;
-      for (int i = 0; i < 10; i++) {
-        model = Mat4::Translation(cubePositions[i]);
-        f32 angle = 20.0f * i;
-        model = Mat4::Rotation(Sono::Radians(angle), Vec3(1.0f, 0.3f, 0.5f)) * model;
-        pipeline->SetMat4("uModel", model);
-        g_RenderSys->Submit<DrawCommand>(vao, 36, texture, PrimitiveType::TRIANGLES);
-        g_RenderSys->Flush();
+  {
+    PROFILE_SCOPE("MAIN_LOOP");
+    while (!g_Window->ShouldClose()) {
+      /* Poll for and process events */
+      {
+        PROFILE_SCOPE("MAIN_LOOP::Handle Events");
+        glfwPollEvents();
+        while (auto *ev = g_EventSys->Pop()) {
+          HandleEvent(*ev);
+          EventDispatcher::Dispatch(*ev);
+        }
+        ProcessInput();
       }
 
-      // g_RenderSys->Flush();
-      g_RenderSys->EndFrame();
+      {
+        /* Render here */
+        PROFILE_SCOPE("MAIN_LOOP::RENDER::RenderOneFrame");
+        g_RenderSys->BeginFrame(cam);
+        g_RenderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
 
-      g_RenderSys->BeginImGuiFrame();
-      ImGui::Begin("My Window"); // Start a new window (panel)
-      ImGui::Text("Hello, ImGui!");
-      ImGui::End();
-      g_RenderSys->EndImGuiFrame();
+        Mat4 model;
+        for (int i = 0; i < 10; i++) {
+          model = Mat4::Translation(cubePositions[i]);
+          f32 angle = 20.0f * i;
+          model = Mat4::Rotation(Sono::Radians(angle), Vec3(1.0f, 0.3f, 0.5f)) * model;
+          g_RenderSys->Submit<DrawCommand>(vao, 36, model, PrimitiveType::TRIANGLES);
+          g_RenderSys->Flush();
+        }
 
-      /* Swap front and back buffers */
-      g_RenderSys->Present();
+        g_RenderSys->BeginImGuiFrame();
+        ImGui::Begin("My Window"); // Start a new window (panel)
+        ImGui::Text("FPS: %.0f", Time::GetFPS());
+        ImGui::End();
+        g_RenderSys->EndImGuiFrame();
+
+        g_RenderSys->EndFrame();
+      }
       g_InputSys->EndFrame();
+
+      Time::Tick();
     }
-
-    Time::Tick();
   }
-  g_RenderSys->ShutdownImGui();
 
+  g_RenderSys->ShutdownImGui();
   Sono::Global::GetPtr()->Shutdown();
   return 0;
 }

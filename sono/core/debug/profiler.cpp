@@ -118,7 +118,9 @@ ProfileScope::~ProfileScope() {
 void ConsoleProfileSink::WriteHeader() {}
 // --------------------------------------------------------------------------------
 void ConsoleProfileSink::WriteEvent(const ProfileEvent &e) {
-  LOG_TRACE_F("%s: %.2fms", e.name, (e.endTime - e.startTime) * 1000);
+  LOG_TRACE_F(
+    "%s: %.2fms", e.name, Sono::FormatSecondsToUnit(e.endTime - e.startTime, TimeUnit::MILISECONDS)
+  );
 }
 // --------------------------------------------------------------------------------
 void ConsoleProfileSink::WriteFooter() {}
@@ -152,14 +154,14 @@ void JsonTraceSink::WriteEvent(const ProfileEvent &e) {
        "\"cat\": \"PERF\","
        "\"name\":\"" << e.name << "\","
        "\"ph\": \"B\"," 
-       "\"ts\":" << e.startTime * 1000 << ","
+       "\"ts\":" << Sono::FormatSecondsToUnit(e.startTime, TimeUnit::MILISECONDS) << ","
        "\"pid\":" << getpid() << ","
        "\"tid\":" << e.threadID
     << "},{"
        "\"cat\": \"PERF\","
        "\"name\":\"" << e.name << "\","
        "\"ph\": \"E\"," 
-       "\"ts\":" << e.endTime * 1000 << ","
+       "\"ts\":" << Sono::FormatSecondsToUnit(e.endTime, TimeUnit::MILISECONDS) << ","
        "\"pid\":" << getpid() << ","
        "\"tid\":" << e.threadID
     << "}";
@@ -172,4 +174,7 @@ void JsonTraceSink::WriteFooter() {
   m_File.flush();
 }
 // --------------------------------------------------------------------------------
-void JsonTraceSink::Flush() { m_File.close(); }
+void JsonTraceSink::Flush() {
+  m_File.flush();
+  m_File.close();
+}

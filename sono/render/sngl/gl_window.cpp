@@ -48,9 +48,6 @@ void GLWindow::Create(i32 width, i32 height, const char *title, WindowMode mode)
   });
 
   glfwSetCursorPosCallback(m_Context, [](GLFWwindow *window, double xpos, double ypos) {
-    RenderWindow *win = (RenderWindow *)(glfwGetWindowUserPointer(window));
-    if (win->GetCurrentCursorMode() != CursorMode::DISABLED) return;
-
     Event e;
     e.time = Time::Now() * 1000;
     e.type = EventType::MOUSE_MOVE;

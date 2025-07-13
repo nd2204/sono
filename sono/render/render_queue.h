@@ -2,7 +2,6 @@
 #define SN_RENDER_QUEUE_H
 
 #include "render_command.h"
-#include "render_context.h"
 #include <vector>
 
 class RenderQueue {

@@ -1,5 +1,5 @@
-#ifndef MEMORY_SYSTEM_H
-#define MEMORY_SYSTEM_H
+#ifndef SN_MEMORY_SYSTEM_H
+#define SN_MEMORY_SYSTEM_H
 
 #include "allocator.h"
 #include "allocators/heap.h"
@@ -142,4 +142,4 @@ uintptr_t AlignSize(uintptr_t size, usize align);
 #define SN_DELETE            delete
 #endif
 
-#endif // !MEMORY_SYSTEM_H
+#endif // !SN_MEMORY_SYSTEM_H
