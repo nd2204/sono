@@ -1,6 +1,33 @@
 #include "render_command.h"
 #include "render_system.h"
+#include "shader/shader.h"
+#include <cstring>
 
+BindShaderCommand::BindShaderCommand(RenderPipeline *shader)
+  : m_Pipeline(shader) {}
+
+void BindShaderCommand::Execute(RenderSystem &renderSys) const {
+  renderSys.BindPipeline(m_Pipeline, 0);
+}
+
+// --------------------------------------------------------------------------------
+
+template class SetUniformCommand<Mat4>;
+template class SetUniformCommand<Mat3>;
+template class SetUniformCommand<Vec4>;
+template class SetUniformCommand<Vec3>;
+template class SetUniformCommand<Vec2>;
+template class SetUniformCommand<Color3>;
+template class SetUniformCommand<Color>;
+template class SetUniformCommand<f32>;
+template class SetUniformCommand<i32>;
+
+template <typename T>
+void SetUniformCommand<T>::Execute(RenderSystem &renderSys) const {
+  renderSys.GetCurrentPipeline()->SetUniform(m_Uniform, m_Data);
+}
+
+// --------------------------------------------------------------------------------
 SetViewportCommand::SetViewportCommand(i32 xpos, i32 ypos, i32 width, i32 height)
   : m_PosX(xpos)
   , m_PosY(ypos)
@@ -20,7 +47,7 @@ DrawCommand::DrawCommand(
   , m_Topology(topology) {}
 // --------------------------------------------------------------------------------
 void DrawCommand::Execute(RenderSystem &renderSys) const {
-  renderSys.GetCurrentPipeline()->SetMat4("uModel", m_Transform);
+  renderSys.GetCurrentPipeline()->SetUniform("uModel", m_Transform);
   renderSys.Draw(m_Topology, m_VAO, m_NumVertices);
 }
 // --------------------------------------------------------------------------------
@@ -33,7 +60,7 @@ DrawIndexedCommand::DrawIndexedCommand(
   , m_Topology(topology) {}
 // --------------------------------------------------------------------------------
 void DrawIndexedCommand::Execute(RenderSystem &renderSys) const {
-  renderSys.GetCurrentPipeline()->SetMat4("uModel", m_Transform);
+  renderSys.GetCurrentPipeline()->SetUniform("uModel", m_Transform);
   renderSys.DrawIndexed(m_Topology, m_VAO, m_NumIndex);
 }
 // --------------------------------------------------------------------------------

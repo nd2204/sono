@@ -154,36 +154,38 @@ struct VertexPC {
 };
 
 struct VertexPT {
-  Vec3 position;
-  Vec2 texCoord;
+  f32 x, y, z;
+  f32 u, v;
 
   VertexPT() = default;
 
+  // clang-format off
   VertexPT(f32 x, f32 y, f32 z, f32 u, f32 v)
-    : position(x, y, z)
-    , texCoord(u, v) {}
+    : x(x) , y(y) , z(z) , u(u) , v(v) {}
 
   VertexPT(const Vec3 &pos, const Vec2 &tex)
-    : position(pos)
-    , texCoord(tex) {}
+    : x(pos.x) , y(pos.y) , z(pos.z) , u(tex.x) , v(tex.y) {}
+  // clang-format on
 };
 
 struct VertexPNT {
-  Vec3 position;
-  Vec3 normal;
-  Vec2 texCoord;
+  f32 x, y, z;
+  f32 nx, ny, nz;
+  f32 u, v;
 
   VertexPNT() = default;
 
+  // clang-format off
   VertexPNT(const f32 pos[3], const f32 norm[3], const f32 tex[2])
-    : position(pos[0], pos[1], pos[2])
-    , normal(norm[0], norm[1], norm[2])
-    , texCoord(tex[0], tex[1]) {}
+    : x(pos[0]) , y(pos[1]) , z(pos[2])
+    , nx(norm[0]) , ny(norm[1]) , nz(norm[2])
+    , u(tex[0]) , v(tex[1]) {}
 
   VertexPNT(const Vec3 &pos, const Vec3 norm, const Vec2 tex)
-    : position(pos)
-    , normal(norm)
-    , texCoord(tex) {}
+    : x(pos.x) , y(pos.y) , z(pos.z)
+    , nx(norm.x) , ny(norm.y) , nz(norm.z)
+    , u(tex.x) , v(tex.y) {}
+  // clang-format on
 };
 
 struct VertexPNTT {

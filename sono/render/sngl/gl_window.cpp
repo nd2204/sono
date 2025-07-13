@@ -34,9 +34,13 @@ void GLWindow::Create(i32 width, i32 height, const char *title, WindowMode mode)
     SetWindowMode(mode);
   }
 
+  // if (glfwRawMouseMotionSupported()) {
+  //   glfwSetInputMode(m_Context, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+  // }
+
   SetCursorMode(m_CurrentCursorMode);
 
-  glfwSetWindowUserPointer(this->m_Context, this);
+  glfwSetWindowUserPointer(m_Context, this);
 
   glfwSetFramebufferSizeCallback(m_Context, [](GLFWwindow *window, int width, int height) {
     (void)window;

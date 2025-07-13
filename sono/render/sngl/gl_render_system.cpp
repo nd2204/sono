@@ -6,7 +6,6 @@
 #include "gl_window.h"
 #include "gl_render_system.h"
 
-#include <GL/gl.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 
@@ -53,8 +52,10 @@ RenderWindow *GLRenderSystem::CreateRenderWindow(
 void GLRenderSystem::BeginFrame(const Camera &cam) {
   m_FrameBeginMark = m_Arena.GetMarker();
 
-  m_pActivePipeline->SetMat4("uView", cam.GetViewMatrix());
-  m_pActivePipeline->SetMat4("uProj", cam.GetProjectionMatrix());
+  if (m_pActivePipeline) {
+    m_pActivePipeline->SetUniform("uView", cam.GetViewMatrix());
+    m_pActivePipeline->SetUniform("uProj", cam.GetProjectionMatrix());
+  }
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::EndFrame() {
@@ -121,7 +122,7 @@ void GLRenderSystem::BindTexture(Texture *texture, u32 unit) {
   std::string uniformName = "uTexture" + std::to_string(unit);
   if (m_pActivePipeline) {
     m_pActivePipeline->Bind();
-    m_pActivePipeline->SetInt(uniformName.c_str(), unit);
+    m_pActivePipeline->SetUniform(uniformName.c_str(), (i32)unit);
   }
 }
 // --------------------------------------------------------------------------------

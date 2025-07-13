@@ -6,6 +6,7 @@
 
 #include <sstream>
 #include <GLFW/glfw3.h>
+#include "core/debug/profiler.h"
 
 #define RENDER_FRAME_ALLOC_SIZE (1 * SN_MEM_MIB)
 
@@ -44,7 +45,10 @@ RenderWindow *RenderSystem::CreateRenderWindow(
   return nullptr;
 }
 
-void RenderSystem::Flush() { m_RenderQueue.Flush(*this); }
+void RenderSystem::Flush() {
+  PROFILE_SCOPE("RenderSystem::Flush");
+  m_RenderQueue.Flush(*this);
+}
 
 BufferManager *RenderSystem::GetBufferManager() const { return m_pBufferManager; }
 

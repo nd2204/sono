@@ -42,6 +42,9 @@ public:
   /// @return: the offset in bytes from the buffer to the current stack top.
   Marker GetMarker() const;
 
+  /// @return: the size of the buffer
+  u32 GetSize() const;
+
   /// @brief free the internal buffer, error if the buffer is not heap allocated
   void FreeInternalBuffer();
 

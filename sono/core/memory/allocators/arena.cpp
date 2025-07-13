@@ -46,6 +46,8 @@ ArenaAllocator::~ArenaAllocator() {
 // ------------------------------------------------------------------------------------------
 Marker ArenaAllocator::GetMarker() const { return m_Offset; }
 // ------------------------------------------------------------------------------------------
+u32 ArenaAllocator::GetSize() const { return m_BufSize; }
+// ------------------------------------------------------------------------------------------
 void ArenaAllocator::FreeInternalBuffer() {
   ASSERT(m_IsHeapAlloc);
   SN_FREE(m_Buf);
@@ -66,6 +68,8 @@ void *ArenaAllocator::AllocAlign(usize sizeBytes, u16 align) {
     return ptr;
   }
 
+  LOG_ERROR("Arena overflowed");
+
   return nullptr;
 }
 // ------------------------------------------------------------------------------------------
@@ -75,13 +79,8 @@ void *ArenaAllocator::Alloc(usize sizeBytes) {
 }
 // ------------------------------------------------------------------------------------------
 void ArenaAllocator::FreeToMarker(Marker marker) {
-  uintptr_t buf_ptr = (usize)m_BufSize;
-  uintptr_t current_ptr = (usize)m_BufSize + (usize)m_Offset;
-
-  uintptr_t m = static_cast<uintptr_t>(marker);
-  // Only allow rolling back if marker is inside the range of [buf_ptr,
-  // current_ptr]
-  if (m >= buf_ptr && m <= current_ptr) {
+  // Only allow rolling back if marker is inside the range of [buf_ptr, current_ptr]
+  if (marker <= m_BufSize) {
     m_Offset = marker;
   }
 }

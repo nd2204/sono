@@ -1,9 +1,11 @@
 #ifndef SN_RENDER_OP_H
 #define SN_RENDER_OP_H
 
+#include "shader/shader.h"
 #include "vertex_array.h"
 #include "core/math/mat4.h"
 #include "render/resource/texture.h"
+#include <vector>
 
 class RenderSystem;
 
@@ -13,6 +15,29 @@ class RenderCommand {
 public:
   virtual ~RenderCommand() = default;
   virtual void Execute(RenderSystem &renderSys) const = 0;
+};
+
+class BindShaderCommand : public RenderCommand {
+public:
+  BindShaderCommand(RenderPipeline *shader);
+  void Execute(RenderSystem &renderSys) const;
+
+private:
+  RenderPipeline *m_Pipeline;
+};
+
+template <typename T>
+class SetUniformCommand : public RenderCommand {
+public:
+  SetUniformCommand(const char *uniform, const T &data)
+    : m_Uniform(uniform)
+    , m_Data(data) {}
+
+  void Execute(RenderSystem &renderSys) const override;
+
+private:
+  const char *m_Uniform;
+  const T &m_Data;
 };
 
 class SetViewportCommand : public RenderCommand {

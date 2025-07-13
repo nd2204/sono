@@ -57,7 +57,7 @@ void HandleEvent(const Event &ev) {
       break;
     case EventType::WINDOW_RESIZE: {
       auto &k = std::get<WindowResizeEvent>(ev.payload);
-      g_RenderSys->Submit<SetViewportCommand>(0, 0, k.width, k.height);
+      g_RenderSys->SetViewport(0, 0, k.width, k.height);
       break;
     }
     case EventType::TEXT:
@@ -79,37 +79,25 @@ i32 main(void) {
   g_Window = g_RenderSys->CreateRenderWindow(800, 600, "Hello Sono");
   g_Window->EnableVsync(true);
 
-  f32 vertices[] = {-0.5f, -0.5f, -0.5f, 0.0f, 0.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 0.0f,
-                    0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-                    -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
+  f32 vertices[] = {
+    -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  -0.5f,
+    0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f,
 
-                    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-                    0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-                    -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, -0.5f, -0.5f, 0.5f,  0.0f, 0.0f,
+    -0.5f, -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,
+    0.5f,  0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,
 
-                    -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f,
-                    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
-                    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  0.5f,  1.0f, 0.0f,
+    -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,
 
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-                    0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 0.0f, 1.0f,
-                    0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+    0.5f,  0.5f,  0.5f,  0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f,
+    0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,
 
-                    -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, 0.5f,  -0.5f, -0.5f, 1.0f, 1.0f,
-                    0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, 0.5f,  -0.5f, 0.5f,  1.0f, 0.0f,
-                    -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, -0.5f, -0.5f, -0.5f, 0.0f, 1.0f,
+    -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, 0.5f,
+    0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f,
 
-                    -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, 0.5f,  0.5f,  -0.5f, 1.0f, 1.0f,
-                    0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-                    -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f};
-
-  Vec3 cubePositions[] = {Vec3(0.0f, 0.0f, 0.0f),    Vec3(2.0f, 5.0f, -15.0f),
-                          Vec3(-1.5f, -2.2f, -2.5f), Vec3(-3.8f, -2.0f, -12.3f),
-                          Vec3(2.4f, -0.4f, -3.5f),  Vec3(-1.7f, 3.0f, -7.5f),
-                          Vec3(1.3f, -2.0f, -2.5f),  Vec3(1.5f, 2.0f, -2.5f),
-                          Vec3(1.5f, 0.2f, -1.5f),   Vec3(-1.3f, 1.0f, -1.5f)};
-
-  u32 indices[] = {0, 1, 3, 1, 2, 3};
+    -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,
+    0.5f,  0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f,
+  };
 
   IBuffer *vb = g_BufferMgr->CreateVertexBuffer(
     BufferUsage::STATIC, sizeof(vertices) / sizeof(f32), sizeof(f32), vertices
@@ -117,57 +105,52 @@ i32 main(void) {
 
   VertexLayout layout = {
     {VAS_POSITION, VAT_FLOAT3},
-    {VAS_TEXCOORD, VAT_FLOAT2},
   };
-  VertexArray *vao = g_RenderSys->CreateVertexArray();
-  vao->AddVertexBuffer(vb, layout);
-  // vao->SetIndexBuffer(ib);
 
-  VertexLayout lightLayout = {
-    {VAS_POSITION, VAT_FLOAT3},
-  };
+  VertexArray *cubeVao = g_RenderSys->CreateVertexArray();
+  cubeVao->AddVertexBuffer(vb, layout);
+
   VertexArray *lightVAO = g_RenderSys->CreateVertexArray();
-  lightVAO->AddVertexBuffer(vb, lightLayout);
-  // vao->SetIndexBuffer(ib);
+  lightVAO->AddVertexBuffer(vb, layout);
 
-  Texture *texture, *texture2;
-  {
-    PROFILE_SCOPE("Create Textures");
-    unsigned char *data;
-    int width, height, nrChannels;
+  // Texture *texture, *texture2;
+  // {
+  //   PROFILE_SCOPE("Create Textures");
+  //   unsigned char *data;
+  //   int width, height, nrChannels;
+  //
+  //   stbi_set_flip_vertically_on_load(true);
+  //   data = stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels, 0);
+  //   texture =
+  //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB, width, height);
+  //   texture->Update(data, 0);
+  //   texture->GenerateMipmaps();
+  //   stbi_image_free(data);
+  //
+  //   data = stbi_load("assets/textures/awesomeface.png", &width, &height, &nrChannels, 0);
+  //   texture2 =
+  //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA, TEX_FORMAT_RGBA, width, height);
+  //   texture2->Update(data, 0);
+  //   texture2->GenerateMipmaps();
+  //   stbi_image_free(data);
+  // }
 
-    stbi_set_flip_vertically_on_load(true);
-    data = stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels, 0);
-    texture =
-      g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB, width, height);
-    texture->Update(data, 0);
-    texture->GenerateMipmaps();
-    stbi_image_free(data);
-
-    data = stbi_load("assets/textures/awesomeface.png", &width, &height, &nrChannels, 0);
-    texture2 =
-      g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA, TEX_FORMAT_RGBA, width, height);
-    texture2->Update(data, 0);
-    texture2->GenerateMipmaps();
-    stbi_image_free(data);
-  }
-
-  Shader *vs = g_RenderSys->CreateShader();
-  Shader *fs = g_RenderSys->CreateShader();
-  RenderPipeline *pipeline;
+  RenderPipeline *cubePipeline;
+  RenderPipeline *lightCubePipeline;
   {
     PROFILE_SCOPE("Compile Shaders");
-    vs->CompileFromFile("./assets/shaders/vertex.glsl", ShaderStage::VERTEX);
-    fs->CompileFromFile("./assets/shaders/fragment.glsl", ShaderStage::FRAGMENT);
-    pipeline = g_RenderSys->CreatePipeline(vs, fs);
-    g_RenderSys->BindPipeline(pipeline, 0);
-    g_RenderSys->BindTexture(texture, 0);
-    g_RenderSys->BindTexture(texture2, 1);
-  }
+    Shader *vs = g_RenderSys->CreateShader();
+    Shader *fs = g_RenderSys->CreateShader();
+    vs->CompileFromFile("./assets/shaders/1.colors.vs.glsl", ShaderStage::VERTEX);
+    fs->CompileFromFile("./assets/shaders/1.colors.fs.glsl", ShaderStage::FRAGMENT);
+    cubePipeline = g_RenderSys->CreatePipeline(vs, fs);
 
-  cam.SetPosition(0.0f, 0.0f, 3.0f);
-  cam.LookAt(Vec3::Zero);
-  cam.SetPerspective(Sono::Radians(80.0f), g_Window->GetAspect(), 0.1f, 100.0f);
+    Shader *vs2 = g_RenderSys->CreateShader();
+    Shader *fs2 = g_RenderSys->CreateShader();
+    vs2->CompileFromFile("./assets/shaders/1.light_cube.vs.glsl", ShaderStage::VERTEX);
+    fs2->CompileFromFile("./assets/shaders/1.light_cube.fs.glsl", ShaderStage::FRAGMENT);
+    lightCubePipeline = g_RenderSys->CreatePipeline(vs2, fs2);
+  }
 
   EventDispatcher::Register<MouseMoveEvent>([](const MouseMoveEvent &e) {
     ImGuiIO &io = ImGui::GetIO();
@@ -185,6 +168,18 @@ i32 main(void) {
     cam.Rotate(Vec3(pitchDelta, yawDelta, 0.0f));
   });
 
+  /// ================================================================================
+  /// Render States
+  /// ================================================================================
+  cam.SetPerspective(Sono::Radians(80.0f), g_Window->GetAspect(), 0.1f, 100.0f);
+
+  Vec3 lightPos(1.2f, 1.0f, -2.0f);
+  Color3 cubeColor(255, 128, 79);
+  Color3 lightColor(255, 255, 255);
+
+  /// ================================================================================
+  /// Main Loop
+  /// ================================================================================
   g_RenderSys->InitImGui(g_Window);
   /* Loop until the user closes the window */
   {
@@ -201,24 +196,38 @@ i32 main(void) {
         ProcessInput();
       }
 
+      /* Render here */
       {
-        /* Render here */
         PROFILE_SCOPE("MAIN_LOOP::RENDER::RenderOneFrame");
+
         g_RenderSys->BeginFrame(cam);
         g_RenderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
 
-        Mat4 model;
-        for (int i = 0; i < 10; i++) {
-          model = Mat4::Translation(cubePositions[i]);
-          f32 angle = 20.0f * i;
-          model = Mat4::Rotation(Sono::Radians(angle), Vec3(1.0f, 0.3f, 0.5f)) * model;
-          g_RenderSys->Submit<DrawCommand>(vao, 36, model, PrimitiveType::TRIANGLES);
-          g_RenderSys->Flush();
-        }
+        // g_RenderSys->BindPipeline(cubePipeline, 0);
+        g_RenderSys->Submit<BindShaderCommand>(cubePipeline);
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uObjectColor", cubeColor);
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
+        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
+        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
+        g_RenderSys->Submit<DrawCommand>(cubeVao, 36);
+        // g_RenderSys->Flush();
+
+        // g_RenderSys->BindPipeline(lightCubePipeline, 0);
+        Mat4 lightCubeModel = Mat4::Translation(lightPos);
+        g_RenderSys->Submit<BindShaderCommand>(lightCubePipeline);
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
+        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
+        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
+        g_RenderSys->Submit<DrawCommand>(lightVAO, 36, lightCubeModel);
+        g_RenderSys->Flush();
 
         g_RenderSys->BeginImGuiFrame();
         ImGui::Begin("My Window"); // Start a new window (panel)
         ImGui::Text("FPS: %.0f", Time::GetFPS());
+        ImGui::ColorEdit3("Light Color", lightColor.ValuePtr());
+        ImGui::Text("Light Cube");
+        ImGui::InputFloat3("position", lightPos.ValuePtr());
+        ImGui::ColorEdit3("Cube Color", cubeColor.ValuePtr());
         ImGui::End();
         g_RenderSys->EndImGuiFrame();
 
@@ -229,6 +238,10 @@ i32 main(void) {
       Time::Tick();
     }
   }
+
+  /// ================================================================================
+  /// Cleanup
+  /// ================================================================================
 
   g_RenderSys->ShutdownImGui();
   Sono::Global::GetPtr()->Shutdown();

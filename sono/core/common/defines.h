@@ -1,6 +1,8 @@
 #ifndef SN_DEFINES_H
 #define SN_DEFINES_H
 
+#define SN_TO_STR_LITERAL(x) #x
+
 #define CONCAT_IMPL(x, y) x##y
 
 #define CONCAT(x, y) CONCAT_IMPL(x, y)
