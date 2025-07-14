@@ -138,13 +138,21 @@ std::string &&MemorySystem::GetAllocsReport() {
   return std::move(buffer);
 }
 // --------------------------------------------------------------------------------
-std::string &&MemorySystem::ToHumanReadable(u64 byte) {
-  static std::string buffer;
-  buffer = (byte < SN_MEM_KIB) ? std::to_string(byte) + SN_MEM_B_STR :
-    (byte < SN_MEM_MIB)        ? std::to_string(byte / SN_MEM_KIB) + SN_MEM_KIB_STR :
-    (byte < SN_MEM_GIB)        ? std::to_string(byte / SN_MEM_MIB) + SN_MEM_MIB_STR :
-                                 std::to_string(byte / SN_MEM_GIB) + SN_MEM_GIB_STR;
-  return std::move(buffer);
+std::string MemorySystem::ToHumanReadable(u64 byte) {
+  std::string buffer = ToHumanReadableValueStr(byte);
+  // clang-format off
+  buffer += (byte < SN_MEM_KIB) ? SN_MEM_B_STR :
+            (byte < SN_MEM_MIB) ? SN_MEM_KIB_STR :
+            (byte < SN_MEM_GIB) ? SN_MEM_MIB_STR :
+                                  SN_MEM_GIB_STR;
+  // clang-format on
+  return buffer;
+}
+std::string MemorySystem::ToHumanReadableValueStr(u64 byte) {
+  if (byte < SN_MEM_KIB) return std::to_string(byte);
+  if (byte < SN_MEM_MIB) return std::to_string(byte / SN_MEM_KIB);
+  if (byte < SN_MEM_GIB) return std::to_string(byte / SN_MEM_MIB);
+  return std::to_string(byte / SN_MEM_GIB);
 }
 // --------------------------------------------------------------------------------
 void *SNAlloc(usize sizeBytes, const char *file, const char *func, i32 line, AllocationType type) {

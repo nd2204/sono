@@ -22,7 +22,7 @@ void Camera::LookAt(const Vec3 &target) {
   // so dir point at the opposite direction
   Vec3 dir = (m_Position - target).Normalized();
 
-  m_Rotations.yaw = Sono::Degrees(atan2(-dir.z, dir.x));
+  m_Rotations.yaw = Sono::Degrees(atan2(-dir.z, -dir.x));
   m_Rotations.pitch = std::clamp(Sono::Degrees(asin(-dir.y)), -89.9f, 89.9f);
 
   UpdateView();

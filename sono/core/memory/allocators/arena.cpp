@@ -68,8 +68,6 @@ void *ArenaAllocator::AllocAlign(usize sizeBytes, u16 align) {
     return ptr;
   }
 
-  LOG_ERROR("Arena overflowed");
-
   return nullptr;
 }
 // ------------------------------------------------------------------------------------------

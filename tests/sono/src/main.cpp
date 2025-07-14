@@ -4,11 +4,13 @@
 #include <core/common/logger.h>
 #include <core/math/mat4.h>
 #include <core/math/vec3.h>
+#include <core/math/lerp.h>
 
 #include <core/input/mouse.h>
 #include <core/event/event_dispatcher.h>
 
 #include <render/camera.h>
+#include <render/vertex_type.h>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -76,36 +78,102 @@ i32 main(void) {
   g_InputSys = InputSystem::GetPtr();
   g_BufferMgr = g_RenderSys->GetBufferManager();
 
-  g_Window = g_RenderSys->CreateRenderWindow(800, 600, "Hello Sono");
+  g_Window = g_RenderSys->CreateRenderWindow(1024, 768, "Hello Sono");
   g_Window->EnableVsync(true);
+  //
+  // std::vector<VertexPNT> cubeVertices = {
+  //   // -z face
+  //   VertexPNT({+0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
+  //
+  //   // +z face
+  //   VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({-0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
+  //
+  //   // -x face
+  //   VertexPNT({-0.5f, +0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({-0.5f, +0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({-0.5f, -0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({-0.5f, -0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+  //
+  //   // +x face
+  //   VertexPNT({+0.5f, +0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, +0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, -0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, -0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+  //
+  //   // -y face
+  //   VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
+  //
+  //   // +y face
+  //   VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
+  //   VertexPNT({-0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
+  // };
 
-  f32 vertices[] = {
-    -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  0.5f,  -0.5f,
-    0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f,
+  std::vector<VertexPNT> cubeVertices = {
+    // -z face
+    VertexPNT({+0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
 
-    -0.5f, -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,
-    0.5f,  0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, -0.5f, 0.5f,
+    // +z face
+    VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
 
-    -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,
+    // -x face
+    VertexPNT({-0.5f, +0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, +0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, -0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, -0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, -0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, +0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
 
-    0.5f,  0.5f,  0.5f,  0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f,
-    0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,  0.5f,
+    // +x face
+    VertexPNT({+0.5f, +0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, +0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, -0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, -0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, -0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, +0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
 
-    -0.5f, -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, 0.5f,
-    0.5f,  -0.5f, 0.5f,  -0.5f, -0.5f, 0.5f,  -0.5f, -0.5f, -0.5f,
+    // -y face
+    VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
 
-    -0.5f, 0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  0.5f,
-    0.5f,  0.5f,  0.5f,  -0.5f, 0.5f,  0.5f,  -0.5f, 0.5f,  -0.5f,
+    // +y face
+    VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
+    VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f})
   };
 
   IBuffer *vb = g_BufferMgr->CreateVertexBuffer(
-    BufferUsage::STATIC, sizeof(vertices) / sizeof(f32), sizeof(f32), vertices
+    BufferUsage::STATIC, cubeVertices.size(), sizeof(VertexPNT), cubeVertices.data()
   );
 
-  VertexLayout layout = {
-    {VAS_POSITION, VAT_FLOAT3},
-  };
+  VertexLayout layout = VertexTraits<VertexPNT>::GetLayout();
 
   VertexArray *cubeVao = g_RenderSys->CreateVertexArray();
   cubeVao->AddVertexBuffer(vb, layout);
@@ -176,6 +244,10 @@ i32 main(void) {
   Vec3 lightPos(1.2f, 1.0f, -2.0f);
   Color3 cubeColor(255, 128, 79);
   Color3 lightColor(255, 255, 255);
+  lightPos = Vec3(-1.2, 1.0f, -2.0f);
+
+  Camera lightCube; // NOTE: I didn't have transform class so i used camera instead :)
+  lightCube.SetPosition(lightPos);
 
   /// ================================================================================
   /// Main Loop
@@ -203,17 +275,21 @@ i32 main(void) {
         g_RenderSys->BeginFrame(cam);
         g_RenderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
 
-        // g_RenderSys->BindPipeline(cubePipeline, 0);
+        lightCube.Move(lightCube.GetRight() * Time::DeltaTime() * 5.0f);
+        lightCube.LookAt(Vec3::Zero);
+        lightPos = lightCube.GetPosition();
+        // cam.SetPosition(lightPos + lightCube.GetForward());
+        // cam.LookAt(Vec3::Zero);
+
         g_RenderSys->Submit<BindShaderCommand>(cubePipeline);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLightPos", lightPos);
         g_RenderSys->Submit<SetUniformCommand<Color3>>("uObjectColor", cubeColor);
         g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
         g_RenderSys->Submit<DrawCommand>(cubeVao, 36);
-        // g_RenderSys->Flush();
 
-        // g_RenderSys->BindPipeline(lightCubePipeline, 0);
-        Mat4 lightCubeModel = Mat4::Translation(lightPos);
+        Mat4 lightCubeModel = Mat4::Scale(Vec3(0.5f)) * Mat4::Translation(lightPos);
         g_RenderSys->Submit<BindShaderCommand>(lightCubePipeline);
         g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
@@ -222,12 +298,39 @@ i32 main(void) {
         g_RenderSys->Flush();
 
         g_RenderSys->BeginImGuiFrame();
-        ImGui::Begin("My Window"); // Start a new window (panel)
-        ImGui::Text("FPS: %.0f", Time::GetFPS());
-        ImGui::ColorEdit3("Light Color", lightColor.ValuePtr());
-        ImGui::Text("Light Cube");
-        ImGui::InputFloat3("position", lightPos.ValuePtr());
-        ImGui::ColorEdit3("Cube Color", cubeColor.ValuePtr());
+        if (ImGui::Begin("Debug")) {
+          ImGui::Text("FPS: %.0f", Time::GetFPS());
+          ImGui::Text("Frame Data");
+          const ArenaAllocator &frameAlloc = g_RenderSys->GetFrameAllocator();
+          float progress = (f32)frameAlloc.GetMarker() / frameAlloc.GetSize() * 100;
+          char buf[32];
+          sprintf(
+            buf, "%s/%s", MemorySystem::ToHumanReadable(frameAlloc.GetMarker()).c_str(),
+            MemorySystem::ToHumanReadable(frameAlloc.GetSize()).c_str()
+          );
+          ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), buf);
+          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+          ImGui::Text("Arena usage");
+          ImGui::Spacing();
+
+          // ImGui::ShowStyleEditor();
+          ImGui::Text("Cube");
+          ImGui::ColorEdit3("Cube Color", cubeColor.ValuePtr());
+          ImGui::Text("Light Cube");
+          ImGui::PushID(0);
+          ImGui::DragFloat3("position", lightPos.ValuePtr(), 0.5f);
+          ImGui::PopID();
+          ImGui::ColorEdit3("Light Color", lightColor.ValuePtr());
+          ImGui::Spacing();
+
+          ImGui::Text("Camera");
+          Vec3 newPosition = cam.GetPosition();
+          ImGui::PushID(1);
+          ImGui::DragFloat3("position", newPosition.ValuePtr(), 0.5f);
+          ImGui::PopID();
+          cam.SetPosition(newPosition);
+          ImGui::Spacing();
+        }
         ImGui::End();
         g_RenderSys->EndImGuiFrame();
 

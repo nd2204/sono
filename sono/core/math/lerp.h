@@ -5,15 +5,15 @@
 #include "core/common/time.h"
 #include "core/math/math.h"
 
-#include <functional>
-
 template <typename T>
 class Interpolated {
 public:
-  explicit Interpolated(const T &initial = {}, Sono::TransitionFn fn = Sono::Linear)
+  explicit Interpolated(
+    const T &initial = {}, Sono::TransitionFn fn = Sono::Linear, f32 durationInSec = 1.0f
+  )
     : m_TransitionFn(fn)
     , m_StartTime(Time::Now())
-    , m_Speed(1.0f)
+    , m_Speed(1.0f / durationInSec)
     , m_Start(initial)
     , m_End(m_Start) {}
 
@@ -22,9 +22,10 @@ public:
   T GetValue() const {
     // clang-format off
     f32 t = GetElapsedSecs() * m_Speed;
-    return t >= 1.0f
-      ? m_End
-      : Sono::Lerp<T>(m_Start, m_End, m_TransitionFn(t));
+    if (t >= 1.0f) {
+      return m_End;
+    }
+    return Sono::Lerp<T>(m_Start, m_End, m_TransitionFn(t));
     // clang-format on
   }
 

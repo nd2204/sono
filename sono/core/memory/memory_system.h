@@ -100,8 +100,9 @@ public:
 
   Allocator &GetGlobalAllocator();
 
-private:
-  std::string &&ToHumanReadable(u64 byte);
+public:
+  static std::string ToHumanReadable(u64 byte);
+  static std::string ToHumanReadableValueStr(u64 byte);
 
 private:
   HeapAllocator m_GlobalAllocator;

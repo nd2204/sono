@@ -14,6 +14,7 @@
 #include "render_queue.h"
 #include "render_window.h"
 #include "vertex_array.h"
+#include "vertex_type.h" // IWYU pragma: export
 
 #include <imgui.h>
 
@@ -44,7 +45,11 @@ public:
   template <class Cmd, typename... Args>
   void Submit(Args &&...args) {
     auto *cmd = m_Arena.New<Cmd>(std::forward<Args>(args)...);
-    m_RenderQueue.Submit(cmd);
+    if (cmd) {
+      m_RenderQueue.Submit(cmd);
+      return;
+    }
+    LOG_WARN("cannot allocate memory for command, command unsubmitted");
   };
 
   virtual void SetViewport(i32 posX, i32 posY, i32 width, i32 height) = 0;
@@ -98,6 +103,8 @@ public:
   // ================================================================================
 
   virtual void SetRenderContext(RenderContext *ctx) = 0;
+
+  const ArenaAllocator &GetFrameAllocator() const { return m_Arena; }
 
   RenderContext *GetCurrentContext() { return m_pActiveCtx; };
 

@@ -9,28 +9,28 @@
 
 inline u32 VertexAttribute::GetTypeCount(VertexAttribType type) {
   switch (type) {
-  case VAT_FLOAT:
-  case VAT_INT:
-  case VAT_UINT:
-    return 1;
-  case VAT_FLOAT2:
-  case VAT_INT2:
-  case VAT_UINT2:
-  case VAT_USHORT2_NORM:
-  case VAT_HALF2:
-    return 2;
-  case VAT_FLOAT3:
-  case VAT_INT3:
-  case VAT_UINT3:
-    return 3;
-  case VAT_FLOAT4:
-  case VAT_INT4:
-  case VAT_UINT4:
-  case VAT_BYTE4_NORM:
-  case VAT_BYTE4_SNORM:
-  case VAT_USHORT4_NORM:
-  case VAT_HALF4:
-    return 4;
+    case VAT_FLOAT:
+    case VAT_INT:
+    case VAT_UINT:
+      return 1;
+    case VAT_FLOAT2:
+    case VAT_INT2:
+    case VAT_UINT2:
+    case VAT_USHORT2_NORM:
+    case VAT_HALF2:
+      return 2;
+    case VAT_FLOAT3:
+    case VAT_INT3:
+    case VAT_UINT3:
+      return 3;
+    case VAT_FLOAT4:
+    case VAT_INT4:
+    case VAT_UINT4:
+    case VAT_BYTE4_NORM:
+    case VAT_BYTE4_SNORM:
+    case VAT_USHORT4_NORM:
+    case VAT_HALF4:
+      return 4;
   }
   SN_ASSERT_F(false, "VertexAttribType of %d is unsupported", type);
   return 0;

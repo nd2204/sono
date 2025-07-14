@@ -2,6 +2,7 @@
 #define SN_MATH_H
 
 #include "core/common/types.h"
+#include "core/common/logger.h"
 #include <cmath>
 
 typedef f32 Radian;
@@ -38,13 +39,10 @@ constexpr inline f32 EaseInOutQuad(f32 t) {
 constexpr inline f32 EaseInCubic(f32 t) { return t * t * t; }
 // --------------------------------------------------------------------------------
 /// 1 - (1 - t) * (1 - t) * (1 - t)
-constexpr inline f32 EaseOutCubic(f32 t) {
-  f32 t2 = t * t;
-  return 3.0f * t - 3 * t2 + t2 * t;
-}
+constexpr inline f32 EaseOutCubic(f32 t) { return 3.0f * t - 3.0f * t * t + t * t * t; }
 // --------------------------------------------------------------------------------
 // TODO:
-inline f32 EaseInOutCubic(f32 t) { return t; }
+constexpr inline f32 EaseInOutCubic(f32 t) { return t; }
 // --------------------------------------------------------------------------------
 // TODO:
 constexpr inline f32 EaseInQuart(f32 t) { return t; }
@@ -58,8 +56,8 @@ constexpr inline f32 EaseInOutQuart(f32 t) { return t; }
 // TODO:
 constexpr inline f32 EaseInQuint(f32 t) { return t; }
 // --------------------------------------------------------------------------------
-// TODO:
-constexpr inline f32 EaseOutQuint(f32 t) { return t; }
+/// 1 - (1 - t)^5
+constexpr inline f32 EaseOutQuint(f32 t) { return 1.0f - powf(1.0f - t, 5.0f); }
 // --------------------------------------------------------------------------------
 // TODO:
 constexpr inline f32 EaseInOutQuint(f32 t) { return t; }
@@ -67,8 +65,7 @@ constexpr inline f32 EaseInOutQuint(f32 t) { return t; }
 // TODO:
 constexpr inline f32 EaseInExpo(f32 t) { return t; }
 // --------------------------------------------------------------------------------
-// TODO:
-constexpr inline f32 EaseOutExpo(f32 t) { return t; }
+constexpr inline f32 EaseOutExpo(f32 t) { return t == 1.0f ? 1.0f : 1.0f - powf(2.0f, -10.0f * t); }
 // --------------------------------------------------------------------------------
 // TODO:
 constexpr inline f32 EaseInOutExpo(f32 t) { return t; }

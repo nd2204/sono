@@ -51,6 +51,9 @@ enum LogLevel {
 #define S_LOG_DEBUG(msg) Logger::Log(LOG_LEVEL_DEBUG, (msg).c_str())
 #define S_LOG_TRACE(msg) Logger::LogF(LOG_LEVEL_TRACE, (msg).c_str())
 
+#define SN_WARN_FUNCTION_UNIMPLEMENTED                                                             \
+  LOG_WARN_F("In (%s): FUNCTION %s is unimplemented ", __FILE__, __FUNCTION__)
+
 class Logger {
 public:
   static void Init(const std::string &filename = "") {
@@ -125,35 +128,35 @@ private:
 
   static const char *LogLevelToString(LogLevel level) {
     switch (level) {
-    case LOG_LEVEL_TRACE:
-      return "T";
-    case LOG_LEVEL_INFO:
-      return "I";
-    case LOG_LEVEL_WARNING:
-      return "W";
-    case LOG_LEVEL_ERROR:
-      return "E";
-    case LOG_LEVEL_DEBUG:
-      return "D";
-    default:
-      return "U";
+      case LOG_LEVEL_TRACE:
+        return "T";
+      case LOG_LEVEL_INFO:
+        return "I";
+      case LOG_LEVEL_WARNING:
+        return "W";
+      case LOG_LEVEL_ERROR:
+        return "E";
+      case LOG_LEVEL_DEBUG:
+        return "D";
+      default:
+        return "U";
     }
   }
 
   static std::string GetColor(LogLevel level) {
     switch (level) {
-    case LOG_LEVEL_TRACE:
-      return "\033[0m"; // Default
-    case LOG_LEVEL_INFO:
-      return "\033[34m"; // Blue
-    case LOG_LEVEL_WARNING:
-      return "\033[33m"; // Yellow
-    case LOG_LEVEL_ERROR:
-      return "\033[31m"; // Red
-    case LOG_LEVEL_DEBUG:
-      return "\033[32m"; // Green
-    default:
-      return "\033[0m"; // Default
+      case LOG_LEVEL_TRACE:
+        return "\033[0m"; // Default
+      case LOG_LEVEL_INFO:
+        return "\033[34m"; // Blue
+      case LOG_LEVEL_WARNING:
+        return "\033[33m"; // Yellow
+      case LOG_LEVEL_ERROR:
+        return "\033[31m"; // Red
+      case LOG_LEVEL_DEBUG:
+        return "\033[32m"; // Green
+      default:
+        return "\033[0m"; // Default
     }
   }
 
