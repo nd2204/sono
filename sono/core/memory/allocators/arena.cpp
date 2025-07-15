@@ -11,8 +11,10 @@
 using Marker = ArenaAllocator::Marker;
 
 ArenaAllocator::ArenaAllocator()
-  : m_IsHeapAlloc(false)
-  , m_Buf(nullptr) {}
+  : m_Buf(nullptr)
+  , m_BufSize(0)
+  , m_Offset(0)
+  , m_IsHeapAlloc(false) {}
 // ------------------------------------------------------------------------------------------
 ArenaAllocator::ArenaAllocator(u32 arenaSizeBytes) { AllocateArena(arenaSizeBytes); }
 // ------------------------------------------------------------------------------------------

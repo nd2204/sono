@@ -37,6 +37,7 @@ Allocator &MemorySystem::GetGlobalAllocator() { return m_GlobalAllocator; }
 void MemorySystem::ReportAllocation(
   void *ptr, const char *file, const char *func, usize size, int line, AllocationType type
 ) {
+#ifndef SN_NO_MEMTRACKING
   if (!ptr) return;
 
   std::lock_guard<std::mutex> lock(m_Mutex);
@@ -54,9 +55,11 @@ void MemorySystem::ReportAllocation(
   if (m_CurrentUsage > m_PeakUsage) {
     m_PeakUsage = m_CurrentUsage;
   }
+#endif // !SN_NO_MEMTRACKING
 }
 // --------------------------------------------------------------------------------
 void MemorySystem::ReportDeallocation(void *ptr, const char *file, i32 line) {
+#ifndef SN_NO_MEMTRACKING
   if (!ptr) return;
 
   std::lock_guard<std::mutex> lock(m_Mutex);
@@ -71,12 +74,11 @@ void MemorySystem::ReportDeallocation(void *ptr, const char *file, i32 line) {
   m_CurrentUsage -= it->second.size;
   m_DeallocationCount++;
   m_AllocTracker.erase(it);
+#endif // !SN_NO_MEMTRACKING
 }
 // --------------------------------------------------------------------------------
-std::string &&MemorySystem::GetLeaksReport() {
-  std::lock_guard<std::mutex> lock(m_Mutex);
-
-  static std::string buffer;
+std::string MemorySystem::GetLeaksReport() const {
+#ifndef SN_NO_MEMTRACKING
   std::stringstream oss;
 
   if (!m_AllocTracker.empty()) {
@@ -102,15 +104,16 @@ std::string &&MemorySystem::GetLeaksReport() {
     oss << "\n=== No Leaks Detected ===";
   }
 
-  buffer = oss.str();
-  return std::move(buffer);
+  return oss.str();
+#else
+  return "";
+#endif // !SN_NO_MEMTRACKING
 }
 // --------------------------------------------------------------------------------
-std::string &&MemorySystem::GetAllocsReport() {
-  std::lock_guard<std::mutex> lock(m_Mutex);
-
-  static std::unordered_map<AllocationType, i32> allocTypeSums;
+std::string MemorySystem::GetAllocsReport() const {
+  std::unordered_map<AllocationType, i32> allocTypeSums;
   allocTypeSums.clear();
+
   for (const auto &pair : m_AllocTracker) {
     const AllocationInfo &info = pair.second;
     if (allocTypeSums.find(info.type) != allocTypeSums.end()) {
@@ -120,7 +123,6 @@ std::string &&MemorySystem::GetAllocsReport() {
     }
   }
 
-  static std::string buffer;
   std::stringstream oss;
   oss << "Total allocated: " << ToHumanReadable(m_TotalAllocated) << std::endl;
   oss << "Total freed: " << ToHumanReadable(m_TotalFreed) << std::endl;
@@ -134,8 +136,7 @@ std::string &&MemorySystem::GetAllocsReport() {
   oss << "Deallocation count: " << m_DeallocationCount << std::endl;
   oss << "Active allocations: " << m_AllocTracker.size();
 
-  buffer = oss.str();
-  return std::move(buffer);
+  return oss.str();
 }
 // --------------------------------------------------------------------------------
 std::string MemorySystem::ToHumanReadable(u64 byte) {
@@ -156,19 +157,19 @@ std::string MemorySystem::ToHumanReadableValueStr(u64 byte) {
 }
 // --------------------------------------------------------------------------------
 void *SNAlloc(usize sizeBytes, const char *file, const char *func, i32 line, AllocationType type) {
-#ifndef SN_NDEBUG
   SN_ASSERT(MemorySystem::GetPtr(), "Memory system is not initialized");
-#endif // !SN_NDEBUG
   void *ptr = malloc(sizeBytes);
+#ifndef SN_NO_MEMTRACKING
   MemorySystem::Get().ReportAllocation(ptr, file, func, sizeBytes, line, type);
+#endif // !SN_NO_MEMTRACKING
   return ptr;
 }
 // --------------------------------------------------------------------------------
 void SNFree(void *mem, const char *file, i32 line) {
-#ifndef SN_NDEBUG
   SN_ASSERT(MemorySystem::GetPtr(), "Memory system is not initialized");
-#endif // !SN_NDEBUG
+#ifndef SN_NO_MEMTRACKING
   MemorySystem::Get().ReportDeallocation(mem, file, line);
+#endif // !SN_NO_MEMTRACKING
   free(mem);
 }
 // --------------------------------------------------------------------------------

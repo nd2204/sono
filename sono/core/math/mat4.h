@@ -2,6 +2,7 @@
 #define SN_MAT4_H
 
 #include "core/common/types.h"
+#include "mat3.h"
 #include "mat_base.h"
 #include "vec3.h"
 #include "vec4.h"
@@ -42,10 +43,10 @@ struct Mat4 : public MatBase<4, 4, f32> {
   /// @params axis the axis vector to rotate
   static Mat4 Rotation(Radian angle, const Vec3 &axis);
 
-  /// @brief create a rotation matrix
+  /// @brief create a rotation matrix from euler angles
   /// @params angle angle in radians
   /// @params axis the axis vector to rotate
-  static Mat4 FromEuler(const Vec3 &euler);
+  static Mat4 RotationFromEuler(const Vec3 &euler);
 
   // static Mat4 Rotate(const Quaternion &rotation);
 
@@ -191,6 +192,10 @@ struct Mat4 : public MatBase<4, 4, f32> {
     Mat4 r = *this;
     r *= rhs;
     return r;
+  }
+
+  Mat3 ToMat3() const {
+    return Mat3(n[0][0], n[0][1], n[0][2], n[1][0], n[1][1], n[1][2], n[2][0], n[2][1], n[2][2]);
   }
 
   static const Mat4 Identity;

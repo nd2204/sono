@@ -44,11 +44,18 @@ Mat4 Mat4::Rotation(Radian angle, const Vec3 &axis) {
   return rot;
 }
 // --------------------------------------------------------------------------------
-Mat4 Mat4::FromEuler(const Vec3 &eulerAngle) {
-  ASSERT(false);
-  return Mat4(
-    0.0f
-  );
+Mat4 Mat4::RotationFromEuler(const Vec3 &eulerAngle) {
+  float cx = cosf(eulerAngle.pitch), sx = sinf(eulerAngle.pitch);
+  float cy = cosf(eulerAngle.yaw),   sy = sinf(eulerAngle.yaw);
+  float cz = cosf(eulerAngle.roll),  sz = sinf(eulerAngle.roll);
+
+  // Column-major order
+  return Mat4{
+    cz * cy,  cz * sy * sx - sz * cx,   cz * sy * cx + sz * sx,   0.0f,
+    sz * cy,  sz * sy * sx + cz * cx,   sz * sy * cx - cz * sx,   0.0f,
+    -sy,      cy * sx,                  cy * cx,                  0.0f,
+    0.0f,     0.0f,                     0.0f,                     1.0f
+  };
 }
 // --------------------------------------------------------------------------------
 Mat4 Mat4::Scale(const Vec3 &sv) {

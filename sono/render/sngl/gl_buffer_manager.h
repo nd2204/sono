@@ -15,7 +15,7 @@ public:
   b8 DeleteVertexLayout(VertexLayout *pLayout) override;
 
   IBuffer *CreateVertexBuffer(
-    BufferUsage usage, usize vertCount, usize vertSize, const void *vertices
+    BufferUsage usage, usize vertSize, usize vertCount, const void *vertices
   ) override;
 
   b8 DeleteVertexBuffer(IBuffer *pBuf) override;

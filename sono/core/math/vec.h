@@ -166,6 +166,14 @@ struct Vec : public VecBase<N, T> {
     return result;
   }
   // -----------------------------------------------------------------------------------------
+  bool operator==(const Vec<N, T> &other) const {
+    T *data = ValuePtr();
+    for (int i = 0; i < N; i++) {
+      if (other[i] != data[i]) return false;
+    }
+    return true;
+  }
+  // -----------------------------------------------------------------------------------------
   constexpr T Dot(const Vec<N, T> &rhs) const {
     T result = T{};
     for (int i = 0; i < N; ++i) {
@@ -209,6 +217,24 @@ struct Vec : public VecBase<N, T> {
     ss << std::to_string(ValuePtr()[N - 1]) << "]";
     return ss.str();
   }
+
+  size_t hash() const {
+    size_t hash = 0x811c9dc5;
+    const f32 *p = ValuePtr();
+    for (int i = 0; i < N; i++) {
+      hash = (hash ^ (size_t)p[i]) * 0x01000193;
+    }
+    return hash;
+  }
 };
+
+namespace std {
+
+template <int N, typename T>
+struct hash<Vec<N, T>> {
+  size_t operator()(const Vec<N, T> &v) const { return v.hash(); }
+};
+
+} // namespace std
 
 #endif // !SN_VEC_H

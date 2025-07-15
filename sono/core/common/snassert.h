@@ -16,15 +16,16 @@
 #define ASSERT(expr)                                                                               \
   do {                                                                                             \
     if (!(expr)) {                                                                                 \
-      LOG_F(                                                                                       \
-        "Assertion Failed (at %s:%d):\n"                                                           \
-        "Expression: (" #expr ") -> is null or false",                                             \
-        __FILE__, __LINE__                                                                         \
-      );                                                                                           \
       DEBUG_BREAK();                                                                               \
       assert(expr);                                                                                \
     }                                                                                              \
   } while (0)
+
+#if __cplusplus >= 201103L
+#define STATIC_ASSERT(expr) static_assert(expr);
+#else
+#define STATIC_ASSERT(expr) ASSERT(expr)
+#endif
 
 /*!
  * WARNING: ONLY USE THIS MACRO WITH STRING LITERALS FOR fmt

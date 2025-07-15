@@ -151,7 +151,11 @@ void GLRenderSystem::InitImGui(RenderWindow *window) {
   ImGui::CreateContext();
   ImGui::StyleColorsDark();
 
-  ImVec4 *colors = ImGui::GetStyle().Colors;
+  ImGuiStyle &style = ImGui::GetStyle();
+  style.FrameRounding = 2.0f;
+  style.FrameBorderSize = 1.0f;
+
+  ImVec4 *colors = style.Colors;
   colors[ImGuiCol_Text] = ImVec4(0.92f, 0.86f, 0.70f, 1.00f);
   colors[ImGuiCol_TextDisabled] = ImVec4(0.24f, 0.22f, 0.21f, 1.00f);
   colors[ImGuiCol_WindowBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);

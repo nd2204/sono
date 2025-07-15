@@ -1,7 +1,6 @@
 #include "render_command.h"
 #include "render_system.h"
 #include "shader/shader.h"
-#include <cstring>
 
 BindShaderCommand::BindShaderCommand(RenderPipeline *shader)
   : m_Pipeline(shader) {}

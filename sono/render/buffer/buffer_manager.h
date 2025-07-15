@@ -23,7 +23,7 @@ public:
   virtual b8 DeleteVertexLayout(VertexLayout *pLayout) = 0;
 
   virtual IBuffer *CreateVertexBuffer(
-    BufferUsage usage, usize vertCount, usize vertSize, const void *vertices = nullptr
+    BufferUsage usage, usize vertSize, usize vertCount, const void *vertices = nullptr
   ) = 0;
 
   virtual b8 DeleteVertexBuffer(IBuffer *pBuf) = 0;

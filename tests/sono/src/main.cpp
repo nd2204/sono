@@ -80,106 +80,62 @@ i32 main(void) {
 
   g_Window = g_RenderSys->CreateRenderWindow(1024, 768, "Hello Sono");
   g_Window->EnableVsync(true);
-  //
-  // std::vector<VertexPNT> cubeVertices = {
-  //   // -z face
-  //   VertexPNT({+0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-  //
-  //   // +z face
-  //   VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({-0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-  //
-  //   // -x face
-  //   VertexPNT({-0.5f, +0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({-0.5f, +0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({-0.5f, -0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({-0.5f, -0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-  //
-  //   // +x face
-  //   VertexPNT({+0.5f, +0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, +0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, -0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, -0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-  //
-  //   // -y face
-  //   VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-  //
-  //   // +y face
-  //   VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
-  //   VertexPNT({-0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
-  // };
 
-  std::vector<VertexPNT> cubeVertices = {
+  std::vector<VertexPN> cubeVertices = {
     // -z face
-    VertexPNT({+0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}, {0.0f, 0.0f}),
-
+    VertexPN({-0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
+    VertexPN({+0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
+    VertexPN({+0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
+    VertexPN({-0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
     // +z face
-    VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}, {0.0f, 0.0f}),
-
+    VertexPN({-0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
+    VertexPN({+0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
+    VertexPN({+0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
+    VertexPN({-0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
     // -x face
-    VertexPNT({-0.5f, +0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, +0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, -0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, -0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, -0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, +0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-
+    VertexPN({-0.5f, +0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}),
+    VertexPN({-0.5f, +0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}),
+    VertexPN({-0.5f, -0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}),
+    VertexPN({-0.5f, -0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}),
     // +x face
-    VertexPNT({+0.5f, +0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, +0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, -0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, -0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, -0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, +0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}, {0.0f, 0.0f}),
-
+    VertexPN({+0.5f, +0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}),
+    VertexPN({+0.5f, +0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}),
+    VertexPN({+0.5f, -0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}),
+    VertexPN({+0.5f, -0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}),
     // -y face
-    VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}, {0.0f, 0.0f}),
-
+    VertexPN({-0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}),
+    VertexPN({+0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}),
+    VertexPN({+0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}),
+    VertexPN({-0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}),
     // +y face
-    VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({+0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f}),
-    VertexPNT({-0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}, {0.0f, 0.0f})
+    VertexPN({-0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}),
+    VertexPN({+0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}),
+    VertexPN({+0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}),
+    VertexPN({-0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}),
+  };
+
+  std::vector<u16> cubeIndices = {
+    0,  1,  2,  2,  3,  0,  4,  5,  6,  6,  7,  4,  8,  9,  10, 10, 11, 8,
+    12, 13, 14, 14, 15, 12, 16, 17, 18, 18, 19, 16, 20, 21, 22, 22, 23, 20,
   };
 
   IBuffer *vb = g_BufferMgr->CreateVertexBuffer(
-    BufferUsage::STATIC, cubeVertices.size(), sizeof(VertexPNT), cubeVertices.data()
+    BufferUsage::STATIC, sizeof(VertexPN), cubeVertices.size(), cubeVertices.data()
   );
 
-  VertexLayout layout = VertexTraits<VertexPNT>::GetLayout();
+  IBuffer *ib = g_BufferMgr->CreateIndexBuffer(
+    BufferUsage::STATIC, INDEX_TYPE_U16, cubeIndices.size(), cubeIndices.data()
+  );
 
-  VertexArray *cubeVao = g_RenderSys->CreateVertexArray();
-  cubeVao->AddVertexBuffer(vb, layout);
+  VertexLayout layout = VertexTraits<VertexPN>::GetLayout();
+
+  VertexArray *cubeVAO = g_RenderSys->CreateVertexArray();
+  cubeVAO->AddVertexBuffer(vb, layout);
+  cubeVAO->SetIndexBuffer(ib);
 
   VertexArray *lightVAO = g_RenderSys->CreateVertexArray();
   lightVAO->AddVertexBuffer(vb, layout);
+  lightVAO->SetIndexBuffer(ib);
 
   // Texture *texture, *texture2;
   // {
@@ -283,18 +239,21 @@ i32 main(void) {
 
         g_RenderSys->Submit<BindShaderCommand>(cubePipeline);
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLightPos", lightPos);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uViewPos", cam.GetPosition());
         g_RenderSys->Submit<SetUniformCommand<Color3>>("uObjectColor", cubeColor);
         g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
-        g_RenderSys->Submit<DrawCommand>(cubeVao, 36);
+        // g_RenderSys->Submit<DrawCommand>(cubeVao, 36);
+        g_RenderSys->Submit<DrawIndexedCommand>(cubeVAO, cubeIndices.size());
 
         Mat4 lightCubeModel = Mat4::Scale(Vec3(0.5f)) * Mat4::Translation(lightPos);
         g_RenderSys->Submit<BindShaderCommand>(lightCubePipeline);
         g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
-        g_RenderSys->Submit<DrawCommand>(lightVAO, 36, lightCubeModel);
+        // g_RenderSys->Submit<DrawCommand>(lightVAO, 36, lightCubeModel);
+        g_RenderSys->Submit<DrawIndexedCommand>(lightVAO, cubeIndices.size(), lightCubeModel);
         g_RenderSys->Flush();
 
         g_RenderSys->BeginImGuiFrame();

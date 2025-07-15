@@ -5,6 +5,7 @@ void *HeapAllocator::Alloc(usize sizeInBytes) { return SN_ALLOC(sizeInBytes, ALL
 
 void *HeapAllocator::AllocAlign(usize sizeInBytes, u16 align) {
   SN_ASSERT(false, "HeapAllocator::AllocAlign Not implemented");
+  (void)align;
   return nullptr;
 }
 

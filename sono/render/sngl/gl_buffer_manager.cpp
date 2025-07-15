@@ -37,7 +37,7 @@ b8 GLBufferManager::DeleteVertexLayout(VertexLayout *pLayout) {
 }
 
 IBuffer *GLBufferManager::CreateVertexBuffer(
-  BufferUsage usage, usize vertCount, usize vertSize, const void *vertices
+  BufferUsage usage, usize vertSize, usize vertCount, const void *vertices
 ) {
   IBuffer *buffer = SN_NEW(ALLOC_TYPE_RENDER_SYSTEM) GLVertexBuffer(usage, vertSize, vertCount);
   if (vertices) {

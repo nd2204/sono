@@ -51,6 +51,23 @@ struct VertexPT {
   // clang-format on
 };
 
+struct VertexPN {
+  Vec3 position;
+  Vec3 normal;
+
+  VertexPN() = default;
+
+  // clang-format off
+  VertexPN(const f32 pos[3], const f32 norm[3])
+    : position(pos[0], pos[1], pos[2])
+    , normal(norm[0],norm[1], norm[2]) {}
+
+  VertexPN(const Vec3 &pos, const Vec3 norm)
+    : position(pos)
+    , normal(norm) {}
+  // clang-format on
+};
+
 struct VertexPNT {
   Vec3 position;
   Vec3 normal;
@@ -94,6 +111,16 @@ struct VertexTraits<VertexP> {
   }
 };
 
+// clang-format off
+template <>
+struct VertexTraits<VertexPN> {
+  static VertexLayout GetLayout() {
+    return VertexLayout()
+      .Push(VAS_POSITION, VAT_FLOAT3)
+      .Push(VAS_NORMAL, VAT_FLOAT3);
+  }
+};
+
 template <>
 struct VertexTraits<VertexPC> {
   static VertexLayout GetLayout() {
@@ -132,5 +159,20 @@ struct VertexTraits<VertexPNTT> {
       .Push(VAS_TANGENT, VAT_FLOAT4);
   }
 };
+
+namespace std {
+
+template <>
+struct hash<VertexPNT> {
+  size_t operator()(const VertexPNT &v) const {
+    size_t h1 = hash<Vec3>()(v.position);
+    size_t h2 = hash<Vec3>()(v.normal);
+    size_t h3 = hash<Vec2>()(v.texCoords);
+    return h1 ^ (h2 << 1) ^ (h3 << 2);
+  }
+};
+
+}
+
 
 #endif // !SN_VERTEX_TYPE_H

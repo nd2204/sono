@@ -74,6 +74,7 @@ public:
   template <typename T, typename... Args>
   void AddSinks(Args &&...args) {
     T *sink = m_SessionAlloc.New<T>(std::forward<Args>(args)...);
+    ASSERT(sink && "Can not allocate memory for sink");
     m_Sinks.push_back(sink);
   }
 

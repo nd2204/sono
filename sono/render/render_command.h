@@ -4,8 +4,6 @@
 #include "shader/shader.h"
 #include "vertex_array.h"
 #include "core/math/mat4.h"
-#include "render/resource/texture.h"
-#include <vector>
 
 class RenderSystem;
 
