@@ -1,3 +1,4 @@
+#include "core/math/math.h"
 #include "imgui.h"
 #include <core/global.h>
 #include <core/common/time.h>
@@ -165,14 +166,14 @@ i32 main(void) {
     PROFILE_SCOPE("Compile Shaders");
     Shader *vs = g_RenderSys->CreateShader();
     Shader *fs = g_RenderSys->CreateShader();
-    vs->CompileFromFile("./assets/shaders/1.colors.vs.glsl", ShaderStage::VERTEX);
-    fs->CompileFromFile("./assets/shaders/1.colors.fs.glsl", ShaderStage::FRAGMENT);
+    vs->CompileFromFile("./assets/shaders/colors.vs.glsl", ShaderStage::VERTEX);
+    fs->CompileFromFile("./assets/shaders/colors.fs.glsl", ShaderStage::FRAGMENT);
     cubePipeline = g_RenderSys->CreatePipeline(vs, fs);
 
     Shader *vs2 = g_RenderSys->CreateShader();
     Shader *fs2 = g_RenderSys->CreateShader();
-    vs2->CompileFromFile("./assets/shaders/1.light_cube.vs.glsl", ShaderStage::VERTEX);
-    fs2->CompileFromFile("./assets/shaders/1.light_cube.fs.glsl", ShaderStage::FRAGMENT);
+    vs2->CompileFromFile("./assets/shaders/light_cube.vs.glsl", ShaderStage::VERTEX);
+    fs2->CompileFromFile("./assets/shaders/light_cube.fs.glsl", ShaderStage::FRAGMENT);
     lightCubePipeline = g_RenderSys->CreatePipeline(vs2, fs2);
   }
 
@@ -205,6 +206,8 @@ i32 main(void) {
   Camera lightCube; // NOTE: I didn't have transform class so i used camera instead :)
   lightCube.SetPosition(lightPos);
 
+  Interpolated<Vec3> cubePos(Vec3(0, 0, 0));
+
   /// ================================================================================
   /// Main Loop
   /// ================================================================================
@@ -229,7 +232,7 @@ i32 main(void) {
         PROFILE_SCOPE("MAIN_LOOP::RENDER::RenderOneFrame");
 
         g_RenderSys->BeginFrame(cam);
-        g_RenderSys->Submit<ClearCommand>(Vec4(0.07f, 0.07f, 0.07f, 1.0f));
+        g_RenderSys->Submit<ClearCommand>(Color3(20, 20, 20));
 
         lightCube.Move(lightCube.GetRight() * Time::DeltaTime() * 5.0f);
         lightCube.LookAt(Vec3::Zero);
@@ -237,15 +240,28 @@ i32 main(void) {
         // cam.SetPosition(lightPos + lightCube.GetForward());
         // cam.LookAt(Vec3::Zero);
 
+        Mat4 cubeModel =
+          Mat4::Rotation(Sono::Radians(Time::TotalTime() * 40.0f), Vec3::Up + Vec3::Left)
+          * Mat4::Translation(cubePos);
+        Vec3 cubeDiffuse = cubeColor * Vec3(0.5f);
+        Vec3 cubeAmbient = cubeDiffuse * Vec3(0.2f);
+
         g_RenderSys->Submit<BindShaderCommand>(cubePipeline);
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLightPos", lightPos);
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uViewPos", cam.GetPosition());
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uObjectColor", cubeColor);
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.ambient", cubeAmbient);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.diffuse", cubeDiffuse);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.specular", Vec3(0.5f));
+        g_RenderSys->Submit<SetUniformCommand<f32>>("uMaterial.shininess", 32.0f);
+
+        Vec3 lightDiffuse = lightColor * Vec3(0.5f);
+        Vec3 lightAmbient = lightDiffuse * Vec3(0.2f);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.position", lightPos);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.ambient", lightAmbient);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.diffuse", lightDiffuse);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.specular", lightColor);
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
         // g_RenderSys->Submit<DrawCommand>(cubeVao, 36);
-        g_RenderSys->Submit<DrawIndexedCommand>(cubeVAO, cubeIndices.size());
+        g_RenderSys->Submit<DrawIndexedCommand>(cubeVAO, cubeIndices.size(), cubeModel);
 
         Mat4 lightCubeModel = Mat4::Scale(Vec3(0.5f)) * Mat4::Translation(lightPos);
         g_RenderSys->Submit<BindShaderCommand>(lightCubePipeline);
@@ -263,9 +279,11 @@ i32 main(void) {
           const ArenaAllocator &frameAlloc = g_RenderSys->GetFrameAllocator();
           float progress = (f32)frameAlloc.GetMarker() / frameAlloc.GetSize() * 100;
           char buf[32];
-          sprintf(
-            buf, "%s/%s", MemorySystem::ToHumanReadable(frameAlloc.GetMarker()).c_str(),
-            MemorySystem::ToHumanReadable(frameAlloc.GetSize()).c_str()
+          std::string frameAllocOffsetStr = MemorySystem::ToHumanReadable(frameAlloc.GetMarker());
+          std::string frameAllocSizeStr = MemorySystem::ToHumanReadable(frameAlloc.GetSize());
+          snprintf(
+            buf, frameAllocSizeStr.size() + frameAllocOffsetStr.size() + 1, "%s/%s",
+            frameAllocOffsetStr.c_str(), frameAllocSizeStr.c_str()
           );
           ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), buf);
           ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);

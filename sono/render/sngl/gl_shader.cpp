@@ -209,7 +209,7 @@ void GLRenderPipeline::SetUniform(const char *uniform, i32 v) const {
   glUniform1i(glGetUniformLocation(this->m_ID, uniform), v);
 }
 // // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const Mat4 &mat4) const {
+void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<4, 4, f32> &mat4) const {
   ASSERT_CURRENT_PROGRAM(this);
   glUniformMatrix4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4.ValuePtr());
 }

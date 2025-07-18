@@ -1,6 +1,8 @@
 #ifndef SN_RENDER_OP_H
 #define SN_RENDER_OP_H
 
+#include "core/common/logger.h"
+#include "render/colors.h"
 #include "shader/shader.h"
 #include "vertex_array.h"
 #include "core/math/mat4.h"
@@ -35,7 +37,7 @@ public:
 
 private:
   const char *m_Uniform;
-  const T &m_Data;
+  T m_Data;
 };
 
 class SetViewportCommand : public RenderCommand {
@@ -79,7 +81,7 @@ private:
 
 class ClearCommand : public RenderCommand {
 public:
-  ClearCommand(const Vec4 &color = Vec4(0.0f));
+  ClearCommand(const Color &color = Color(0.0f));
   void Execute(RenderSystem &renderSys) const override;
 
 private:

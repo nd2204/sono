@@ -63,7 +63,7 @@ void DrawIndexedCommand::Execute(RenderSystem &renderSys) const {
   renderSys.DrawIndexed(m_Topology, m_VAO, m_NumIndex);
 }
 // --------------------------------------------------------------------------------
-ClearCommand::ClearCommand(const Vec4 &color)
+ClearCommand::ClearCommand(const Color &color)
   : m_Color(color) {}
 // --------------------------------------------------------------------------------
 void ClearCommand::Execute(RenderSystem &renderSys) const { renderSys.Clear(m_Color); }

@@ -20,4 +20,16 @@
 #define DEFINE_STRING_CONSTANTS(NAME, FOREACH_MACRO)                                               \
   const char *NAME[] = {FOREACH_MACRO(GENERATE_STRING)}
 
+#define BITVAL(n) (1 << ((n - 1) % sizeof(void *) * 8))
+
+#define BIT_ON(x, n) ((x) & BITVAL(n))
+
+#define ENABLE_BIT(x, n) (x) |= BITVAL(n)
+
+#define DISABLE_BIT(x, n) (x) &= ~BITVAL(n)
+
+#define TOGGLE_BIT(x, n) (x) ^= BITVAL(n)
+
+#define SET_BIT(x, n, v) (x) |= (BITVAL(n) * (v % 2)) & (BITVAL(n) * (v % 2))
+
 #endif // !SN_DEFINES_H

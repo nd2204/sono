@@ -18,6 +18,9 @@ public:
 
   // clang-format on
 
+  explicit Color(f32 r, f32 g, f32 b, f32 a)
+    : Vec<4, f32>(r, g, b, a) {}
+
   explicit Color(u8 r, u8 g, u8 b, u8 a)
     : Vec<4, f32>(r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f) {}
 
@@ -96,6 +99,8 @@ public:
     g = ((rgba >> 16) & 255) / 255.0f;
     b = ((rgba >> 8) & 255) / 255.0f;
   }
+
+  operator Color() const { return Color(r, g, b, 1.0f); }
 };
 
 #endif // !SN_COLORS_H

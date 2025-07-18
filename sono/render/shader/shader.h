@@ -55,7 +55,7 @@ public:
   virtual void SetUniform(const char *uniform, f32 v) const = 0;
   virtual void SetUniform(const char *uniform, i32 v) const = 0;
 
-  virtual void SetUniform(const char *uniform, const Mat4 &mat4) const = 0;
+  virtual void SetUniform(const char *uniform, const MatBase<4, 4, f32> &mat4) const = 0;
   virtual void SetUniform(const char *uniform, const MatBase<4, 3, f32> &mat4x3) const = 0;
   virtual void SetUniform(const char *uniform, const MatBase<4, 2, f32> &mat4x2) const = 0;
 

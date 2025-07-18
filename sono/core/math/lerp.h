@@ -31,6 +31,11 @@ public:
 
   void SetDuration(f32 durationInSec) { m_Speed = 1.0f / durationInSec; }
 
+  void SetStart(T const &startVal) {
+    m_Start = startVal;
+    m_StartTime = Time::Now();
+  }
+
   void SetEnd(T const &endVal) {
     m_Start = GetValue();
     m_End = endVal;
