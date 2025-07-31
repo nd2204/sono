@@ -157,17 +157,21 @@ std::string MemorySystem::ToHumanReadableValueStr(u64 byte) {
 }
 // --------------------------------------------------------------------------------
 void *SNAlloc(usize sizeBytes, const char *file, const char *func, i32 line, AllocationType type) {
-  SN_ASSERT(MemorySystem::GetPtr(), "Memory system is not initialized");
   void *ptr = malloc(sizeBytes);
 #ifndef SN_NO_MEMTRACKING
-  MemorySystem::Get().ReportAllocation(ptr, file, func, sizeBytes, line, type);
+  MemorySystem *pMemSys = MemorySystem::GetPtr();
+  if (!pMemSys) {
+    LOG_WARN("'Untracked Allocation' - Using SNAlloc before memory system initialization");
+  } else {
+    pMemSys->ReportAllocation(ptr, file, func, sizeBytes, line, type);
+  }
 #endif // !SN_NO_MEMTRACKING
   return ptr;
 }
 // --------------------------------------------------------------------------------
 void SNFree(void *mem, const char *file, i32 line) {
-  SN_ASSERT(MemorySystem::GetPtr(), "Memory system is not initialized");
 #ifndef SN_NO_MEMTRACKING
+  SN_ASSERT(MemorySystem::GetPtr(), "Memory system is not initialized");
   MemorySystem::Get().ReportDeallocation(mem, file, line);
 #endif // !SN_NO_MEMTRACKING
   free(mem);

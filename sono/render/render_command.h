@@ -1,7 +1,6 @@
 #ifndef SN_RENDER_OP_H
 #define SN_RENDER_OP_H
 
-#include "core/common/logger.h"
 #include "render/colors.h"
 #include "shader/shader.h"
 #include "vertex_array.h"
@@ -9,7 +8,15 @@
 
 class RenderSystem;
 
-enum class PrimitiveType { TRIANGLES, TRIANGLE_STRIPS, TRIANGLE_FAN, LINES, LINE_STRIPS, POINTS };
+enum class PrimitiveType {
+  TRIANGLES,
+  TRIANGLE_STRIPS,
+  TRIANGLE_FAN,
+  LINES,
+  LINE_STRIPS,
+  LINE_LOOPS,
+  POINTS
+};
 
 class RenderCommand {
 public:
@@ -52,14 +59,15 @@ private:
 class DrawCommand : public RenderCommand {
 public:
   DrawCommand(
-    const VertexArray *va, u32 vertCount, const Mat4 &model = Mat4::Identity,
-    PrimitiveType topology = PrimitiveType::TRIANGLES
+    const VertexArray *va, u32 offset, u32 vertCount,
+    PrimitiveType topology = PrimitiveType::TRIANGLES, const Mat4 &model = Mat4::Identity
   );
   void Execute(RenderSystem &renderSys) const override;
 
 private:
   const VertexArray *m_VAO;
   const Mat4 &m_Transform;
+  u32 m_VertOffset;
   u32 m_NumVertices;
   PrimitiveType m_Topology;
 };
@@ -67,7 +75,7 @@ private:
 class DrawIndexedCommand : public RenderCommand {
 public:
   DrawIndexedCommand(
-    const VertexArray *va, u32 idxCount, const Mat4 &model = Mat4::Identity,
+    const VertexArray *va, u32 idxOffset, u32 idxCount, const Mat4 &model = Mat4::Identity,
     PrimitiveType topology = PrimitiveType::TRIANGLES
   );
   void Execute(RenderSystem &renderSys) const override;
@@ -75,6 +83,7 @@ public:
 private:
   const VertexArray *m_VAO;
   const Mat4 &m_Transform;
+  u32 m_IndexOffset;
   u32 m_NumIndex;
   PrimitiveType m_Topology;
 };

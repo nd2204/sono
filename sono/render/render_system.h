@@ -54,9 +54,13 @@ public:
 
   virtual void SetViewport(i32 posX, i32 posY, i32 width, i32 height) = 0;
 
-  virtual void Draw(PrimitiveType topology, const VertexArray *va, u32 maxVertCount) = 0;
+  virtual void Draw(
+    PrimitiveType topology, const VertexArray *va, u32 offset, u32 maxVertCount
+  ) = 0;
 
-  virtual void DrawIndexed(PrimitiveType topology, const VertexArray *va, u32 idxCount) = 0;
+  virtual void DrawIndexed(
+    PrimitiveType topology, const VertexArray *va, u32 idxOffset, u32 idxCount
+  ) = 0;
 
   virtual void Clear(const Vec4 &color) = 0;
 
@@ -66,7 +70,7 @@ public:
   // Pipeline management
   // ================================================================================
 
-  virtual Shader *CreateShader(const ShaderDesc *desc = nullptr) = 0;
+  virtual Shader *CreateShader(const ShaderDesc &desc) = 0;
 
   virtual VertexArray *CreateVertexArray() = 0;
 
@@ -76,7 +80,9 @@ public:
     TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
   ) = 0;
 
-  virtual RenderPipeline *CreatePipeline(Shader *vs, Shader *fs) = 0;
+  virtual RenderPipeline *CreateDefaultPipeline() = 0;
+
+  virtual RenderPipeline *CreatePipeline(const PipelineDesc &desc) = 0;
 
   virtual void BindTexture(Texture *texture, u32 unit) = 0;
 

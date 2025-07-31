@@ -7,8 +7,8 @@
 template <int N, typename T>
 struct VecBase {
   T data[N];
-  T *ValuePtr() { return data; }
-  const T *ValuePtr() const { return data; }
+  T *ValuePtr() { return &data[0]; }
+  const T *ValuePtr() const { return &data[0]; }
 
   // Default constructor for Vec struct
   VecBase() {}

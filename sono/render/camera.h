@@ -17,34 +17,26 @@ public:
   void LookAt(const Vec3 &pos);
 
   void SetPosition(f32 xpos, f32 ypos, f32 zpos);
-
   void SetPosition(const Vec3 &newPos);
 
   void Rotate(const Vec3 &euler);
-
   void SetEulerAngles(f32 yaw, f32 pitch, f32 roll);
-
   void SetEulerAngles(const Vec3 &euler);
-
-  const Vec3 &GetEulerAngles() const;
 
   void Move(const Vec3 &v);
 
   void SetPerspective(Radian fov, f32 aspect, f32 zNear, f32 zFar);
-
   void SetOrthogonal();
 
-  const Vec3 &GetForward() const;
-
-  const Vec3 &GetRight() const;
-
-  const Vec3 &GetUp() const;
-
-  const Vec3 &GetPosition() const;
-
-  const Mat4 &GetViewMatrix() const;
-
-  const Mat4 &GetProjectionMatrix() const;
+  // --------------------------------------------------------------------------------
+  inline const Vec3 &GetForward() const { return m_Forward; }
+  inline const Vec3 &GetRight() const { return m_Right; }
+  inline const Vec3 &GetUp() const { return m_Up; }
+  inline const Vec3 &GetEulerAngles() const { return m_Rotations; }
+  inline const Vec3 &GetPosition() const { return m_Position; }
+  inline Vec3 &GetPosition() { return m_Position; }
+  inline const Mat4 &GetViewMatrix() const { return m_ViewMatrix; }
+  inline const Mat4 &GetProjectionMatrix() const { return m_ProjectionMatrix; }
 
 private:
   void UpdateView();

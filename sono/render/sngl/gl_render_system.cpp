@@ -4,12 +4,30 @@
 #include "gl_texture.h"
 #include "gl_vertex_array.h"
 #include "gl_window.h"
+#include "render/shader/shader.h"
 #include "gl_render_system.h"
+#include "gl_commmon.h"
 
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 
 #include <string>
+
+const std::string kDefaultVertexShader = // force clang-format
+  "#version 330 core"
+  "layout (location = 0) in vec3 aPos;"
+  "uniform mat4 uModel;"
+  "uniform mat4 uView;"
+  "uniform mat4 uProj;"
+  "void main() {"
+  "  gl_Position = uProj * uView * uModel * vec4(aPos, 1.0);"
+  "}";
+
+const std::string kDefaultFragmentShader = "#version 330 core"
+                                           "out vec4 FragColor;"
+                                           "void main() {"
+                                           "  FragColor = vec4(1.0f);"
+                                           "}";
 
 GLRenderSystem::GLRenderSystem()
   : RenderSystem() {}
@@ -71,28 +89,34 @@ void GLRenderSystem::SetViewport(i32 posX, i32 posY, i32 width, i32 height) {
   glViewport(posX, posY, width, height);
 }
 // --------------------------------------------------------------------------------
-void GLRenderSystem::Draw(PrimitiveType topology, const VertexArray *va, u32 maxVertCount) {
+void GLRenderSystem::Draw(
+  PrimitiveType topology, const VertexArray *va, u32 offset, u32 maxVertCount
+) {
   const GLVertexArray *vao = reinterpret_cast<const GLVertexArray *>(va);
   i32 numBuffers = vao->GetVertexBuffers().size();
   va->Bind();
   for (int i = 0; i < numBuffers; i++) {
-    glDrawArrays(ConvertPrimitiveType(topology), 0, maxVertCount);
+    glDrawArrays(ConvertPrimitiveType(topology), offset, maxVertCount);
+    GL_CHECK_ERROR();
   }
 }
 // --------------------------------------------------------------------------------
-void GLRenderSystem::DrawIndexed(PrimitiveType topology, const VertexArray *va, u32 idxCount) {
+void GLRenderSystem::DrawIndexed(
+  PrimitiveType topology, const VertexArray *va, u32 idxOffset, u32 idxCount
+) {
   const GLVertexArray *vao = reinterpret_cast<const GLVertexArray *>(va);
   const GLIndexBuffer *ib = vao->GetCurrentIndexBuffer();
   va->Bind();
   glDrawElements(
     ConvertPrimitiveType(topology), idxCount, GLIndexBuffer::ConvertIndexType(ib->GetIndexType()),
-    reinterpret_cast<void *>(0)
+    reinterpret_cast<void *>(idxOffset)
   );
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Clear(const Vec4 &c) {
   glClearColor(c.r, c.g, c.b, c.a);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  GL_CHECK_ERROR();
 }
 
 // ================================================================================
@@ -105,7 +129,7 @@ void GLRenderSystem::BindVertexArray(VertexArray *va) {
   return reinterpret_cast<GLVertexArray *>(va)->Bind();
 }
 // --------------------------------------------------------------------------------
-Shader *GLRenderSystem::CreateShader(const ShaderDesc *desc) { return m_Arena.New<GLShader>(desc); }
+Shader *GLRenderSystem::CreateShader(const ShaderDesc &desc) { return m_Arena.New<GLShader>(desc); }
 // --------------------------------------------------------------------------------
 Texture *GLRenderSystem::CreateTexture(
   TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
@@ -113,8 +137,24 @@ Texture *GLRenderSystem::CreateTexture(
   return m_Arena.New<GLTexture>(type, internalFmt, fmt, width, height);
 }
 // --------------------------------------------------------------------------------
-RenderPipeline *GLRenderSystem::CreatePipeline(Shader *vs, Shader *fs) {
-  return m_Arena.New<GLRenderPipeline>(vs, fs);
+RenderPipeline *GLRenderSystem::CreateDefaultPipeline() {
+  // clang-format off
+  PipelineDesc desc = {
+    .vertex = CreateShader({
+      .src = kDefaultVertexShader,
+      .stage = ShaderStage::VERTEX,
+    }),
+    .fragment = CreateShader({
+      .src = kDefaultFragmentShader,
+      .stage = ShaderStage::FRAGMENT
+    })
+  };
+  // clang-format on
+  return m_Arena.New<GLRenderPipeline>(desc);
+}
+// --------------------------------------------------------------------------------
+RenderPipeline *GLRenderSystem::CreatePipeline(const PipelineDesc &desc) {
+  return m_Arena.New<GLRenderPipeline>(desc);
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::BindTexture(Texture *texture, u32 unit) {
@@ -249,12 +289,13 @@ void GLRenderSystem::SetRenderContext(RenderContext *ctx) { m_pActiveCtx = ctx; 
 
 GLenum GLRenderSystem::ConvertPrimitiveType(PrimitiveType type) {
   switch (type) {
-    case PrimitiveType::TRIANGLES:         return GL_TRIANGLES;
-    case PrimitiveType::TRIANGLE_STRIPS:   return GL_TRIANGLE_STRIP;
-    case PrimitiveType::TRIANGLE_FAN:      return GL_TRIANGLE_FAN;
-    case PrimitiveType::LINES:             return GL_LINE;
-    case PrimitiveType::LINE_STRIPS:       return GL_LINE_STRIP;
-    case PrimitiveType::POINTS:            return GL_POINT;
+    case PrimitiveType::POINTS:           return GL_POINTS;
+    case PrimitiveType::LINES:            return GL_LINES;
+    case PrimitiveType::LINE_LOOPS:       return GL_LINE_LOOP;
+    case PrimitiveType::LINE_STRIPS:      return GL_LINE_STRIP;
+    case PrimitiveType::TRIANGLES:        return GL_TRIANGLES;
+    case PrimitiveType::TRIANGLE_STRIPS:  return GL_TRIANGLE_STRIP;
+    case PrimitiveType::TRIANGLE_FAN:     return GL_TRIANGLE_FAN;
   }
   ASSERT(false);
   return 0;

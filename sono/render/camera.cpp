@@ -78,20 +78,6 @@ void Camera::SetOrthogonal() {
   // m_ProjectionMatrix = Mat4::Ortho();
 }
 // --------------------------------------------------------------------------------
-const Vec3 &Camera::GetForward() const { return m_Forward; }
-// --------------------------------------------------------------------------------
-const Vec3 &Camera::GetRight() const { return m_Right; }
-// --------------------------------------------------------------------------------
-const Vec3 &Camera::GetUp() const { return m_Up; }
-// --------------------------------------------------------------------------------
-const Vec3 &Camera::GetEulerAngles() const { return m_Rotations; }
-// --------------------------------------------------------------------------------
-const Vec3 &Camera::GetPosition() const { return m_Position; }
-// --------------------------------------------------------------------------------
-const Mat4 &Camera::GetViewMatrix() const { return m_ViewMatrix; }
-// --------------------------------------------------------------------------------
-const Mat4 &Camera::GetProjectionMatrix() const { return m_ProjectionMatrix; }
-// --------------------------------------------------------------------------------
 void Camera::UpdateView() {
   Vec3 forward(
     cos(Sono::Radians(m_Rotations.yaw)) * cos(Sono::Radians(m_Rotations.pitch)),

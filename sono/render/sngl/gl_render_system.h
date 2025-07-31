@@ -28,9 +28,11 @@ public:
 
   void SetViewport(i32 posX, i32 posY, i32 width, i32 height) override;
 
-  void Draw(PrimitiveType topology, const VertexArray *va, u32 mMaxVertCount) override;
+  void Draw(PrimitiveType topology, const VertexArray *va, u32 offset, u32 mMaxVertCount) override;
 
-  void DrawIndexed(PrimitiveType topology, const VertexArray *va, u32 idxCount) override;
+  void DrawIndexed(
+    PrimitiveType topology, const VertexArray *va, u32 idxOffset, u32 idxCount
+  ) override;
 
   void Clear(const Vec4 &color) override;
 
@@ -54,13 +56,15 @@ public:
 
   void BindVertexArray(VertexArray *va) override;
 
-  Shader *CreateShader(const ShaderDesc *desc = nullptr) override;
+  Shader *CreateShader(const ShaderDesc &desc) override;
 
   Texture *CreateTexture(
     TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
   ) override;
 
-  RenderPipeline *CreatePipeline(Shader *vs, Shader *fs) override;
+  RenderPipeline *CreateDefaultPipeline() override;
+
+  RenderPipeline *CreatePipeline(const PipelineDesc &desc) override;
 
   void BindTexture(Texture *texture, u32 unit) override;
 

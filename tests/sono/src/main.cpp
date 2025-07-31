@@ -1,17 +1,21 @@
-#include "core/math/math.h"
 #include "imgui.h"
-#include <core/global.h>
-#include <core/common/time.h>
+#include "render/render_command.h"
+#include "render/shader/shader.h"
 #include <core/common/logger.h>
-#include <core/math/mat4.h>
-#include <core/math/vec3.h>
+#include <core/common/time.h>
+#include <core/global.h>
 #include <core/math/lerp.h>
+#include <core/math/mat4.h>
+#include <core/math/transform.h>
+#include <core/math/vec3.h>
 
-#include <core/input/mouse.h>
 #include <core/event/event_dispatcher.h>
+#include <core/input/mouse.h>
+#include <core/resource/image.h>
 
 #include <render/camera.h>
 #include <render/vertex_type.h>
+#include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -24,6 +28,41 @@ EventSystem *g_EventSys;
 InputSystem *g_InputSys;
 BufferManager *g_BufferMgr;
 RenderWindow *g_Window;
+
+void DrawTransformGizmo(const Transform &transform) {}
+
+u32 GetImGuiId(const std::string &key) {
+  static std::unordered_map<std::string, u32> s_AutoIdMap;
+  static u32 s_AutoId = 0;
+
+  auto idItor = s_AutoIdMap.find(key);
+  if (idItor == s_AutoIdMap.end()) {
+    return (s_AutoIdMap[key] = s_AutoId++);
+  } else {
+    return idItor->second;
+  }
+}
+
+void ImGui_DrawTransformComponent(
+  Transform &transform, const std::string &name = "Unamed transform"
+) {
+  Vec3 position = transform.GetPosition();
+  Vec3 rotation = transform.GetEulerRotation();
+  Vec3 scale = transform.GetScale();
+
+  ImGui::Text("%s", name.c_str());
+  ImGui::PushID(GetImGuiId(name));
+  if (ImGui::DragFloat3("position", position.ValuePtr(), 0.25f)) {
+    transform.SetPosition(position);
+  }
+  if (ImGui::DragFloat3("rotation", rotation.ValuePtr(), 0.05f)) {
+    transform.SetEulerRotation(rotation);
+  }
+  if (ImGui::DragFloat3("scale", scale.ValuePtr(), 0.05f)) {
+    transform.SetScale(scale);
+  }
+  ImGui::PopID();
+}
 
 void ProcessInput() {
   if (g_Window->GetKey(KeyCode::KEY_ESC) == GLFW_PRESS) {
@@ -69,6 +108,17 @@ void HandleEvent(const Event &ev) {
   }
 }
 
+std::vector<VertexP> CreateWordGridMesh(i32 gridSize, f32 spacing) {
+  std::vector<VertexP> mesh;
+  for (int i = -gridSize; i <= gridSize; i++) {
+    mesh.emplace_back(i * spacing, 0.0f, -gridSize * spacing);
+    mesh.emplace_back(i * spacing, 0.0f, +gridSize * spacing);
+    mesh.emplace_back(-gridSize * spacing, 0.0f, i * spacing);
+    mesh.emplace_back(+gridSize * spacing, 0.0f, i * spacing);
+  }
+  return mesh;
+}
+
 i32 main(void) {
   std::unique_ptr<Sono::Global> global = std::make_unique<Sono::Global>();
   Sono::Global::GetPtr()->Init();
@@ -82,6 +132,15 @@ i32 main(void) {
   g_Window = g_RenderSys->CreateRenderWindow(1024, 768, "Hello Sono");
   g_Window->EnableVsync(true);
 
+  std::vector<VertexP> gridVertices = CreateWordGridMesh(20, 1.0f);
+  std::vector<VertexP> axesVertices = {
+    {0.0f, 0.0f, 0.0f},
+    {1.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f},
+    {0.0f, 1.0f, 0.0f},
+    {0.0f, 0.0f, 0.0f},
+    {0.0f, 0.0f, 1.0f}
+  };
   std::vector<VertexPN> cubeVertices = {
     // -z face
     VertexPN({-0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
@@ -123,20 +182,28 @@ i32 main(void) {
   IBuffer *vb = g_BufferMgr->CreateVertexBuffer(
     BufferUsage::STATIC, sizeof(VertexPN), cubeVertices.size(), cubeVertices.data()
   );
-
   IBuffer *ib = g_BufferMgr->CreateIndexBuffer(
     BufferUsage::STATIC, INDEX_TYPE_U16, cubeIndices.size(), cubeIndices.data()
   );
 
-  VertexLayout layout = VertexTraits<VertexPN>::GetLayout();
+  // Debugging buffers
+  IBuffer *gridVb = g_BufferMgr->CreateVertexBuffer(
+    BufferUsage::STATIC, sizeof(VertexP), gridVertices.size(), gridVertices.data()
+  );
+  IBuffer *axesVb = g_BufferMgr->CreateVertexBuffer(
+    BufferUsage::STATIC, sizeof(VertexP), axesVertices.size(), axesVertices.data()
+  );
 
   VertexArray *cubeVAO = g_RenderSys->CreateVertexArray();
-  cubeVAO->AddVertexBuffer(vb, layout);
+  cubeVAO->AddVertexBuffer(vb, VertexTraits<VertexPN>::GetLayout());
   cubeVAO->SetIndexBuffer(ib);
-
   VertexArray *lightVAO = g_RenderSys->CreateVertexArray();
-  lightVAO->AddVertexBuffer(vb, layout);
+  lightVAO->AddVertexBuffer(vb, VertexTraits<VertexPN>::GetLayout());
   lightVAO->SetIndexBuffer(ib);
+  VertexArray *gridVAO = g_RenderSys->CreateVertexArray();
+  gridVAO->AddVertexBuffer(gridVb, VertexTraits<VertexP>::GetLayout());
+  VertexArray *axesVAO = g_RenderSys->CreateVertexArray();
+  axesVAO->AddVertexBuffer(axesVb, VertexTraits<VertexP>::GetLayout());
 
   // Texture *texture, *texture2;
   // {
@@ -144,17 +211,19 @@ i32 main(void) {
   //   unsigned char *data;
   //   int width, height, nrChannels;
   //
-  //   stbi_set_flip_vertically_on_load(true);
-  //   data = stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels, 0);
-  //   texture =
-  //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB, width, height);
+  //   stbi_set_flip_vertically_on_load(true); data =
+  //   stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels,
+  //   0); texture =
+  //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB,
+  //     width, height);
   //   texture->Update(data, 0);
   //   texture->GenerateMipmaps();
   //   stbi_image_free(data);
   //
-  //   data = stbi_load("assets/textures/awesomeface.png", &width, &height, &nrChannels, 0);
-  //   texture2 =
-  //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA, TEX_FORMAT_RGBA, width, height);
+  //   data = stbi_load("assets/textures/awesomeface.png", &width, &height,
+  //   &nrChannels, 0); texture2 =
+  //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA,
+  //     TEX_FORMAT_RGBA, width, height);
   //   texture2->Update(data, 0);
   //   texture2->GenerateMipmaps();
   //   stbi_image_free(data);
@@ -162,19 +231,55 @@ i32 main(void) {
 
   RenderPipeline *cubePipeline;
   RenderPipeline *lightCubePipeline;
+  RenderPipeline *gridPipeline;
+  RenderPipeline *axesPipeline;
   {
-    PROFILE_SCOPE("Compile Shaders");
-    Shader *vs = g_RenderSys->CreateShader();
-    Shader *fs = g_RenderSys->CreateShader();
-    vs->CompileFromFile("./assets/shaders/colors.vs.glsl", ShaderStage::VERTEX);
-    fs->CompileFromFile("./assets/shaders/colors.fs.glsl", ShaderStage::FRAGMENT);
-    cubePipeline = g_RenderSys->CreatePipeline(vs, fs);
+    // clang-format off
+    PROFILE_SCOPE("CreateRenderPipelines");
+    cubePipeline = g_RenderSys->CreatePipeline({
+      .vertex = g_RenderSys->CreateShader({
+        .src = LoadShaderSrcFromFile("./assets/shaders/colors.vs.glsl"),
+        .stage = ShaderStage::VERTEX
+      }),
+      .fragment = g_RenderSys->CreateShader({
+        .src = LoadShaderSrcFromFile("./assets/shaders/colors.fs.glsl"),
+        .stage = ShaderStage::FRAGMENT
+      })
+    });
 
-    Shader *vs2 = g_RenderSys->CreateShader();
-    Shader *fs2 = g_RenderSys->CreateShader();
-    vs2->CompileFromFile("./assets/shaders/light_cube.vs.glsl", ShaderStage::VERTEX);
-    fs2->CompileFromFile("./assets/shaders/light_cube.fs.glsl", ShaderStage::FRAGMENT);
-    lightCubePipeline = g_RenderSys->CreatePipeline(vs2, fs2);
+    lightCubePipeline = g_RenderSys->CreatePipeline({
+      .vertex = g_RenderSys->CreateShader({
+        .src = LoadShaderSrcFromFile("./assets/shaders/light_cube.vs.glsl"),
+        .stage = ShaderStage::VERTEX
+      }),
+      .fragment = g_RenderSys->CreateShader({
+        .src = LoadShaderSrcFromFile("./assets/shaders/light_cube.fs.glsl"),
+        .stage = ShaderStage::FRAGMENT
+      })
+    });
+
+    gridPipeline = g_RenderSys->CreatePipeline({
+      .vertex = g_RenderSys->CreateShader({
+        .src = LoadShaderSrcFromFile("./assets/shaders/default.vs.glsl"),
+        .stage = ShaderStage::VERTEX
+      }),
+      .fragment = g_RenderSys->CreateShader({
+        .src = LoadShaderSrcFromFile("./assets/shaders/grid.fs.glsl"),
+        .stage = ShaderStage::FRAGMENT
+      })
+    });
+
+    axesPipeline = g_RenderSys->CreatePipeline({
+      .vertex = g_RenderSys->CreateShader({
+        .src = LoadShaderSrcFromFile("./assets/shaders/default.vs.glsl"),
+        .stage = ShaderStage::VERTEX
+      }),
+      .fragment = g_RenderSys->CreateShader({
+        .src = LoadShaderSrcFromFile("./assets/shaders/axes.fs.glsl"),
+        .stage = ShaderStage::FRAGMENT
+      })
+    });
+    // clang-format on
   }
 
   EventDispatcher::Register<MouseMoveEvent>([](const MouseMoveEvent &e) {
@@ -198,15 +303,15 @@ i32 main(void) {
   /// ================================================================================
   cam.SetPerspective(Sono::Radians(80.0f), g_Window->GetAspect(), 0.1f, 100.0f);
 
-  Vec3 lightPos(1.2f, 1.0f, -2.0f);
   Color3 cubeColor(255, 128, 79);
   Color3 lightColor(255, 255, 255);
-  lightPos = Vec3(-1.2, 1.0f, -2.0f);
 
-  Camera lightCube; // NOTE: I didn't have transform class so i used camera instead :)
-  lightCube.SetPosition(lightPos);
+  Transform lightCubeTransform;
+  lightCubeTransform.SetPosition({-1.2, 1.0f, -2.0f});
+  lightCubeTransform.SetScale(Vec3(0.5f));
 
-  Interpolated<Vec3> cubePos(Vec3(0, 0, 0));
+  Transform cubeTransform;
+  cubeTransform.SetPosition(Vec3::Zero);
 
   /// ================================================================================
   /// Main Loop
@@ -227,6 +332,11 @@ i32 main(void) {
         ProcessInput();
       }
 
+      // lightCubeTransform.Move(Vec3::Right * Time::DeltaTime());
+      // lightCubeTransform.LookAt(cubeTransform);
+
+      // cam.SetPosition(lightPos + lightCube.GetForward());
+      // cam.LookAt(Vec3::Zero);
       /* Render here */
       {
         PROFILE_SCOPE("MAIN_LOOP::RENDER::RenderOneFrame");
@@ -234,17 +344,42 @@ i32 main(void) {
         g_RenderSys->BeginFrame(cam);
         g_RenderSys->Submit<ClearCommand>(Color3(20, 20, 20));
 
-        lightCube.Move(lightCube.GetRight() * Time::DeltaTime() * 5.0f);
-        lightCube.LookAt(Vec3::Zero);
-        lightPos = lightCube.GetPosition();
-        // cam.SetPosition(lightPos + lightCube.GetForward());
-        // cam.LookAt(Vec3::Zero);
+        g_RenderSys->Submit<BindShaderCommand>(axesPipeline);
+        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
+        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(255, 0, 0));
+        g_RenderSys->Submit<DrawCommand>(
+          axesVAO, 0, 2, PrimitiveType::LINES, cubeTransform.GetModelMatrix()
+        );
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 255, 0));
+        g_RenderSys->Submit<DrawCommand>(
+          axesVAO, 2, 2, PrimitiveType::LINES, cubeTransform.GetModelMatrix()
+        );
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 0, 255));
+        g_RenderSys->Submit<DrawCommand>(
+          axesVAO, 4, 2, PrimitiveType::LINES, cubeTransform.GetModelMatrix()
+        );
 
-        Mat4 cubeModel =
-          Mat4::Rotation(Sono::Radians(Time::TotalTime() * 40.0f), Vec3::Up + Vec3::Left)
-          * Mat4::Translation(cubePos);
-        Vec3 cubeDiffuse = cubeColor * Vec3(0.5f);
-        Vec3 cubeAmbient = cubeDiffuse * Vec3(0.2f);
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(255, 0, 0));
+        g_RenderSys->Submit<DrawCommand>(
+          axesVAO, 0, 2, PrimitiveType::LINES, lightCubeTransform.GetModelMatrix()
+        );
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 255, 0));
+        g_RenderSys->Submit<DrawCommand>(
+          axesVAO, 2, 2, PrimitiveType::LINES, lightCubeTransform.GetModelMatrix()
+        );
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 0, 255));
+        g_RenderSys->Submit<DrawCommand>(
+          axesVAO, 4, 2, PrimitiveType::LINES, lightCubeTransform.GetModelMatrix()
+        );
+
+        g_RenderSys->Submit<BindShaderCommand>(gridPipeline);
+        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
+        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
+        g_RenderSys->Submit<DrawCommand>(gridVAO, 0, gridVertices.size(), PrimitiveType::LINES);
+
+        Vec3 cubeDiffuse = cubeColor * Vec3(0.6f);
+        Vec3 cubeAmbient = cubeDiffuse * Vec3(0.4f);
 
         g_RenderSys->Submit<BindShaderCommand>(cubePipeline);
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.ambient", cubeAmbient);
@@ -252,24 +387,32 @@ i32 main(void) {
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.specular", Vec3(0.5f));
         g_RenderSys->Submit<SetUniformCommand<f32>>("uMaterial.shininess", 32.0f);
 
-        Vec3 lightDiffuse = lightColor * Vec3(0.5f);
-        Vec3 lightAmbient = lightDiffuse * Vec3(0.2f);
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.position", lightPos);
+        // lightColor.x = sin(glfwGetTime() * 2.0f);
+        // lightColor.y = sin(glfwGetTime() * 0.7f);
+        // lightColor.z = sin(glfwGetTime() * 1.3f);
+        Vec3 lightDiffuse = lightColor * Vec3(0.6f);
+        Vec3 lightAmbient = lightDiffuse * Vec3(0.4f);
+        g_RenderSys->Submit<SetUniformCommand<Vec3>>(
+          "uLight.position", lightCubeTransform.GetPosition()
+        );
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.ambient", lightAmbient);
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.diffuse", lightDiffuse);
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.specular", lightColor);
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
         // g_RenderSys->Submit<DrawCommand>(cubeVao, 36);
-        g_RenderSys->Submit<DrawIndexedCommand>(cubeVAO, cubeIndices.size(), cubeModel);
+        g_RenderSys->Submit<DrawIndexedCommand>(
+          cubeVAO, 0, cubeIndices.size(), cubeTransform.GetModelMatrix()
+        );
 
-        Mat4 lightCubeModel = Mat4::Scale(Vec3(0.5f)) * Mat4::Translation(lightPos);
         g_RenderSys->Submit<BindShaderCommand>(lightCubePipeline);
         g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
         // g_RenderSys->Submit<DrawCommand>(lightVAO, 36, lightCubeModel);
-        g_RenderSys->Submit<DrawIndexedCommand>(lightVAO, cubeIndices.size(), lightCubeModel);
+        g_RenderSys->Submit<DrawIndexedCommand>(
+          lightVAO, 0, cubeIndices.size(), lightCubeTransform.GetModelMatrix()
+        );
         g_RenderSys->Flush();
 
         g_RenderSys->BeginImGuiFrame();
@@ -282,7 +425,7 @@ i32 main(void) {
           std::string frameAllocOffsetStr = MemorySystem::ToHumanReadable(frameAlloc.GetMarker());
           std::string frameAllocSizeStr = MemorySystem::ToHumanReadable(frameAlloc.GetSize());
           snprintf(
-            buf, frameAllocSizeStr.size() + frameAllocOffsetStr.size() + 1, "%s/%s",
+            buf, frameAllocSizeStr.size() + frameAllocOffsetStr.size() + 2, "%s/%s",
             frameAllocOffsetStr.c_str(), frameAllocSizeStr.c_str()
           );
           ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), buf);
@@ -291,21 +434,21 @@ i32 main(void) {
           ImGui::Spacing();
 
           // ImGui::ShowStyleEditor();
-          ImGui::Text("Cube");
+          ImGui_DrawTransformComponent(cubeTransform, "Cube");
           ImGui::ColorEdit3("Cube Color", cubeColor.ValuePtr());
-          ImGui::Text("Light Cube");
-          ImGui::PushID(0);
-          ImGui::DragFloat3("position", lightPos.ValuePtr(), 0.5f);
-          ImGui::PopID();
+          ImGui::Spacing();
+
+          ImGui_DrawTransformComponent(lightCubeTransform, "Light cube");
           ImGui::ColorEdit3("Light Color", lightColor.ValuePtr());
           ImGui::Spacing();
 
           ImGui::Text("Camera");
+          ImGui::PushID(GetImGuiId("Camera"));
           Vec3 newPosition = cam.GetPosition();
-          ImGui::PushID(1);
-          ImGui::DragFloat3("position", newPosition.ValuePtr(), 0.5f);
+          if (ImGui::DragFloat3("position", newPosition.ValuePtr(), 0.5f)) {
+            cam.SetPosition(newPosition);
+          }
           ImGui::PopID();
-          cam.SetPosition(newPosition);
           ImGui::Spacing();
         }
         ImGui::End();

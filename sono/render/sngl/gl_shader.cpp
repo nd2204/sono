@@ -1,12 +1,9 @@
 #include "gl_shader.h"
 #include "core/common/logger.h"
 #include "core/common/snassert.h"
+#include "render/shader/shader.h"
 
-#include <cstdint>
-#include <fstream>
 #include <glad/glad.h>
-#include <iostream>
-#include <sstream>
 #include <unordered_map>
 
 #ifdef SN_NDEBUG
@@ -47,67 +44,29 @@ static inline GLenum ShaderStageToOpenGLShader(ShaderStage stage) {
 // ================================================================================
 // GLShader Implementation
 // ================================================================================
-GLShader::GLShader()
-  : m_ShaderID(0) {}
-// --------------------------------------------------------------------------------
-GLShader::GLShader(const ShaderDesc *desc)
-  : m_ShaderID(0) {
-  if (!desc) return;
-  m_Stage = desc->stage;
-  if (!desc->src.empty()) {
-    m_Src = desc->src;
-    m_ShaderID = _Compile(desc->src.c_str(), ShaderStageToOpenGLShader(desc->stage));
-  }
+GLShader::GLShader(const ShaderDesc &desc)
+  : Shader(desc)
+  , m_ShaderID(0) {
+  Compile();
 }
 // --------------------------------------------------------------------------------
-void GLShader::CompileFromSrc(const std::string &src, ShaderStage stage) {
-  this->m_ShaderID = _Compile(src.c_str(), ShaderStageToOpenGLShader(stage));
-  m_Stage = stage;
-}
-// --------------------------------------------------------------------------------
-void GLShader::CompileFromFile(const std::string &filePath, ShaderStage stage) {
-  std::ifstream srcFile(filePath);
-  std::stringstream srcStream;
-  std::string code;
+void GLShader::Compile() {
+  SN_ASSERT(!m_Desc.src.empty(), "shader sources is empty");
 
-  m_Stage = stage;
+  GLenum type = ShaderStageToOpenGLShader(m_Desc.stage);
+  m_ShaderID = glCreateShader(type);
 
-  if (srcFile.is_open()) {
-    srcStream << srcFile.rdbuf();
-    srcFile.close();
-
-    code = srcStream.str();
-
-    LOG_DEBUG_F("Compiling shader from file: %s", filePath.c_str());
-    this->m_ShaderID = _Compile(code.c_str(), ShaderStageToOpenGLShader(stage));
-  } else {
-    LOG_ERROR_F("Failed to open shader file: %s", filePath.c_str());
-    this->m_ShaderID = 0;
-  }
-}
-// --------------------------------------------------------------------------------
-GLuint GLShader::GetID() const { return m_ShaderID; }
-// --------------------------------------------------------------------------------
-ShaderStage GLShader::GetStage() const { return m_Stage; }
-// --------------------------------------------------------------------------------
-void GLShader::DeleteShader() { glDeleteShader(m_ShaderID); }
-// --------------------------------------------------------------------------------
-GLShader::operator GLuint() const { return m_ShaderID; }
-// --------------------------------------------------------------------------------
-u32 GLShader::_Compile(const char *src, u32 type) {
-  u32 shaderId = glCreateShader(type);
   i32 success;
   char infoLog[512];
 
-  const char *sources[1] = {src};
+  // glShaderSource expected a const char * const pointer
+  const char *sources[] = {m_Desc.src.c_str()};
+  glShaderSource(m_ShaderID, 1, sources, NULL);
+  glCompileShader(m_ShaderID);
 
-  glShaderSource(shaderId, 1, sources, NULL);
-  glCompileShader(shaderId);
-
-  glGetShaderiv(shaderId, GL_COMPILE_STATUS, &success);
-
+  glGetShaderiv(m_ShaderID, GL_COMPILE_STATUS, &success);
   if (!success) {
-    glGetShaderInfoLog(shaderId, 512, NULL, infoLog);
+    glGetShaderInfoLog(m_ShaderID, 512, NULL, infoLog);
     switch (type) {
       case GL_VERTEX_SHADER:
         LOG_ERROR_F("Vertex shader compilation failed: %s", infoLog);
@@ -122,259 +81,230 @@ u32 GLShader::_Compile(const char *src, u32 type) {
   } else {
     LOG_INFO_F("%s compilation success", ShaderTypeStr.at(type));
   }
-
-  return shaderId;
 }
+// --------------------------------------------------------------------------------
+GLuint GLShader::GetID() const { return m_ShaderID; }
+// --------------------------------------------------------------------------------
+void GLShader::DeleteShader() { glDeleteShader(m_ShaderID); }
+// --------------------------------------------------------------------------------
+GLShader::operator GLuint() const { return m_ShaderID; }
 // --------------------------------------------------------------------------------
 GLShader::~GLShader() { DeleteShader(); }
 
 // ================================================================================
 // GLRenderPipeline Implementation
 // ================================================================================
-GLRenderPipeline::GLRenderPipeline(Shader *s1, Shader *s2) {
-  this->m_ID = glCreateProgram();
-  AttachShader(s1);
-  AttachShader(s2);
-  LinkProgram();
-}
-// --------------------------------------------------------------------------------
-void GLRenderPipeline::AttachShader(Shader *shader) {
-  glAttachShader(this->m_ID, static_cast<GLShader *>(shader)->GetID());
+GLRenderPipeline::GLRenderPipeline(const PipelineDesc &desc)
+  : RenderPipeline(desc) {
+  m_ID = glCreateProgram();
+  glAttachShader(m_ID, static_cast<GLShader *>(desc.vertex)->GetID());
+  glAttachShader(m_ID, static_cast<GLShader *>(desc.fragment)->GetID());
 
-  switch (shader->GetStage()) {
-    case ShaderStage::VERTEX: {
-      if ((m_AttachedShaders & VERTEX_SHADER_BIT) != 0)
-        LOG_ERROR("Reattaching shader of type GL_VERTEX_SHADER");
-      m_AttachedShaders |= VERTEX_SHADER_BIT;
-      m_VertexShader = shader;
-      break;
-    }
-    case ShaderStage::FRAGMENT:
-      if ((m_AttachedShaders & FRAGMENT_SHADER_BIT) != 0)
-        LOG_ERROR("Reattaching shader of type GL_FRAGMENT_SHADER");
-      m_AttachedShaders |= FRAGMENT_SHADER_BIT;
-      m_FragmentShader = shader;
-      break;
-    case ShaderStage::GEOMETRY:
-      if ((m_AttachedShaders & GEOMETRY_SHADER_BIT) != 0)
-        LOG_ERROR("Reattaching shader of type GL_GEOMETRY_SHADER");
-      m_AttachedShaders |= GEOMETRY_SHADER_BIT;
-      break;
-    case ShaderStage::COMPUTE:
-      SN_ASSERT(false, "ShaderStage::COMPUTE is not supported on OpenGL");
-      break;
-    case ShaderStage::TESSELATION:
-      SN_ASSERT(false, "ShaderStage::TESSELATION is not supported on OpenGL");
-      break;
-  }
-}
-
-void GLRenderPipeline::SetUniform(const char *uniform, const Vec4 &v4) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniform4fv(glGetUniformLocation(this->m_ID, uniform), 1, v4.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const Vec3 &v3) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniform3fv(glGetUniformLocation(this->m_ID, uniform), 1, v3.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const Vec2 &v2) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniform2fv(glGetUniformLocation(this->m_ID, uniform), 1, v2.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, f32 x, f32 y, f32 z, f32 w) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniform4f(glGetUniformLocation(this->m_ID, uniform), x, y, z, w);
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, f32 x, f32 y, f32 z) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniform3f(glGetUniformLocation(this->m_ID, uniform), x, y, z);
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, f32 x, f32 y) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniform2f(glGetUniformLocation(this->m_ID, uniform), x, y);
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, f32 v) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniform1f(glGetUniformLocation(this->m_ID, uniform), v);
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, i32 v) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniform1i(glGetUniformLocation(this->m_ID, uniform), v);
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<4, 4, f32> &mat4) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniformMatrix4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<4, 3, f32> &mat4x3) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniformMatrix4x3fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4x3.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<4, 2, f32> &mat4x2) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniformMatrix4x2fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4x2.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<3, 4, f32> &mat3x4) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniformMatrix3x4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat3x4.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const Mat3 &mat3) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniformMatrix3fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat3.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<3, 2, f32> &mat3x2) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniformMatrix3x2fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat3x2.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<2, 2, f32> &mat2) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniformMatrix2fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat2.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<2, 4, f32> &mat2x4) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniformMatrix2x4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat2x4.ValuePtr());
-}
-// // --------------------------------------------------------------------------------
-void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<2, 3, f32> &mat2x3) const {
-  ASSERT_CURRENT_PROGRAM(this);
-  glUniformMatrix2x3fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat2x3.ValuePtr());
-}
-
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetVec4(const char *uniform, f32 x, f32 y, f32 z, f32 w) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniform4f(glGetUniformLocation(this->m_ID, uniform), x, y, z, w);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetVec4(const char *uniform, const Vec4 &v) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniform4fv(glGetUniformLocation(this->m_ID, uniform), 1, v.ValuePtr());
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetVec3(const char *uniform, f32 x, f32 y, f32 z) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniform3f(glGetUniformLocation(this->m_ID, uniform), x, y, z);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetVec3(const char *uniform, const Vec3 &v) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniform3f(glGetUniformLocation(this->m_ID, uniform), v.x, v.y, v.z);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetVec2(const char *uniform, f32 x, f32 y) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniform2f(glGetUniformLocation(this->m_ID, uniform), x, y);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetVec2(const char *uniform, const Vec2 &v) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniform2f(glGetUniformLocation(this->m_ID, uniform), v.x, v.y);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetFloat(const char *uniform, f32 v) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniform1f(glGetUniformLocation(this->m_ID, uniform), v);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetBool(const char *uniform, b8 v) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniform1i(glGetUniformLocation(this->m_ID, uniform), v);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetInt(const char *uniform, i32 v) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniform1i(glGetUniformLocation(this->m_ID, uniform), v);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat4(const char *uniform, f32 *mat4) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat4(const char *uniform, const Mat4 &mat4) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4.ValuePtr());
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat4x3(const char *uniform, f32 *mat4x3) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix4x3fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4x3);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat4x2(const char *uniform, f32 *mat4x2) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix4x2fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat4x2);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat3x4(const char *uniform, f32 *mat3x4) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix3x4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat3x4);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat3(const char *uniform, f32 *mat3) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix3fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat3);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat3(const char *uniform, const Mat3 &mat3) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix3fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat3.ValuePtr());
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat3x2(const char *uniform, f32 *mat3x2) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix3x2fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat3x2);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat2(const char *uniform, f32 *mat2) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix2fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat2);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat2x4(const char *uniform, f32 *mat2x4) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix2x4fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat2x4);
-// }
-// // --------------------------------------------------------------------------------
-// void GLRenderPipeline::SetMat2x3(const char *uniform, f32 *mat2x3) const {
-//   ASSERT_CURRENT_PROGRAM(this);
-//   glUniformMatrix2x3fv(glGetUniformLocation(this->m_ID, uniform), 1, GL_FALSE, mat2x3);
-// }
-// --------------------------------------------------------------------------------
-void GLRenderPipeline::Bind() const { glUseProgram(this->m_ID); }
-// --------------------------------------------------------------------------------
-void GLRenderPipeline::Unbind() const { glUseProgram(0); }
-// --------------------------------------------------------------------------------
-GLuint GLRenderPipeline::GetID() const { return this->m_ID; }
-// --------------------------------------------------------------------------------
-GLRenderPipeline::operator GLuint() const { return this->m_ID; }
-// --------------------------------------------------------------------------------
-void GLRenderPipeline::LinkProgram() const {
   i32 success;
   char infoLog[512];
 
-  glLinkProgram(this->m_ID);
-  glGetProgramiv(this->m_ID, GL_LINK_STATUS, &success);
+  glLinkProgram(m_ID);
+  glGetProgramiv(m_ID, GL_LINK_STATUS, &success);
   if (!success) {
-    glGetProgramInfoLog(this->m_ID, 512, NULL, infoLog);
+    glGetProgramInfoLog(m_ID, 512, NULL, infoLog);
   }
 
-  ((GLShader *)m_VertexShader)->DeleteShader();
-  ((GLShader *)m_FragmentShader)->DeleteShader();
+  // TODO: remove these as soon as the resources system established
+  ((GLShader *)m_Desc.vertex)->DeleteShader();
+  ((GLShader *)m_Desc.fragment)->DeleteShader();
 }
 // --------------------------------------------------------------------------------
-GLRenderPipeline::~GLRenderPipeline() { glDeleteProgram(this->m_ID); }
+void GLRenderPipeline::SetUniform(const char *uniform, const Vec4 &v4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform4fv(glGetUniformLocation(m_ID, uniform), 1, v4.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const Vec3 &v3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform3fv(glGetUniformLocation(m_ID, uniform), 1, v3.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const Vec2 &v2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform2fv(glGetUniformLocation(m_ID, uniform), 1, v2.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, f32 x, f32 y, f32 z, f32 w) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform4f(glGetUniformLocation(m_ID, uniform), x, y, z, w);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, f32 x, f32 y, f32 z) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform3f(glGetUniformLocation(m_ID, uniform), x, y, z);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, f32 x, f32 y) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform2f(glGetUniformLocation(m_ID, uniform), x, y);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, f32 v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform1f(glGetUniformLocation(m_ID, uniform), v);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, i32 v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform1i(glGetUniformLocation(m_ID, uniform), v);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<4, 4, f32> &mat4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat4.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<4, 3, f32> &mat4x3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4x3fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat4x3.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<4, 2, f32> &mat4x2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4x2fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat4x2.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<3, 4, f32> &mat3x4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3x4fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat3x4.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const Mat3 &mat3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat3.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<3, 2, f32> &mat3x2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3x2fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat3x2.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<2, 2, f32> &mat2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix2fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat2.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<2, 4, f32> &mat2x4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix2x4fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat2x4.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetUniform(const char *uniform, const MatBase<2, 3, f32> &mat2x3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix2x3fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat2x3.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetVec4(const char *uniform, f32 x, f32 y, f32 z, f32 w) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform4f(glGetUniformLocation(m_ID, uniform), x, y, z, w);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetVec4(const char *uniform, const Vec4 &v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform4fv(glGetUniformLocation(m_ID, uniform), 1, v.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetVec3(const char *uniform, f32 x, f32 y, f32 z) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform3f(glGetUniformLocation(m_ID, uniform), x, y, z);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetVec3(const char *uniform, const Vec3 &v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform3f(glGetUniformLocation(m_ID, uniform), v.x, v.y, v.z);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetVec2(const char *uniform, f32 x, f32 y) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform2f(glGetUniformLocation(m_ID, uniform), x, y);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetVec2(const char *uniform, const Vec2 &v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform2f(glGetUniformLocation(m_ID, uniform), v.x, v.y);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetFloat(const char *uniform, f32 v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform1f(glGetUniformLocation(m_ID, uniform), v);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetBool(const char *uniform, b8 v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform1i(glGetUniformLocation(m_ID, uniform), v);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetInt(const char *uniform, i32 v) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniform1i(glGetUniformLocation(m_ID, uniform), v);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat4(const char *uniform, f32 *mat4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat4);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat4(const char *uniform, const Mat4 &mat4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat4.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat4x3(const char *uniform, f32 *mat4x3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4x3fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat4x3);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat4x2(const char *uniform, f32 *mat4x2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix4x2fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat4x2);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat3x4(const char *uniform, f32 *mat3x4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3x4fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat3x4);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat3(const char *uniform, f32 *mat3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat3);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat3(const char *uniform, const Mat3 &mat3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat3.ValuePtr());
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat3x2(const char *uniform, f32 *mat3x2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix3x2fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat3x2);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat2(const char *uniform, f32 *mat2) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix2fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat2);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat2x4(const char *uniform, f32 *mat2x4) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix2x4fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat2x4);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::SetMat2x3(const char *uniform, f32 *mat2x3) const {
+  ASSERT_CURRENT_PROGRAM(this);
+  glUniformMatrix2x3fv(glGetUniformLocation(m_ID, uniform), 1, GL_FALSE, mat2x3);
+}
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::Bind() const { glUseProgram(m_ID); }
+// --------------------------------------------------------------------------------
+void GLRenderPipeline::Unbind() const { glUseProgram(0); }
+// --------------------------------------------------------------------------------
+GLuint GLRenderPipeline::GetID() const { return m_ID; }
+// --------------------------------------------------------------------------------
+GLRenderPipeline::operator GLuint() const { return m_ID; }
+// --------------------------------------------------------------------------------
+GLRenderPipeline::~GLRenderPipeline() { glDeleteProgram(m_ID); }

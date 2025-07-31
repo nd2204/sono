@@ -10,6 +10,24 @@
 #include <sstream>
 #include <vector>
 
+#define ANSI_RESET         "\033[0m"
+#define ANSI_BLACK         "\033[30m"
+#define ANSI_RED           "\033[31m"
+#define ANSI_GREEN         "\033[32m"
+#define ANSI_YELLOW        "\033[33m"
+#define ANSI_BLUE          "\033[34m"
+#define ANSI_PURPLE        "\033[35m"
+#define ANSI_CYAN          "\033[36m"
+#define ANSI_WHITE         "\033[37m"
+#define ANSI_BRIGHT_BLACK  "\033[90m"
+#define ANSI_BRIGHT_RED    "\033[91m"
+#define ANSI_BRIGHT_GREEN  "\033[92m"
+#define ANSI_BRIGHT_YELLOW "\033[93m"
+#define ANSI_BRIGHT_BLUE   "\033[94m"
+#define ANSI_BRIGHT_PURPLE "\033[95m"
+#define ANSI_BRIGHT_CYAN   "\033[96m"
+#define ANSI_BRIGHT_WHITE  "\033[97m"
+
 #ifdef SONO_PLATFORM_WINDOWS
 #include <windows.h>
 #endif
@@ -144,20 +162,16 @@ private:
   }
 
   static std::string GetColor(LogLevel level) {
+    // clang-format off
     switch (level) {
-      case LOG_LEVEL_TRACE:
-        return "\033[0m"; // Default
-      case LOG_LEVEL_INFO:
-        return "\033[34m"; // Blue
-      case LOG_LEVEL_WARNING:
-        return "\033[33m"; // Yellow
-      case LOG_LEVEL_ERROR:
-        return "\033[31m"; // Red
-      case LOG_LEVEL_DEBUG:
-        return "\033[32m"; // Green
-      default:
-        return "\033[0m"; // Default
+      case LOG_LEVEL_TRACE:   return ANSI_RESET;
+      case LOG_LEVEL_INFO:    return ANSI_CYAN;
+      case LOG_LEVEL_WARNING: return ANSI_YELLOW;
+      case LOG_LEVEL_ERROR:   return ANSI_RED;
+      case LOG_LEVEL_DEBUG:   return ANSI_GREEN;
+      default:                return ANSI_RESET; // Default
     }
+    // clang-format on
   }
 
   static inline std::ofstream logFile;
