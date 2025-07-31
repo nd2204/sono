@@ -241,10 +241,10 @@ i32 main(void) {
         // cam.LookAt(Vec3::Zero);
 
         Mat4 cubeModel =
-          Mat4::Rotation(Sono::Radians(Time::TotalTime() * 40.0f), Vec3::Up + Vec3::Left)
-          * Mat4::Translation(cubePos);
-        Vec3 cubeDiffuse = cubeColor * Vec3(0.5f);
-        Vec3 cubeAmbient = cubeDiffuse * Vec3(0.2f);
+          // Mat4::Rotation(Sono::Radians(Time::TotalTime() * 40.0f), Vec3::Up + Vec3::Left) *
+          Mat4::Translation(cubePos);
+        Vec3 cubeDiffuse = cubeColor * Vec3(0.6f);
+        Vec3 cubeAmbient = cubeDiffuse * Vec3(0.4f);
 
         g_RenderSys->Submit<BindShaderCommand>(cubePipeline);
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.ambient", cubeAmbient);
@@ -252,8 +252,11 @@ i32 main(void) {
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.specular", Vec3(0.5f));
         g_RenderSys->Submit<SetUniformCommand<f32>>("uMaterial.shininess", 32.0f);
 
-        Vec3 lightDiffuse = lightColor * Vec3(0.5f);
-        Vec3 lightAmbient = lightDiffuse * Vec3(0.2f);
+        // lightColor.x = sin(glfwGetTime() * 2.0f);
+        // lightColor.y = sin(glfwGetTime() * 0.7f);
+        // lightColor.z = sin(glfwGetTime() * 1.3f);
+        Vec3 lightDiffuse = lightColor * Vec3(0.6f);
+        Vec3 lightAmbient = lightDiffuse * Vec3(0.4f);
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.position", lightPos);
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.ambient", lightAmbient);
         g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.diffuse", lightDiffuse);
@@ -282,7 +285,7 @@ i32 main(void) {
           std::string frameAllocOffsetStr = MemorySystem::ToHumanReadable(frameAlloc.GetMarker());
           std::string frameAllocSizeStr = MemorySystem::ToHumanReadable(frameAlloc.GetSize());
           snprintf(
-            buf, frameAllocSizeStr.size() + frameAllocOffsetStr.size() + 1, "%s/%s",
+            buf, frameAllocSizeStr.size() + frameAllocOffsetStr.size() + 2, "%s/%s",
             frameAllocOffsetStr.c_str(), frameAllocSizeStr.c_str()
           );
           ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), buf);

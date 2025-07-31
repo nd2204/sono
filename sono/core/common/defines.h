@@ -20,7 +20,9 @@
 #define DEFINE_STRING_CONSTANTS(NAME, FOREACH_MACRO)                                               \
   const char *NAME[] = {FOREACH_MACRO(GENERATE_STRING)}
 
-#define BITVAL(n) (1 << ((n - 1) % sizeof(void *) * 8))
+#define BITVAL(n) (1 << (n - 1))
+
+#define MASKTOBIT(n) ((1 << (n)) - 1)
 
 #define BIT_ON(x, n) ((x) & BITVAL(n))
 
