@@ -149,6 +149,7 @@ std::string MemorySystem::ToHumanReadable(u64 byte) {
   // clang-format on
   return buffer;
 }
+// --------------------------------------------------------------------------------
 std::string MemorySystem::ToHumanReadableValueStr(u64 byte) {
   if (byte < SN_MEM_KIB) return std::to_string(byte);
   if (byte < SN_MEM_MIB) return std::to_string(byte / SN_MEM_KIB);

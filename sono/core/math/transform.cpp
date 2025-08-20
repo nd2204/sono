@@ -54,6 +54,9 @@ void Transform::UpdateRotation() {
 }
 // --------------------------------------------------------------------------------
 void Transform::UpdateModelMatrix() {
-  m_ModelMatrix =
-    Mat4::Scale(m_Scale) * Mat4::RotationFromEuler(m_EulerRot) * Mat4::Translation(m_Position);
+  Mat4 rtX = Mat4::Rotation(Sono::Radians(m_EulerRot.x), Vec3::Right);
+  Mat4 rtY = Mat4::Rotation(Sono::Radians(m_EulerRot.y), Vec3::Up);
+  Mat4 rtZ = Mat4::Rotation(Sono::Radians(m_EulerRot.z), Vec3::Forward);
+
+  m_ModelMatrix = Mat4::Scale(m_Scale) * rtY * rtX * rtZ * Mat4::Translation(m_Position);
 }

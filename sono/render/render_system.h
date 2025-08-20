@@ -5,6 +5,7 @@
 #include "core/system.h"
 #include "core/common/singleton.h"
 #include "core/memory/allocators/arena.h"
+#include "debug/debug_draw.h"
 #include "render/render_command.h"
 #include "render/render_context.h"
 #include "render/buffer/buffer_manager.h"
@@ -122,6 +123,7 @@ protected:
   RenderContext *m_pActiveCtx;
   BufferManager *m_pBufferManager;
   RenderPipeline *m_pActivePipeline;
+  DebugDraw *m_DebugDraw;
   RenderQueue m_RenderQueue;
   ArenaAllocator m_Arena;
   ArenaAllocator::Marker m_FrameBeginMark;

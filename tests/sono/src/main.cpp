@@ -55,7 +55,7 @@ void ImGui_DrawTransformComponent(
   if (ImGui::DragFloat3("position", position.ValuePtr(), 0.25f)) {
     transform.SetPosition(position);
   }
-  if (ImGui::DragFloat3("rotation", rotation.ValuePtr(), 0.05f)) {
+  if (ImGui::DragFloat3("rotation", rotation.ValuePtr(), 0.5f)) {
     transform.SetEulerRotation(rotation);
   }
   if (ImGui::DragFloat3("scale", scale.ValuePtr(), 0.05f)) {
@@ -306,12 +306,12 @@ i32 main(void) {
   Color3 cubeColor(255, 128, 79);
   Color3 lightColor(255, 255, 255);
 
-  Transform lightCubeTransform;
-  lightCubeTransform.SetPosition({-1.2, 1.0f, -2.0f});
-  lightCubeTransform.SetScale(Vec3(0.5f));
-
   Transform cubeTransform;
   cubeTransform.SetPosition(Vec3::Zero);
+
+  Transform lightCubeTransform = cubeTransform;
+  lightCubeTransform.Move({-1.2f, 1.0f, -2.0f});
+  lightCubeTransform.SetScale(Vec3(0.5f));
 
   /// ================================================================================
   /// Main Loop
@@ -332,8 +332,8 @@ i32 main(void) {
         ProcessInput();
       }
 
-      // lightCubeTransform.Move(Vec3::Right * Time::DeltaTime());
-      // lightCubeTransform.LookAt(cubeTransform);
+      // lightCubeTransform.Move(Vec3::Right * Time::DeltaTime() * 1.25f);
+      lightCubeTransform.LookAt(cubeTransform);
 
       // cam.SetPosition(lightPos + lightCube.GetForward());
       // cam.LookAt(Vec3::Zero);
@@ -420,7 +420,7 @@ i32 main(void) {
           ImGui::Text("FPS: %.0f", Time::GetFPS());
           ImGui::Text("Frame Data");
           const ArenaAllocator &frameAlloc = g_RenderSys->GetFrameAllocator();
-          float progress = (f32)frameAlloc.GetMarker() / frameAlloc.GetSize() * 100;
+          float progress = ((f32)frameAlloc.GetMarker() / (f32)frameAlloc.GetSize());
           char buf[32];
           std::string frameAllocOffsetStr = MemorySystem::ToHumanReadable(frameAlloc.GetMarker());
           std::string frameAllocSizeStr = MemorySystem::ToHumanReadable(frameAlloc.GetSize());
@@ -430,7 +430,7 @@ i32 main(void) {
           );
           ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), buf);
           ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-          ImGui::Text("Arena usage");
+          ImGui::Text("Arena usage (%.2f)", progress * 100);
           ImGui::Spacing();
 
           // ImGui::ShowStyleEditor();

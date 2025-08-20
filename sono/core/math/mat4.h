@@ -44,8 +44,6 @@ struct Mat4 : public MatBase<4, 4, f32> {
   static Mat4 Rotation(Radian angle, const Vec3 &axis);
 
   /// @brief create a rotation matrix from euler angles
-  /// @params angle angle in radians
-  /// @params axis the axis vector to rotate
   static Mat4 RotationFromEuler(const Vec3 &euler);
 
   // static Mat4 Rotate(const Quaternion &rotation);

@@ -45,9 +45,15 @@ Mat4 Mat4::Rotation(Radian angle, const Vec3 &axis) {
 }
 // --------------------------------------------------------------------------------
 Mat4 Mat4::RotationFromEuler(const Vec3 &eulerAngle) {
-  float cx = cosf(eulerAngle.pitch), sx = sinf(eulerAngle.pitch);
-  float cy = cosf(eulerAngle.yaw),   sy = sinf(eulerAngle.yaw);
-  float cz = cosf(eulerAngle.roll),  sz = sinf(eulerAngle.roll);
+  Vec3 angle = {
+    Sono::Radians(eulerAngle.x),
+    Sono::Radians(eulerAngle.y),
+    Sono::Radians(eulerAngle.z)
+  };
+
+  float cx = cosf(angle.pitch), sx = sinf(angle.pitch);
+  float cy = cosf(angle.yaw),   sy = sinf(angle.yaw);
+  float cz = cosf(angle.roll),  sz = sinf(angle.roll);
 
   // Column-major order
   return Mat4{

@@ -20,6 +20,7 @@ RenderSystem::RenderSystem()
   , m_Arena(RENDER_FRAME_ALLOC_SIZE) {
   /* Initialize the library */
   if (!glfwInit()) exit(EXIT_FAILURE);
+  m_DebugDraw = m_Arena.New<DebugDraw>(this);
 }
 
 RenderWindow *RenderSystem::CreateRenderWindow(
