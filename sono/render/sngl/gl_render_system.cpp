@@ -1,6 +1,5 @@
 #include "gl_buffer_base.h"
-#include "gl_buffer_manager.h"
-#include "gl_shader.h"
+#include "gl_render_device.h"
 #include "gl_texture.h"
 #include "gl_vertex_array.h"
 #include "gl_window.h"
@@ -12,22 +11,6 @@
 #include <imgui_impl_glfw.h>
 
 #include <string>
-
-const std::string kDefaultVertexShader = // force clang-format
-  "#version 330 core"
-  "layout (location = 0) in vec3 aPos;"
-  "uniform mat4 uModel;"
-  "uniform mat4 uView;"
-  "uniform mat4 uProj;"
-  "void main() {"
-  "  gl_Position = uProj * uView * uModel * vec4(aPos, 1.0);"
-  "}";
-
-const std::string kDefaultFragmentShader = "#version 330 core"
-                                           "out vec4 FragColor;"
-                                           "void main() {"
-                                           "  FragColor = vec4(1.0f);"
-                                           "}";
 
 GLRenderSystem::GLRenderSystem()
   : RenderSystem() {}
@@ -41,14 +24,13 @@ void GLRenderSystem::Init() {
 #ifdef MACOS_BUILD
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-  m_pBufferManager = m_Arena.New<GLBufferManager>();
+  m_pDevice = m_Arena.New<GLRenderDevice>(&m_Arena);
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Shutdown() {
   LOG_INFO("<-- Shutting down GLRenderSystem -->");
-  m_pBufferManager->DeleteAllIndexBuffers();
-  m_pBufferManager->DeleteAllVertexBuffers();
-  m_pBufferManager->DeleteAllLayout();
+  m_pDevice->DeleteAllBuffers();
+  m_pDevice->DeleteAllLayout();
   m_Arena.FreeInternalBuffer();
 }
 // --------------------------------------------------------------------------------
@@ -105,12 +87,23 @@ void GLRenderSystem::DrawIndexed(
   PrimitiveType topology, const VertexArray *va, u32 idxOffset, u32 idxCount
 ) {
   const GLVertexArray *vao = reinterpret_cast<const GLVertexArray *>(va);
-  const GLIndexBuffer *ib = vao->GetCurrentIndexBuffer();
+  const Buffer *ib = vao->GetCurrentIndexBuffer();
+
+  GLenum type = GL_UNSIGNED_INT;
+  if (ib->GetStride() == sizeof(u16))
+    type = GL_UNSIGNED_SHORT;
+  else if (ib->GetStride() == sizeof(u8))
+    type = GL_UNSIGNED_BYTE;
+
   va->Bind();
+  // clang-format off
   glDrawElements(
-    ConvertPrimitiveType(topology), idxCount, GLIndexBuffer::ConvertIndexType(ib->GetIndexType()),
+    ConvertPrimitiveType(topology),
+    idxCount,
+    type,
     reinterpret_cast<void *>(idxOffset)
   );
+  // clang-format on
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Clear(const Vec4 &c) {
@@ -129,34 +122,6 @@ void GLRenderSystem::BindVertexArray(VertexArray *va) {
   return reinterpret_cast<GLVertexArray *>(va)->Bind();
 }
 // --------------------------------------------------------------------------------
-Shader *GLRenderSystem::CreateShader(const ShaderDesc &desc) { return m_Arena.New<GLShader>(desc); }
-// --------------------------------------------------------------------------------
-Texture *GLRenderSystem::CreateTexture(
-  TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
-) {
-  return m_Arena.New<GLTexture>(type, internalFmt, fmt, width, height);
-}
-// --------------------------------------------------------------------------------
-RenderPipeline *GLRenderSystem::CreateDefaultPipeline() {
-  // clang-format off
-  PipelineDesc desc = {
-    .vertex = CreateShader({
-      .src = kDefaultVertexShader,
-      .stage = ShaderStage::VERTEX,
-    }),
-    .fragment = CreateShader({
-      .src = kDefaultFragmentShader,
-      .stage = ShaderStage::FRAGMENT
-    })
-  };
-  // clang-format on
-  return m_Arena.New<GLRenderPipeline>(desc);
-}
-// --------------------------------------------------------------------------------
-RenderPipeline *GLRenderSystem::CreatePipeline(const PipelineDesc &desc) {
-  return m_Arena.New<GLRenderPipeline>(desc);
-}
-// --------------------------------------------------------------------------------
 void GLRenderSystem::BindTexture(Texture *texture, u32 unit) {
   reinterpret_cast<GLTexture *>(texture)->Bind(unit);
   std::string uniformName = "uTexture" + std::to_string(unit);
@@ -166,7 +131,7 @@ void GLRenderSystem::BindTexture(Texture *texture, u32 unit) {
   }
 }
 // --------------------------------------------------------------------------------
-void GLRenderSystem::BindBuffer(IBuffer *buffer, u32 index) {
+void GLRenderSystem::BindBuffer(Buffer *buffer, u32 index) {
   (void)index;
   buffer->Bind();
 }

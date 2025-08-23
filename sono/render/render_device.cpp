@@ -1,0 +1,27 @@
+#include "render/render_device.h"
+
+// --------------------------------------------------------------------------------
+RenderDevice::RenderDevice(Allocator *allocator)
+  : m_pAllocator(allocator) {}
+// --------------------------------------------------------------------------------
+RenderDevice::~RenderDevice() {}
+// --------------------------------------------------------------------------------
+void RenderDevice::DeleteAllBuffers() {
+  for (auto it = m_Buffers.begin(); it != m_Buffers.end();) {
+    if (DeleteBuffer(*it))
+      it = m_Buffers.erase(it);
+    else {
+      it++;
+    }
+  }
+}
+// --------------------------------------------------------------------------------
+void RenderDevice::DeleteAllLayout() {
+  for (auto it = m_VertexLayouts.begin(); it != m_VertexLayouts.end();) {
+    if (DeleteVertexLayout(*it))
+      it = m_VertexLayouts.erase(it);
+    else {
+      it++;
+    }
+  }
+}

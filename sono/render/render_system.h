@@ -5,10 +5,9 @@
 #include "core/system.h"
 #include "core/common/singleton.h"
 #include "core/memory/allocators/arena.h"
-#include "debug/debug_draw.h"
 #include "render/render_command.h"
 #include "render/render_context.h"
-#include "render/buffer/buffer_manager.h"
+#include "render/render_device.h"
 #include "render/shader/shader.h"
 #include "render/resource/texture.h"
 
@@ -16,6 +15,8 @@
 #include "render_window.h"
 #include "vertex_array.h"
 #include "vertex_type.h" // IWYU pragma: export
+
+#include "debug/debug_draw.h"
 
 #include <imgui.h>
 
@@ -71,23 +72,13 @@ public:
   // Pipeline management
   // ================================================================================
 
-  virtual Shader *CreateShader(const ShaderDesc &desc) = 0;
-
   virtual VertexArray *CreateVertexArray() = 0;
 
   virtual void BindVertexArray(VertexArray *va) = 0;
 
-  virtual Texture *CreateTexture(
-    TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
-  ) = 0;
-
-  virtual RenderPipeline *CreateDefaultPipeline() = 0;
-
-  virtual RenderPipeline *CreatePipeline(const PipelineDesc &desc) = 0;
-
   virtual void BindTexture(Texture *texture, u32 unit) = 0;
 
-  virtual void BindBuffer(IBuffer *buffer, u32 index) = 0;
+  virtual void BindBuffer(Buffer *buffer, u32 index) = 0;
 
   virtual void BindPipeline(RenderPipeline *pipeline, u32 index) = 0;
 
@@ -111,17 +102,17 @@ public:
 
   virtual void SetRenderContext(RenderContext *ctx) = 0;
 
-  const ArenaAllocator &GetFrameAllocator() const { return m_Arena; }
+  inline const ArenaAllocator &GetFrameAllocator() const { return m_Arena; }
 
-  RenderContext *GetCurrentContext() { return m_pActiveCtx; };
+  inline RenderContext *GetCurrentContext() { return m_pActiveCtx; };
 
-  RenderPipeline *GetCurrentPipeline() { return m_pActivePipeline; }
+  inline RenderPipeline *GetCurrentPipeline() { return m_pActivePipeline; }
 
-  BufferManager *GetBufferManager() const;
+  inline RenderDevice *GetRenderDevice() const { return m_pDevice; };
 
 protected:
   RenderContext *m_pActiveCtx;
-  BufferManager *m_pBufferManager;
+  RenderDevice *m_pDevice;
   RenderPipeline *m_pActivePipeline;
   DebugDraw *m_DebugDraw;
   RenderQueue m_RenderQueue;

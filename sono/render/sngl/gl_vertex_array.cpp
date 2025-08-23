@@ -1,6 +1,4 @@
 #include "gl_buffer_base.h"
-#include "gl_index_buffer.h"
-#include "gl_vertex_buffer.h"
 #include "gl_vertex_array.h"
 #include "core/common/snassert.h"
 
@@ -51,7 +49,7 @@ void GLVertexArray::Bind() const { glBindVertexArray(m_ID); }
 // --------------------------------------------------------------------------------
 void GLVertexArray::Unbind() const { glBindVertexArray(0); }
 // --------------------------------------------------------------------------------
-void GLVertexArray::AddVertexBuffer(IBuffer *buffer, const VertexLayout &layout) {
+void GLVertexArray::AddVertexBuffer(Buffer *buffer, const VertexLayout &layout) {
   ASSERT(buffer);
 
   glBindVertexArray(m_ID);
@@ -74,29 +72,25 @@ void GLVertexArray::AddVertexBuffer(IBuffer *buffer, const VertexLayout &layout)
     );
   }
 
-  m_VertexBuffers.push_back(static_cast<GLVertexBuffer *>(buffer));
+  m_VertexBuffers.push_back(static_cast<GLBuffer *>(buffer));
 }
 // --------------------------------------------------------------------------------
-void GLVertexArray::SetIndexBuffer(IBuffer *buffer) {
+void GLVertexArray::SetIndexBuffer(Buffer *buffer) {
   ASSERT(buffer);
   glBindVertexArray(m_ID);
-  m_pIndexBuffer = static_cast<GLIndexBuffer *>(buffer);
+  m_pIndexBuffer = static_cast<GLBuffer *>(buffer);
   m_pIndexBuffer->Bind();
 }
 // --------------------------------------------------------------------------------
 GLuint GLVertexArray::GetID() const { return m_ID; }
 // --------------------------------------------------------------------------------
-const GLIndexBuffer *GLVertexArray::GetCurrentIndexBuffer() const { return m_pIndexBuffer; }
+const GLBuffer *GLVertexArray::GetCurrentIndexBuffer() const { return m_pIndexBuffer; }
 // --------------------------------------------------------------------------------
-const std::vector<GLVertexBuffer *> &GLVertexArray::GetVertexBuffers() const {
-  return m_VertexBuffers;
-}
+const std::vector<GLBuffer *> &GLVertexArray::GetVertexBuffers() const { return m_VertexBuffers; }
 // --------------------------------------------------------------------------------
-GLVertexBuffer *GLVertexArray::operator[](usize index) { return m_VertexBuffers[index]; }
+GLBuffer *GLVertexArray::operator[](usize index) { return m_VertexBuffers[index]; }
 // --------------------------------------------------------------------------------
-const GLVertexBuffer *GLVertexArray::operator[](usize index) const {
-  return m_VertexBuffers[index];
-}
+const GLBuffer *GLVertexArray::operator[](usize index) const { return m_VertexBuffers[index]; }
 // --------------------------------------------------------------------------------
 GLVertexArray::~GLVertexArray() {
   if (m_ID) glDeleteVertexArrays(1, &m_ID);

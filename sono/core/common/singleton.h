@@ -28,7 +28,7 @@ public:
   static T *GetPtr() { return m_sInstance; }
 
 protected:
-  static T *m_sInstance;
+  inline static T *m_sInstance = nullptr;
 
 private:
 };

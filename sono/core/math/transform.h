@@ -63,8 +63,11 @@ public:
   std::string ToString() const;
 
 private:
+  Mat4 CalculateLocalModelMatrix() const;
   void UpdateRotation();
+
   void UpdateModelMatrix();
+  void UpdateModelMatrix(const Mat4 &parentModelMat);
 
 private:
   Vec3 m_Position;
@@ -76,6 +79,8 @@ private:
   Vec3 m_Forward;
 
   Mat4 m_ModelMatrix;
+  // TODO: Make use of this flags after scene graph implementation
+  // b8 m_IsDirty;
 };
 
 #endif // !SN_TRANSFORM_H

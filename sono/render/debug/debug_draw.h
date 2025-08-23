@@ -1,6 +1,8 @@
 #ifndef SN_DEBUG_DRAW_H
 #define SN_DEBUG_DRAW_H
 
+#include <render/vertex_array.h>
+#include <render/buffer_base.h>
 #include <core/common/singleton.h>
 #include <core/system.h>
 
@@ -17,9 +19,8 @@ public:
 
 private:
   RenderSystem *m_RenderSys;
+  Buffer *m_Buffer;
+  VertexArray *m_VertexArray;
 };
-
-template <>
-inline DebugDraw *Singleton<DebugDraw>::m_sInstance = nullptr;
 
 #endif // !SN_DEBUG_DRAW_H

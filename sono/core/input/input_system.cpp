@@ -3,27 +3,23 @@
 #include "core/debug/profiler.h"
 #include <variant>
 
-template <>
-InputSystem *Singleton<InputSystem>::m_sInstance = nullptr;
-
 // --------------------------------------------------------------------------------
-
 InputSystem::InputSystem(Allocator &allocator)
   : m_Allocator(allocator)
   , m_MouseState(nullptr)
   , m_KeyState(nullptr) {}
-
+// --------------------------------------------------------------------------------
 void InputSystem::Init() {
   LOG_INFO("<-- Initializing InputSystem -->");
   Mouse::Init(this);
 }
-
+// --------------------------------------------------------------------------------
 void InputSystem::Shutdown() {
   LOG_INFO("<-- Shutting down InputSystem -->");
   m_Allocator.Free(m_MouseState);
   m_Allocator.Free(m_KeyState);
 }
-
+// --------------------------------------------------------------------------------
 void InputSystem::InjectEvent(const Event &e) {
   switch (e.type) {
     case EventType::KEY: {
@@ -81,19 +77,19 @@ void InputSystem::InjectEvent(const Event &e) {
       break;
   }
 }
-
+// --------------------------------------------------------------------------------
 void InputSystem::ActivateMouse() {
   if (!m_MouseState) {
     m_MouseState = m_Allocator.New<MouseState>();
   }
 }
-
+// --------------------------------------------------------------------------------
 void InputSystem::ActivateKeyboard() {
   if (!m_KeyState) {
     m_KeyState = m_Allocator.New<KeyState>();
   }
 }
-
+// --------------------------------------------------------------------------------
 void InputSystem::EndFrame() {
   if (m_MouseState) {
     m_MouseState->deltaX = 0;

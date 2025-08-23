@@ -13,9 +13,6 @@
 #include <unistd.h>
 #endif // SONO_PLATFORM_WINDOW
 
-template <>
-Sono::Profiler *Singleton<Sono::Profiler>::m_sInstance = nullptr;
-
 using namespace Sono;
 
 // ================================================================================

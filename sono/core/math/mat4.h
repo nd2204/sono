@@ -192,13 +192,13 @@ struct Mat4 : public MatBase<4, 4, f32> {
     return r;
   }
 
-  inline void SetTranslation(const Vec3 &v) {
-    n[3][0] = v.x;
-    n[3][1] = v.y;
-    n[3][2] = v.z;
-  }
+  inline void SetTranslation(const Vec3 &v) { SetTranslation(v.x, v.y, v.z); }
 
-  inline void SetTranslation(f32 x, f32 y, f32 z) { SetTranslation(x, y, z); }
+  inline void SetTranslation(f32 x, f32 y, f32 z) {
+    n[3][0] = x;
+    n[3][1] = y;
+    n[3][2] = z;
+  }
 
   inline Mat3 ToMat3() const {
     return Mat3(n[0][0], n[0][1], n[0][2], n[1][0], n[1][1], n[1][2], n[2][0], n[2][1], n[2][2]);

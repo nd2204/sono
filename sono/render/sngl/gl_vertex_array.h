@@ -6,8 +6,7 @@
 
 #include "render/vertex_array.h"
 #include "render/vertex_layout.h"
-#include "gl_vertex_buffer.h"
-#include "gl_index_buffer.h"
+#include "gl_buffer_base.h"
 
 class GLVertexArray : public VertexArray {
 public:
@@ -17,27 +16,26 @@ public:
 
   void Unbind() const override;
 
-  void AddVertexBuffer(IBuffer *buffer, const VertexLayout &layout) override;
+  void AddVertexBuffer(Buffer *buffer, const VertexLayout &layout) override;
 
-  void SetIndexBuffer(IBuffer *buffer) override;
+  void SetIndexBuffer(Buffer *buffer) override;
 
   GLuint GetID() const;
 
-  const GLIndexBuffer *GetCurrentIndexBuffer() const;
+  const GLBuffer *GetCurrentIndexBuffer() const;
 
-  const std::vector<GLVertexBuffer *> &GetVertexBuffers() const;
+  const std::vector<GLBuffer *> &GetVertexBuffers() const;
 
-  GLVertexBuffer *operator[](usize index);
+  GLBuffer *operator[](usize index);
 
-  const GLVertexBuffer *operator[](usize index) const;
+  const GLBuffer *operator[](usize index) const;
 
   ~GLVertexArray();
 
 private:
-  std::vector<GLVertexBuffer *> m_VertexBuffers;
+  std::vector<GLBuffer *> m_VertexBuffers;
   // std::vector<VertexLayout> m_VertexLayouts;
-
-  GLIndexBuffer *m_pIndexBuffer;
+  GLBuffer *m_pIndexBuffer;
   GLuint m_ID;
 };
 

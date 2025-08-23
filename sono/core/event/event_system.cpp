@@ -1,7 +1,5 @@
 #include "event_system.h"
 
-template <>
-EventSystem *Singleton<EventSystem>::m_sInstance = nullptr;
 // --------------------------------------------------------------------------------
 EventSystem::EventSystem()
   : m_Head(0)

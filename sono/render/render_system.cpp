@@ -1,7 +1,7 @@
 #include "core/common/logger.h"
 #include "core/memory/memory_system.h"
 
-#include "render/buffer/buffer_manager.h"
+#include "render/render_device.h"
 #include "render_system.h"
 
 #include <sstream>
@@ -10,12 +10,9 @@
 
 #define RENDER_FRAME_ALLOC_SIZE (1 * SN_MEM_MIB)
 
-template <>
-RenderSystem *Singleton<RenderSystem>::m_sInstance = nullptr;
-
 RenderSystem::RenderSystem()
   : m_pActiveCtx(nullptr)
-  , m_pBufferManager(nullptr)
+  , m_pDevice(nullptr)
   , m_pActivePipeline(nullptr)
   , m_Arena(RENDER_FRAME_ALLOC_SIZE) {
   /* Initialize the library */
@@ -50,7 +47,5 @@ void RenderSystem::Flush() {
   PROFILE_SCOPE("RenderSystem::Flush");
   m_RenderQueue.Flush(*this);
 }
-
-BufferManager *RenderSystem::GetBufferManager() const { return m_pBufferManager; }
 
 RenderSystem::~RenderSystem() { glfwTerminate(); }

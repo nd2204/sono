@@ -3,15 +3,17 @@
 #include "math.h"
 
 #include <algorithm>
+#include <cmath>
 #include <sstream>
 
 void Transform::LookAt(const Transform &target) { LookAt(target.GetPosition()); }
 // --------------------------------------------------------------------------------
 void Transform::LookAt(const Vec3 &worldPos) {
-  Vec3 dir = (m_Position - worldPos).Normalized();
+  Vec3 dir = (worldPos - m_Position).Normalized();
 
-  m_EulerRot.pitch = Sono::Degrees(asin(-dir.y));
-  m_EulerRot.yaw = Sono::Degrees(atan2(-dir.z, -dir.x));
+  m_EulerRot.pitch = Sono::Degrees(atan2(dir.y, sqrt(dir.x * dir.x + dir.z * dir.z)));
+  m_EulerRot.yaw = Sono::Degrees(atan2(dir.x, dir.z));
+  m_EulerRot.roll = 0.0f;
 
   UpdateRotation();
   UpdateModelMatrix();
@@ -53,10 +55,16 @@ void Transform::UpdateRotation() {
   m_Up = m_Right.Cross(m_Forward);
 }
 // --------------------------------------------------------------------------------
-void Transform::UpdateModelMatrix() {
+Mat4 Transform::CalculateLocalModelMatrix() const {
   Mat4 rtX = Mat4::Rotation(Sono::Radians(m_EulerRot.x), Vec3::Right);
   Mat4 rtY = Mat4::Rotation(Sono::Radians(m_EulerRot.y), Vec3::Up);
   Mat4 rtZ = Mat4::Rotation(Sono::Radians(m_EulerRot.z), Vec3::Forward);
 
-  m_ModelMatrix = Mat4::Scale(m_Scale) * rtY * rtX * rtZ * Mat4::Translation(m_Position);
+  return Mat4::Scale(m_Scale) * rtY * rtX * rtZ * Mat4::Translation(m_Position);
+}
+// --------------------------------------------------------------------------------
+void Transform::UpdateModelMatrix() { m_ModelMatrix = CalculateLocalModelMatrix(); }
+// --------------------------------------------------------------------------------
+void Transform::UpdateModelMatrix(const Mat4 &parentModelMat) {
+  m_ModelMatrix = parentModelMat * CalculateLocalModelMatrix();
 }

@@ -11,8 +11,6 @@
 
 DEFINE_STRING_CONSTANTS(kAllocationTypeStr, __FOREACH_ALLOCATION_TYPES);
 
-template <>
-MemorySystem *Singleton<MemorySystem>::m_sInstance = nullptr;
 // --------------------------------------------------------------------------------
 MemorySystem::MemorySystem()
   : m_TotalAllocated(0)

@@ -26,7 +26,6 @@ MemorySystem *g_MemSys;
 RenderSystem *g_RenderSys;
 EventSystem *g_EventSys;
 InputSystem *g_InputSys;
-BufferManager *g_BufferMgr;
 RenderWindow *g_Window;
 
 void DrawTransformGizmo(const Transform &transform) {}
@@ -111,11 +110,24 @@ void HandleEvent(const Event &ev) {
 std::vector<VertexP> CreateWordGridMesh(i32 gridSize, f32 spacing) {
   std::vector<VertexP> mesh;
   for (int i = -gridSize; i <= gridSize; i++) {
+    // Ignore the forward and right axis
+    if (i == 0) continue;
     mesh.emplace_back(i * spacing, 0.0f, -gridSize * spacing);
     mesh.emplace_back(i * spacing, 0.0f, +gridSize * spacing);
     mesh.emplace_back(-gridSize * spacing, 0.0f, i * spacing);
     mesh.emplace_back(+gridSize * spacing, 0.0f, i * spacing);
   }
+
+  // X axis
+  mesh.emplace_back(-gridSize, 0.0f, 0.0f);
+  mesh.emplace_back(+gridSize, 0.0f, 0.0f);
+  // Y axis
+  mesh.emplace_back(0.0f, -gridSize, 0.0f);
+  mesh.emplace_back(0.0f, +gridSize, 0.0f);
+  // Z axis
+  mesh.emplace_back(0.0f, 0.0f, -gridSize);
+  mesh.emplace_back(0.0f, 0.0f, +gridSize);
+
   return mesh;
 }
 
@@ -127,9 +139,10 @@ i32 main(void) {
   g_RenderSys = RenderSystem::GetPtr();
   g_EventSys = EventSystem::GetPtr();
   g_InputSys = InputSystem::GetPtr();
-  g_BufferMgr = g_RenderSys->GetBufferManager();
 
-  g_Window = g_RenderSys->CreateRenderWindow(1024, 768, "Hello Sono");
+  RenderDevice *device = g_RenderSys->GetRenderDevice();
+
+  g_Window = g_RenderSys->CreateRenderWindow(1600, 1000, "Hello Sono");
   g_Window->EnableVsync(true);
 
   std::vector<VertexP> gridVertices = CreateWordGridMesh(20, 1.0f);
@@ -141,6 +154,7 @@ i32 main(void) {
     {0.0f, 0.0f, 0.0f},
     {0.0f, 0.0f, 1.0f}
   };
+
   std::vector<VertexPN> cubeVertices = {
     // -z face
     VertexPN({-0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
@@ -179,20 +193,33 @@ i32 main(void) {
     12, 13, 14, 14, 15, 12, 16, 17, 18, 18, 19, 16, 20, 21, 22, 22, 23, 20,
   };
 
-  IBuffer *vb = g_BufferMgr->CreateVertexBuffer(
-    BufferUsage::STATIC, sizeof(VertexPN), cubeVertices.size(), cubeVertices.data()
-  );
-  IBuffer *ib = g_BufferMgr->CreateIndexBuffer(
-    BufferUsage::STATIC, INDEX_TYPE_U16, cubeIndices.size(), cubeIndices.data()
-  );
+  // clang-format off
+  Buffer *vb = device->CreateBuffer({
+    .count = cubeVertices.size(),
+    .stride = sizeof(VertexPN),
+    .usage = BufferUsage::Vertex,
+    .data = cubeVertices.data()
+  });
+  Buffer *ib = device->CreateBuffer({
+    .count = cubeIndices.size(),
+    .stride = sizeof(u16),
+    .usage = BufferUsage::Index,
+    .data = cubeIndices.data()
+  });
 
   // Debugging buffers
-  IBuffer *gridVb = g_BufferMgr->CreateVertexBuffer(
-    BufferUsage::STATIC, sizeof(VertexP), gridVertices.size(), gridVertices.data()
-  );
-  IBuffer *axesVb = g_BufferMgr->CreateVertexBuffer(
-    BufferUsage::STATIC, sizeof(VertexP), axesVertices.size(), axesVertices.data()
-  );
+  Buffer *gridVb = device->CreateBuffer({
+    .count = gridVertices.size(),
+    .stride = sizeof(VertexP),
+    .usage = BufferUsage::Vertex,
+    .data = gridVertices.data()
+  });
+  Buffer *axesVb = device->CreateBuffer({
+    .count = axesVertices.size(),
+    .stride = sizeof(VertexP),
+    .usage = BufferUsage::Vertex,
+    .data = axesVertices.data()
+  });
 
   VertexArray *cubeVAO = g_RenderSys->CreateVertexArray();
   cubeVAO->AddVertexBuffer(vb, VertexTraits<VertexPN>::GetLayout());
@@ -236,45 +263,45 @@ i32 main(void) {
   {
     // clang-format off
     PROFILE_SCOPE("CreateRenderPipelines");
-    cubePipeline = g_RenderSys->CreatePipeline({
-      .vertex = g_RenderSys->CreateShader({
+    cubePipeline = device->CreatePipeline({
+      .vertex = device->CreateShader({
         .src = LoadShaderSrcFromFile("./assets/shaders/colors.vs.glsl"),
         .stage = ShaderStage::VERTEX
       }),
-      .fragment = g_RenderSys->CreateShader({
+      .fragment = device->CreateShader({
         .src = LoadShaderSrcFromFile("./assets/shaders/colors.fs.glsl"),
         .stage = ShaderStage::FRAGMENT
       })
     });
 
-    lightCubePipeline = g_RenderSys->CreatePipeline({
-      .vertex = g_RenderSys->CreateShader({
+    lightCubePipeline = device->CreatePipeline({
+      .vertex = device->CreateShader({
         .src = LoadShaderSrcFromFile("./assets/shaders/light_cube.vs.glsl"),
         .stage = ShaderStage::VERTEX
       }),
-      .fragment = g_RenderSys->CreateShader({
+      .fragment = device->CreateShader({
         .src = LoadShaderSrcFromFile("./assets/shaders/light_cube.fs.glsl"),
         .stage = ShaderStage::FRAGMENT
       })
     });
 
-    gridPipeline = g_RenderSys->CreatePipeline({
-      .vertex = g_RenderSys->CreateShader({
+    gridPipeline = device->CreatePipeline({
+      .vertex = device->CreateShader({
         .src = LoadShaderSrcFromFile("./assets/shaders/default.vs.glsl"),
         .stage = ShaderStage::VERTEX
       }),
-      .fragment = g_RenderSys->CreateShader({
+      .fragment = device->CreateShader({
         .src = LoadShaderSrcFromFile("./assets/shaders/grid.fs.glsl"),
         .stage = ShaderStage::FRAGMENT
       })
     });
 
-    axesPipeline = g_RenderSys->CreatePipeline({
-      .vertex = g_RenderSys->CreateShader({
+    axesPipeline = device->CreatePipeline({
+      .vertex = device->CreateShader({
         .src = LoadShaderSrcFromFile("./assets/shaders/default.vs.glsl"),
         .stage = ShaderStage::VERTEX
       }),
-      .fragment = g_RenderSys->CreateShader({
+      .fragment = device->CreateShader({
         .src = LoadShaderSrcFromFile("./assets/shaders/axes.fs.glsl"),
         .stage = ShaderStage::FRAGMENT
       })
@@ -376,7 +403,17 @@ i32 main(void) {
         g_RenderSys->Submit<BindShaderCommand>(gridPipeline);
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
         g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
-        g_RenderSys->Submit<DrawCommand>(gridVAO, 0, gridVertices.size(), PrimitiveType::LINES);
+        // Draw non axis line
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(40, 40, 40));
+        g_RenderSys->Submit<DrawCommand>(gridVAO, 0, gridVertices.size() - 6, PrimitiveType::LINES);
+        // Draw axis line
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(255, 0, 0));
+        g_RenderSys->Submit<DrawCommand>(gridVAO, gridVertices.size() - 6, 2, PrimitiveType::LINES);
+        // g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(0, 255, 0));
+        // g_RenderSys->Submit<DrawCommand>(gridVAO, gridVertices.size() - 4, 2,
+        // PrimitiveType::LINES);
+        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(0, 0, 255));
+        g_RenderSys->Submit<DrawCommand>(gridVAO, gridVertices.size() - 2, 2, PrimitiveType::LINES);
 
         Vec3 cubeDiffuse = cubeColor * Vec3(0.6f);
         Vec3 cubeAmbient = cubeDiffuse * Vec3(0.4f);

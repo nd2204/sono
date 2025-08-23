@@ -56,19 +56,9 @@ public:
 
   void BindVertexArray(VertexArray *va) override;
 
-  Shader *CreateShader(const ShaderDesc &desc) override;
-
-  Texture *CreateTexture(
-    TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
-  ) override;
-
-  RenderPipeline *CreateDefaultPipeline() override;
-
-  RenderPipeline *CreatePipeline(const PipelineDesc &desc) override;
-
   void BindTexture(Texture *texture, u32 unit) override;
 
-  void BindBuffer(IBuffer *buffer, u32 index) override;
+  void BindBuffer(Buffer *buffer, u32 index) override;
 
   void BindPipeline(RenderPipeline *pipeline, u32 index) override;
 

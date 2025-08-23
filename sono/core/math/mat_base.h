@@ -39,16 +39,6 @@ struct MatBase {
     return n[row];
   }
 
-  MatBase<R, C, T> &operator=(const MatBase<R, C, T> &rhs) {
-    const T *ptr = rhs.ValuePtr();
-    for (int i = 0; i < R; i++) {
-      for (int j = 0; j < C; j++) {
-        n[i][j] = T(ptr[i * 4 + j]);
-      }
-    }
-    return *this;
-  }
-
   /// @brief setup an identity matrix with the value of v in the diagonal cells
   explicit MatBase(T v) {
     SN_ASSERT(R == C, "Must be a square matrix");

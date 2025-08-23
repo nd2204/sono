@@ -1,13 +1,13 @@
 #ifndef SN_GL_BUFFER_BASE_H
 #define SN_GL_BUFFER_BASE_H
 
-#include "render/buffer/buffer_base.h"
+#include "render/buffer_base.h"
 
 #include "glad/glad.h"
 
-class GLBuffer : public IBuffer {
+class GLBuffer : public Buffer {
 public:
-  GLBuffer(GLenum target, BufferUsage usage, usize size);
+  GLBuffer(const BufferDesc &desc);
 
   virtual ~GLBuffer();
 
@@ -18,10 +18,6 @@ public:
   virtual void Update(const void *data, usize size, usize offset = 0) override;
 
   virtual void Release() override;
-
-  virtual u32 GetSize() const override;
-
-  virtual BufferUsage GetUsage() const override;
 
   virtual void Bind() const override;
 
@@ -34,8 +30,7 @@ public:
 private:
   GLuint m_BufferID;
   GLenum m_Target;
-  usize m_Size;
-  BufferUsage m_Usage;
+  GLenum m_GlUsage;
 };
 
 #endif // !SN_GL_BUFFER_BASE_H
