@@ -30,7 +30,6 @@ void GLRenderSystem::Init() {
 void GLRenderSystem::Shutdown() {
   LOG_INFO("<-- Shutting down GLRenderSystem -->");
   m_pDevice->DeleteAllBuffers();
-  m_pDevice->DeleteAllLayout();
   m_Arena.FreeInternalBuffer();
 }
 // --------------------------------------------------------------------------------

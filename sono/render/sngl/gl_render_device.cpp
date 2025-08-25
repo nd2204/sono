@@ -25,19 +25,9 @@ const std::string kDefaultFragmentShader = // force clang-format
 GLRenderDevice::GLRenderDevice(Allocator *allocator)
   : RenderDevice(allocator) {
   DeleteAllBuffers();
-  DeleteAllLayout();
 }
 // --------------------------------------------------------------------------------
-GLRenderDevice::~GLRenderDevice() {
-  DeleteAllBuffers();
-  DeleteAllLayout();
-}
-// --------------------------------------------------------------------------------
-VertexLayout *GLRenderDevice::CreateVertexLayout() {
-  VertexLayout *layout = SN_NEW(ALLOC_TYPE_RENDER_SYSTEM) VertexLayout();
-  m_VertexLayouts.insert(layout);
-  return layout;
-}
+GLRenderDevice::~GLRenderDevice() { DeleteAllBuffers(); }
 // --------------------------------------------------------------------------------
 RenderPipeline *GLRenderDevice::CreateDefaultPipeline() {
   // clang-format off
@@ -67,12 +57,6 @@ Texture *GLRenderDevice::CreateTexture(
   TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
 ) {
   return m_pAllocator->New<GLTexture>(type, internalFmt, fmt, width, height);
-}
-// --------------------------------------------------------------------------------
-b8 GLRenderDevice::DeleteVertexLayout(VertexLayout *pLayout) {
-  ASSERT(pLayout);
-  SN_FREE(pLayout);
-  return true;
 }
 // --------------------------------------------------------------------------------
 Buffer *GLRenderDevice::CreateBuffer(const BufferDesc &desc) {

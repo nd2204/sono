@@ -334,7 +334,7 @@ i32 main(void) {
   Color3 lightColor(255, 255, 255);
 
   Transform cubeTransform;
-  cubeTransform.SetPosition(Vec3::Zero);
+  cubeTransform.SetPosition({0.0f, 0.5f, 0.0f});
 
   Transform lightCubeTransform = cubeTransform;
   lightCubeTransform.Move({-1.2f, 1.0f, -2.0f});

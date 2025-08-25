@@ -12,8 +12,6 @@ public:
 
   ~GLRenderDevice();
 
-  VertexLayout *CreateVertexLayout() override;
-
   RenderPipeline *CreateDefaultPipeline() override;
 
   RenderPipeline *CreatePipeline(const PipelineDesc &desc) override;
@@ -23,8 +21,6 @@ public:
   Texture *CreateTexture(
     TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
   ) override;
-
-  b8 DeleteVertexLayout(VertexLayout *pLayout) override;
 
   Buffer *CreateBuffer(const BufferDesc &desc) override;
 

@@ -15,13 +15,3 @@ void RenderDevice::DeleteAllBuffers() {
     }
   }
 }
-// --------------------------------------------------------------------------------
-void RenderDevice::DeleteAllLayout() {
-  for (auto it = m_VertexLayouts.begin(); it != m_VertexLayouts.end();) {
-    if (DeleteVertexLayout(*it))
-      it = m_VertexLayouts.erase(it);
-    else {
-      it++;
-    }
-  }
-}

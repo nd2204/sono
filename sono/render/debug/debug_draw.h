@@ -17,6 +17,8 @@ public:
   void Init() override;
   void Shutdown() override;
 
+  void Render();
+
 private:
   RenderSystem *m_RenderSys;
   Buffer *m_Buffer;

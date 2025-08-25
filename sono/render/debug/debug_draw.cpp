@@ -18,5 +18,8 @@ void DebugDraw::Init() {
   m_VertexArray->AddVertexBuffer(m_Buffer, VertexTraits<VertexPC>::GetLayout());
 }
 // --------------------------------------------------------------------------------
-void DebugDraw::Shutdown() {}
+void DebugDraw::Shutdown() {
+  RenderDevice *device = m_RenderSys->GetRenderDevice();
+  device->DeleteBuffer(m_Buffer);
+}
 // --------------------------------------------------------------------------------

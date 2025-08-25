@@ -7,7 +7,6 @@
 #include "render/buffer_base.h"
 #include "render/resource/texture.h"
 #include "render/shader/shader.h"
-#include "render/vertex_layout.h"
 
 #include <set>
 
@@ -16,8 +15,6 @@ public:
   RenderDevice(Allocator *allocator);
 
   virtual ~RenderDevice();
-
-  virtual VertexLayout *CreateVertexLayout() = 0;
 
   virtual RenderPipeline *CreateDefaultPipeline() = 0;
 
@@ -29,19 +26,14 @@ public:
     TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
   ) = 0;
 
-  virtual b8 DeleteVertexLayout(VertexLayout *pLayout) = 0;
-
   virtual Buffer *CreateBuffer(const BufferDesc &desc) = 0;
 
   virtual b8 DeleteBuffer(Buffer *pBuf) = 0;
 
   virtual void DeleteAllBuffers();
 
-  virtual void DeleteAllLayout();
-
 protected:
   std::set<Buffer *> m_Buffers;
-  std::set<VertexLayout *> m_VertexLayouts;
   Allocator *m_pAllocator;
 };
 
