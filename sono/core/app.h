@@ -3,7 +3,9 @@
 
 #include "render/render_system.h"
 #include "render/render_window.h"
+
 namespace Sono {
+
 class App {
 public:
   virtual ~App() {}
@@ -26,6 +28,7 @@ public:
 protected:
   RenderWindow *m_ActiveWindow;
 };
+
 } // namespace Sono
 
 #endif // !SN_APPLICATION_H

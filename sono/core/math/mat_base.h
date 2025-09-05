@@ -5,6 +5,7 @@
 #include <cstring>
 #include <sstream>
 #include <string>
+#include <utility>
 
 template <int R, int C, typename T>
 struct MatBase {
@@ -29,12 +30,6 @@ struct MatBase {
   explicit MatBase(const MatBase<R, C, U> &o)
     : MatBase(o.ValuePtr()) {}
 
-  T *operator[](usize row) { return n[row]; }
-
-  const T *operator[](usize row) const { return n[row]; }
-
-  const T &operator()(usize row, usize col) const { return n[row][col]; }
-
   /// @brief setup an identity matrix with the value of v in the diagonal cells
   explicit MatBase(T v) {
     SN_ASSERT(R == C, "Must be a square matrix");
@@ -42,6 +37,30 @@ struct MatBase {
     memset(n, 0, R * C * sizeof(T));
     for (int i = 0; i < R; i++) {
       n[i][i] = v;
+    }
+  }
+
+  T *operator[](usize row) {
+    SN_ASSERT(row < R, "Index out of bound");
+    return n[row];
+  }
+
+  const T *operator[](usize row) const {
+    SN_ASSERT(row < R, "Index out of bound");
+    return n[row];
+  }
+
+  const T &operator()(usize row, usize col) const {
+    SN_ASSERT(row < R && col < C, "Index out of bound");
+    return n[row][col];
+  }
+
+  void Tranpose() {
+    SN_ASSERT(R == C, "Must be a square matrix");
+    for (i32 r = 1; r < R; ++r) {
+      for (i32 c = 0; c < r; ++r) {
+        std::swap(&n[r][c], &n[c][r]);
+      }
     }
   }
 

@@ -1,8 +1,9 @@
 #ifndef SN_VEC3_H
 #define SN_VEC3_H
 
-#include "vec_base.h"
-#include "vec.h"
+#include <core/math/vec_base.h>
+#include <core/math/math.h>
+#include <core/math/vec.h>
 
 typedef Vec<3, f32> Vec3;
 
@@ -46,5 +47,19 @@ struct VecBase<3, f32> {
   static const Vec3 &Back;
   static const Vec3 &Zero;
 };
+
+namespace Sono {
+// --------------------------------------------------------------------------------
+constexpr inline Vec3 Radians(const Vec3 &euler) {
+  f32 mult = PI / 180.0f;
+  return Vec3(euler.x * mult, euler.y * mult, euler.z * mult);
+}
+// --------------------------------------------------------------------------------
+constexpr inline Vec3 Degrees(const Vec3 &euler) {
+  f32 mult = 180.0f / PI;
+  return Vec3(euler.x * mult, euler.y * mult, euler.z * mult);
+}
+
+} // namespace Sono
 
 #endif // !SN_VEC3_H

@@ -17,9 +17,6 @@
 #include <imgui.h>
 #include <core/entry.h>
 
-#include "glm/fwd.hpp"
-#include "glm/trigonometric.hpp"
-
 class SonoTest : public Sono::App {
 public:
   Camera cam;
@@ -55,10 +52,7 @@ public:
   void Init() override {
     g_RenderSys = RenderSystem::GetPtr();
     g_InputSys = InputSystem::GetPtr();
-    m_ActiveWindow->EnableVsync(false);
-
-    // glm::quat q = ;
-    // glm::rotate(q, glm::radians(45), glm::vec3(0.0f, 1.0f, 0.0f))
+    m_ActiveWindow->EnableVsync(0);
 
     RenderDevice *device = g_RenderSys->GetRenderDevice();
 
@@ -241,15 +235,15 @@ public:
     lightColor = Color3(255, 255, 255);
     cubeTransform.SetPosition({0.0f, 0.5f, 0.0f});
     lightCubeTransform = cubeTransform;
-    lightCubeTransform.Move({-1.2f, 1.0f, -2.0f});
+    lightCubeTransform.Move({-1.2f, 1.0f, 2.0f});
     lightCubeTransform.SetScale(Vec3(0.5f));
   }
 
   void Update() override {
     ProcessInput();
 
-    // lightCubeTransform.Move(Vec3::Right * Time::DeltaTime() * 1.25f);
-    // lightCubeTransform.LookAt(cubeTransform);
+    lightCubeTransform.Move(Vec3::Right * Time::DeltaTime() * 1.25f);
+    lightCubeTransform.LookAt(cubeTransform);
     if (lightCubeTransform.IsDirty()) {
       lightCubeTransform.UpdateModelMatrix();
     }
@@ -416,7 +410,7 @@ private:
     Transform &transform, const std::string &name = "Unamed transform"
   ) {
     Vec3 position = transform.GetPosition();
-    Vec3 rotationRad = transform.GetEulerRotation();
+    Vec3 eulerDeg = transform.GetEuler();
     Vec3 scale = transform.GetScale();
 
     ImGui::Text("%s", name.c_str());
@@ -424,8 +418,8 @@ private:
     if (ImGui::DragFloat3("position", position.ValuePtr(), 0.25f)) {
       transform.SetPosition(position);
     }
-    if (ImGui::DragFloat3("rotation", rotationRad.ValuePtr(), 0.5f)) {
-      transform.SetEulerRotation(rotationRad);
+    if (ImGui::DragFloat3("rotation", eulerDeg.ValuePtr(), 0.5f)) {
+      transform.SetEuler(eulerDeg);
     }
     if (ImGui::DragFloat3("scale", scale.ValuePtr(), 0.05f)) {
       transform.SetScale(scale);

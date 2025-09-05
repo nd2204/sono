@@ -1,8 +1,7 @@
 #ifndef SN_MATH_H
 #define SN_MATH_H
 
-#include "core/common/types.h"
-#include "core/common/logger.h"
+#include <core/common/types.h>
 #include <cmath>
 
 typedef f32 Radian;
@@ -12,6 +11,7 @@ namespace Sono {
 using TransitionFn = f32 (*)(f32);
 
 constexpr f32 PI = 3.14159265358979323846;
+constexpr f32 HALF_PI = 1.5707963267949;
 // --------------------------------------------------------------------------------
 constexpr inline Radian Radians(f32 angle) { return angle * PI / 180.0f; }
 // --------------------------------------------------------------------------------

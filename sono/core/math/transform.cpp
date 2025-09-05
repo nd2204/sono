@@ -1,23 +1,6 @@
 #include <core/math/transform.h>
 #include <sstream>
 
-void Transform::LookAt(const Transform &target) { LookAt(target.GetPosition()); }
-// --------------------------------------------------------------------------------
-void Transform::LookAt(const Vec3 &worldPos) {
-  Vec3 forward = (worldPos - m_Position).Normalized();
-  Vec3 right = forward.Cross(Vec3::Up).Normalized();
-  Vec3 up = right.Cross(forward).Normalized();
-
-  m_Rotation = Quaternion::FromMat3(Mat3(forward, right, up));
-  m_IsDirty = true;
-}
-// --------------------------------------------------------------------------------
-Vec3 Transform::GetEulerRotation() const { return m_Rotation.ToEuler(); }
-// --------------------------------------------------------------------------------
-void Transform::SetEulerRotation(const Vec3 &eulerRot) {
-  m_Rotation = Quaternion::FromEuler(eulerRot);
-  m_IsDirty = true;
-}
 // --------------------------------------------------------------------------------
 void Transform::Move(const Vec3 &translation, CoordSpace relSpace) {
   if (relSpace == CoordSpace::LOCAL) {
@@ -47,6 +30,56 @@ Vec3 Transform::GetRight() const {
 // --------------------------------------------------------------------------------
 Vec3 Transform::GetUp() const {
   return m_Rotation * Vec3::Up; // up is the local +y axis
+}
+// --------------------------------------------------------------------------------
+const Quaternion &Transform::GetRotation() const { return m_Rotation; }
+// --------------------------------------------------------------------------------
+void Transform::SetRotation(const Quaternion &q) {
+  m_Rotation = q;
+  m_EditorEuler = Sono::Degrees(m_Rotation.ToEuler()); // sync for inspector
+  m_IsDirty = true;
+}
+// --------------------------------------------------------------------------------
+void Transform::Rotate(const Quaternion &q, CoordSpace relSpace) {
+  switch (relSpace) {
+    case CoordSpace::GLOBAL:
+      m_Rotation = q * m_Rotation;
+      break;
+    case CoordSpace::LOCAL:
+      m_Rotation = m_Rotation * q;
+      break;
+  }
+  m_IsDirty = true;
+}
+// --------------------------------------------------------------------------------
+void Transform::RotateAxis(const Vec3 &axis, Radian angleRad, CoordSpace relSpace) {
+  Rotate(Quaternion(angleRad, axis), relSpace);
+}
+// --------------------------------------------------------------------------------
+void Transform::LookAt(const Transform &target, const Vec3 &worldUp) {
+  LookAt(target.GetPosition(), worldUp);
+}
+// --------------------------------------------------------------------------------
+void Transform::LookAt(const Vec3 &worldPos, const Vec3 &worldUp) {
+  Vec3 forward = (worldPos - m_Position).Normalized();
+  Vec3 right = worldUp.Cross(forward).Normalized();
+  Vec3 up = forward.Cross(right);
+
+  m_Rotation = Quaternion::FromMatrix(
+    Mat3(right.x, right.y, right.z, up.x, up.y, up.z, forward.x, forward.y, forward.z)
+  );
+  m_EditorEuler = Sono::Degrees(m_Rotation.ToEuler());
+
+  m_IsDirty = true;
+}
+// --------------------------------------------------------------------------------
+const Vec3 &Transform::GetEuler() const { return m_EditorEuler; }
+// --------------------------------------------------------------------------------
+void Transform::SetEuler(const Vec3 &eulerDeg) {
+  m_EditorEuler = eulerDeg;
+  Vec3 eulerRad = Sono::Radians(eulerDeg);
+  m_Rotation = Quaternion::FromEuler(eulerRad);
+  m_IsDirty = true;
 }
 // --------------------------------------------------------------------------------
 const Vec3 &Transform::GetScale() const { return m_Scale; }

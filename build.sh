@@ -42,15 +42,30 @@ build_dir="${project_dir}/build"
 
 build_type=RelWithDebInfo
 
+program_args=()
 while [[ $# -gt 0 ]]; do
-  case $1 in
-    "--norun") norun=1 ;;
-    "--debug") build_type=Debug ;;
-    "--release") build_type=Release ;;
-    "--rebuild") rebuild=1 ;;
-    "--force" | "-f") force=1 ;;
-  esac
-  shift
+  if [[ ! $record_args ]]; then
+    case $1 in
+      "--norun") norun=1; shift ;;
+      "--debug") build_type=Debug; shift ;;
+      "--release") build_type=Release; shift ;;
+      "--rebuild") rebuild=1; shift ;;
+      "--test") test=1; shift;;
+      "--force" | "-f") force=1; shift ;;
+      "--args")
+        record_args=1
+        shift
+        ;;
+      *)
+        echo "Unknown option: $1"
+        shift
+        ;;
+      esac
+  else
+    # Everything after -- goes into program_args
+    program_args+=("$1")
+    shift
+  fi
 done
 
 if [[ -d "$build_dir" && ! $force ]]; then
@@ -95,7 +110,13 @@ echo "Sono build completed successfully."
 echo "================================================================================"
 
 if [[ $is_win -eq 1 ]]; then exe=.exe; else exe= ; fi
-exec="$build_dir/tests/sono/SonoTest$exe"
+
+if [[ $test -eq 1 ]]; then
+  exec="$build_dir/tests/SonoTest$exe ${program_args[@]}"
+else
+  exec="$build_dir/tests/SonoEditor$exe ${program_args[@]}"
+fi
+
 
 if [[ ! $norun ]]; then
   echo "\"--norun\" flag not set, running the application..."

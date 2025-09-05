@@ -7,4 +7,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
 add_subdirectory(sono)
-add_subdirectory(tests/sono)
+add_subdirectory(tests)

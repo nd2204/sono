@@ -37,9 +37,9 @@ public:
   // Orientation manipulation, query methods
   // --------------------------------------------------------------------------------
 
-  void LookAt(const Transform &target);
+  void LookAt(const Transform &target, const Vec3 &worldUp = Vec3::Up);
 
-  void LookAt(const Vec3 &worldPos);
+  void LookAt(const Vec3 &worldPos, const Vec3 &worldUp = Vec3::Up);
 
   Vec3 GetForward() const;
 
@@ -47,10 +47,17 @@ public:
 
   Vec3 GetUp() const;
 
-  Vec3 GetEulerRotation() const;
+  const Quaternion &GetRotation() const;
 
-  // Set the euler angle in radians
-  void SetEulerRotation(const Vec3 &eulerRot);
+  void SetRotation(const Quaternion &q);
+
+  void Rotate(const Quaternion &q, CoordSpace relSpace = CoordSpace::LOCAL);
+
+  void RotateAxis(const Vec3 &axis, Radian angleRad, CoordSpace relSpace = CoordSpace::LOCAL);
+
+  const Vec3 &GetEuler() const;
+
+  void SetEuler(const Vec3 &eulerDeg);
 
   // --------------------------------------------------------------------------------
   // Scale
@@ -78,9 +85,14 @@ public:
 
 private:
   Vec3 m_Position;
-  Quaternion m_Rotation;
   Vec3 m_Scale;
 
+  // TODO: move this to scene graph
+  Vec3 m_EditorEuler;
+
+  Quaternion m_Rotation;
+
+  Mat4 m_RotationMatrix;
   Mat4 m_ModelMatrix;
 
   // TODO: Make use of this flags after scene graph implementation
