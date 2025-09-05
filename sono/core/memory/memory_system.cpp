@@ -32,6 +32,32 @@ void MemorySystem::Shutdown() {
 // --------------------------------------------------------------------------------
 Allocator &MemorySystem::GetGlobalAllocator() { return m_GlobalAllocator; }
 // --------------------------------------------------------------------------------
+void MemorySystem::ReportSubAllocation(
+  void *parentPtr, void *childPtr, const char *file, const char *func, usize size, int line,
+  AllocationType type
+) {
+#ifndef SN_NO_MEMTRACKING
+  if (!parentPtr || !childPtr || m_AllocTracker.find(parentPtr) == m_AllocTracker.end()) return;
+
+  std::lock_guard<std::mutex> lock(m_Mutex);
+
+  auto &childMap = m_AllocTracker[parentPtr].childs;
+  if (childMap.find(childPtr) != childMap.end()) {
+    LOG_WARN_F("Double sub-allocation detected at %p in %s:%d", childPtr, size, line);
+  }
+
+  childMap[childPtr] = {
+    .file = file,
+    .func = func,
+    .parent = &m_AllocTracker[parentPtr],
+    .size = size,
+    .line = line,
+    .type = type
+  };
+#endif // !SN_NO_MEMTRACKING
+}
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
 void MemorySystem::ReportAllocation(
   void *ptr, const char *file, const char *func, usize size, int line, AllocationType type
 ) {
@@ -45,7 +71,17 @@ void MemorySystem::ReportAllocation(
     LOG_WARN_F("Double allocation detected at %p in %s:%d", ptr, size, line);
   }
 
-  m_AllocTracker[ptr] = AllocationInfo(file, func, size, line, type);
+  // clang-format off
+  m_AllocTracker[ptr] = {
+    .file = file,
+    .func = func,
+    .parent = nullptr,
+    .size = size,
+    .line = line,
+    .type = type
+  };
+
+  // clang-format on
   m_TotalAllocated += size;
   m_CurrentUsage += size;
   m_AllocationCount++;
@@ -112,6 +148,7 @@ std::string MemorySystem::GetAllocsReport() const {
   std::unordered_map<AllocationType, i32> allocTypeSums;
   allocTypeSums.clear();
 
+  // TODO: add recursive report string collector for allocation with childs
   for (const auto &pair : m_AllocTracker) {
     const AllocationInfo &info = pair.second;
     if (allocTypeSums.find(info.type) != allocTypeSums.end()) {

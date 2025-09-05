@@ -6,10 +6,10 @@
 
 Image::Image()
   : m_Buffer(nullptr)
+  , m_BufSize(0)
   , m_Width(0)
   , m_Height(0)
   , m_Channels(0)
-  , m_BufSize(0)
   , m_AutoFree(true) {}
 // --------------------------------------------------------------------------------
 Image::Image(const std::string &imageFile)

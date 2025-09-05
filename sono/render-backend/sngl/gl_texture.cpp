@@ -1,6 +1,6 @@
-#include "gl_texture.h"
-#include "core/common/snassert.h"
-#include "glad/glad.h"
+#include <render-backend/sngl/gl_texture.h>
+#include <core/common/snassert.h>
+#include <glad/glad.h>
 #include <cstdint>
 
 // clang-format off

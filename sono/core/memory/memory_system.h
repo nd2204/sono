@@ -1,11 +1,11 @@
 #ifndef SN_MEMORY_SYSTEM_H
 #define SN_MEMORY_SYSTEM_H
 
-#include "allocator.h"
-#include "allocators/heap.h"
-#include "core/common/types.h"
-#include "core/common/defines.h"
-#include "core/common/singleton.h"
+#include <core/memory/allocator.h>
+#include <core/memory/allocators/heap.h>
+
+#include <core/common/types.h>
+#include <core/common/singleton.h>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -33,41 +33,6 @@ constexpr usize SN_MEM_GB = SN_MEM_MIB * SN_MEM_MIB;
 
 // clang-format off
 
-#define __FOREACH_ALLOCATION_TYPES(F) \
-  F(0, ALLOC_TYPE_GENERAL),           \
-  F(1, ALLOC_TYPE_SYSTEM_EVENT),      \
-  F(2, ALLOC_TYPE_ALLOCATOR_ARENA),   \
-  F(3, ALLOC_TYPE_ALLOCATOR_POOL),    \
-  F(4, ALLOC_TYPE_RESOURCE),          \
-  F(5, ALLOC_TYPE_RENDER_SYSTEM),     \
-  F(6, ALLOC_TYPE_MAX)
-
-// clang-format on
-
-DEFINE_ENUMS(AllocationType, __FOREACH_ALLOCATION_TYPES);
-
-struct AllocationInfo {
-  const char *file;
-  const char *func;
-  usize size;
-  i32 line;
-  AllocationType type;
-
-  AllocationInfo()
-    : file(nullptr)
-    , func(nullptr)
-    , size(0)
-    , line(0)
-    , type(ALLOC_TYPE_GENERAL) {}
-
-  AllocationInfo(const char *file, const char *func, usize size, i32 line, AllocationType type)
-    : file(file)
-    , func(func)
-    , size(size)
-    , line(line)
-    , type(type) {}
-};
-
 class MemorySystem : public Singleton<MemorySystem> {
 public:
   MemorySystem();
@@ -82,9 +47,13 @@ public:
 
   void Shutdown();
 
-  /// @brief: update memory allocation
+  /// @brief: track memory allocation
   void ReportAllocation(
     void *ptr, const char *file, const char *func, usize size, int line, AllocationType type
+  );
+
+  void ReportSubAllocation(
+    void *parent, void *child, const char *file, const char *func, usize size, int line, AllocationType type
   );
 
   /// @brief update memory deallocation
@@ -133,7 +102,7 @@ uintptr_t AlignSize(uintptr_t size, usize align);
 
 #define SN_ZERO(ptr, size) memset((ptr), 0, (size));
 
-#if !defined(SN_NDEBUG) && !defined(SN_NO_MEMTRACKING)
+#if !defined(SN_NO_MEMTRACKING)
 #define SN_ALLOC(size, type) SNAlloc((size), __FILE__, __FUNCTION__, __LINE__, (type))
 #define SN_FREE(ptr)         SNFree(ptr, __FILE__, __LINE__)
 #define SN_NEW(type)         new (__FILE__, __FUNCTION__, __LINE__, (type))

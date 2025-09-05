@@ -1,9 +1,9 @@
 #include "core/common/snassert.h"
 
-#include "gl_render_device.h"
-#include "gl_buffer_base.h"
-#include "gl_commmon.h"
-#include "render/buffer_base.h"
+#include <render-backend/sngl/gl_render_device.h>
+#include <render-backend/sngl/gl_buffer_base.h>
+#include <render-backend/sngl/gl_commmon.h>
+#include <render/buffer_base.h>
 
 // ------------------------------------------------------------------------------------------
 GLBuffer::GLBuffer(const BufferDesc &desc)

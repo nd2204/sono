@@ -1,7 +1,7 @@
-#include "global.h"
-#include "debug/profiler.h"
-#include "render/sngl/gl_render_system.h"
-#include "core/common/time.h"
+#include <render-backend/sngl/gl_render_system.h>
+#include <core/global.h>
+#include <core/debug/profiler.h>
+#include <core/common/time.h>
 #include <memory>
 
 using namespace Sono;

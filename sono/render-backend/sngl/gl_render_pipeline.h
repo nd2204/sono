@@ -1,34 +1,9 @@
-#ifndef SN_GL_SHADERS_H
-#define SN_GL_SHADERS_H
+#ifndef SN_GL_RENDER_PIPELINE_H
+#define SN_GL_RENDER_PIPELINE_H
 
-#include "core/common/types.h"
+#include <render/render_pipeline.h>
+#include <core/common/types.h>
 #include <glad/glad.h>
-
-#include "render/shader/shader.h"
-
-class GLShader : public Shader {
-public:
-  GLShader(const ShaderDesc &desc);
-
-  ~GLShader();
-
-  void Compile() override;
-
-  GLuint GetID() const;
-
-  void SetSource(const char **src);
-
-  void DeleteShader();
-
-  operator GLuint() const;
-
-private:
-  GLuint m_ShaderID;
-};
-
-#define VERTEX_SHADER_BIT   1
-#define FRAGMENT_SHADER_BIT 1 << 1
-#define GEOMETRY_SHADER_BIT 1 << 2
 
 class GLRenderPipeline : public RenderPipeline {
 public:
@@ -96,4 +71,4 @@ private:
   u8 m_AttachedShaders;
 };
 
-#endif // !SN_GL_SHADERS_H
+#endif // !SN_GL_RENDER_PIPELINE_H

@@ -1,16 +1,17 @@
 #ifndef SN_GL_BUFFER_MANAGER_H
 #define SN_GL_BUFFER_MANAGER_H
 
-#include "render/render_device.h"
-#include "render/shader/shader.h"
-
-#include "glad/glad.h"
+#include <render/render_device.h>
+#include <render/shader/shader.h>
+#include <glad/glad.h>
 
 class GLRenderDevice : public RenderDevice {
 public:
-  GLRenderDevice(Allocator *allocator);
+  using RenderDevice::RenderDevice;
 
-  ~GLRenderDevice();
+  void Init() override;
+
+  void Shutdown() override;
 
   RenderPipeline *CreateDefaultPipeline() override;
 
@@ -21,6 +22,8 @@ public:
   Texture *CreateTexture(
     TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
   ) override;
+
+  CommandList *CreateCommandList() override;
 
   Buffer *CreateBuffer(const BufferDesc &desc) override;
 

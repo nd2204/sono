@@ -1,9 +1,10 @@
 #include "core/memory/memory_system.h"
 
-#include "render/sngl/gl_render_device.h"
-#include "render/sngl/gl_buffer_base.h"
-#include "render/sngl/gl_texture.h"
-#include "render/sngl/gl_shader.h"
+#include <render-backend/sngl/gl_render_pipeline.h>
+#include <render-backend/sngl/gl_render_device.h>
+#include <render-backend/sngl/gl_buffer_base.h>
+#include <render-backend/sngl/gl_texture.h>
+#include <render-backend/sngl/gl_shader.h>
 
 const std::string kDefaultVertexShader = // force clang-format
   "#version 330 core"
@@ -22,12 +23,13 @@ const std::string kDefaultFragmentShader = // force clang-format
   "  FragColor = vec4(1.0f);"
   "}";
 
-GLRenderDevice::GLRenderDevice(Allocator *allocator)
-  : RenderDevice(allocator) {
+// --------------------------------------------------------------------------------
+void GLRenderDevice::Init() {}
+// --------------------------------------------------------------------------------
+void GLRenderDevice::Shutdown() {
+  m_FrameAllocator.FreeInternalBuffer();
   DeleteAllBuffers();
 }
-// --------------------------------------------------------------------------------
-GLRenderDevice::~GLRenderDevice() { DeleteAllBuffers(); }
 // --------------------------------------------------------------------------------
 RenderPipeline *GLRenderDevice::CreateDefaultPipeline() {
   // clang-format off
@@ -42,22 +44,24 @@ RenderPipeline *GLRenderDevice::CreateDefaultPipeline() {
     })
   };
   // clang-format on
-  return m_pAllocator->New<GLRenderPipeline>(desc);
+  return m_pResourceAllocator->New<GLRenderPipeline>(desc);
 }
 // --------------------------------------------------------------------------------
 RenderPipeline *GLRenderDevice::CreatePipeline(const PipelineDesc &desc) {
-  return m_pAllocator->New<GLRenderPipeline>(desc);
+  return m_pResourceAllocator->New<GLRenderPipeline>(desc);
 }
 // --------------------------------------------------------------------------------
 Shader *GLRenderDevice::CreateShader(const ShaderDesc &desc) {
-  return m_pAllocator->New<GLShader>(desc);
+  return m_pResourceAllocator->New<GLShader>(desc);
 }
 // --------------------------------------------------------------------------------
 Texture *GLRenderDevice::CreateTexture(
   TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
 ) {
-  return m_pAllocator->New<GLTexture>(type, internalFmt, fmt, width, height);
+  return m_pResourceAllocator->New<GLTexture>(type, internalFmt, fmt, width, height);
 }
+// --------------------------------------------------------------------------------
+CommandList *GLRenderDevice::CreateCommandList() { return nullptr; }
 // --------------------------------------------------------------------------------
 Buffer *GLRenderDevice::CreateBuffer(const BufferDesc &desc) {
   Buffer *buffer = SN_NEW(ALLOC_TYPE_RENDER_SYSTEM) GLBuffer(desc);

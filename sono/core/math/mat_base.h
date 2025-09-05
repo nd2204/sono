@@ -29,15 +29,11 @@ struct MatBase {
   explicit MatBase(const MatBase<R, C, U> &o)
     : MatBase(o.ValuePtr()) {}
 
-  T *operator[](usize row) {
-    ASSERT(row < R);
-    return n[row];
-  }
+  T *operator[](usize row) { return n[row]; }
 
-  const T *operator[](usize row) const {
-    ASSERT(row < R);
-    return n[row];
-  }
+  const T *operator[](usize row) const { return n[row]; }
+
+  const T &operator()(usize row, usize col) const { return n[row][col]; }
 
   /// @brief setup an identity matrix with the value of v in the diagonal cells
   explicit MatBase(T v) {

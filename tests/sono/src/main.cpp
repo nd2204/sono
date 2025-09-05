@@ -1,267 +1,177 @@
-#include "imgui.h"
-#include "render/render_command.h"
-#include "render/shader/shader.h"
+#include <core/math/math.h>
 #include <core/common/logger.h>
 #include <core/common/time.h>
 #include <core/global.h>
-#include <core/math/lerp.h>
 #include <core/math/mat4.h>
 #include <core/math/transform.h>
 #include <core/math/vec3.h>
-
 #include <core/event/event_dispatcher.h>
 #include <core/input/mouse.h>
-#include <core/resource/image.h>
-
+#include <render/render_command.h>
+#include <render/shader/shader.h>
 #include <render/camera.h>
 #include <render/vertex_type.h>
 #include <unordered_map>
-
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#include <imgui.h>
+#include <core/entry.h>
 
-Camera cam;
+#include "glm/fwd.hpp"
+#include "glm/trigonometric.hpp"
 
-MemorySystem *g_MemSys;
-RenderSystem *g_RenderSys;
-EventSystem *g_EventSys;
-InputSystem *g_InputSys;
-RenderWindow *g_Window;
+class SonoTest : public Sono::App {
+public:
+  Camera cam;
+  RenderSystem *g_RenderSys;
+  InputSystem *g_InputSys;
 
-void DrawTransformGizmo(const Transform &transform) {}
+  std::vector<VertexP> gridVertices;
+  std::vector<VertexP> axesVertices;
+  std::vector<VertexPN> cubeVertices;
+  std::vector<u16> cubeIndices;
 
-u32 GetImGuiId(const std::string &key) {
-  static std::unordered_map<std::string, u32> s_AutoIdMap;
-  static u32 s_AutoId = 0;
-
-  auto idItor = s_AutoIdMap.find(key);
-  if (idItor == s_AutoIdMap.end()) {
-    return (s_AutoIdMap[key] = s_AutoId++);
-  } else {
-    return idItor->second;
-  }
-}
-
-void ImGui_DrawTransformComponent(
-  Transform &transform, const std::string &name = "Unamed transform"
-) {
-  Vec3 position = transform.GetPosition();
-  Vec3 rotation = transform.GetEulerRotation();
-  Vec3 scale = transform.GetScale();
-
-  ImGui::Text("%s", name.c_str());
-  ImGui::PushID(GetImGuiId(name));
-  if (ImGui::DragFloat3("position", position.ValuePtr(), 0.25f)) {
-    transform.SetPosition(position);
-  }
-  if (ImGui::DragFloat3("rotation", rotation.ValuePtr(), 0.5f)) {
-    transform.SetEulerRotation(rotation);
-  }
-  if (ImGui::DragFloat3("scale", scale.ValuePtr(), 0.05f)) {
-    transform.SetScale(scale);
-  }
-  ImGui::PopID();
-}
-
-void ProcessInput() {
-  if (g_Window->GetKey(KeyCode::KEY_ESC) == GLFW_PRESS) {
-    g_Window->SetCursorMode(CursorMode::NORMAL);
-  }
-  if (g_Window->GetKey(KeyCode::KEY_F) == GLFW_PRESS) {
-    g_Window->SetCursorMode(CursorMode::DISABLED);
-  }
-
-  const float cameraSpeed = 10.0f * Time::DeltaTime(); // adjust accordingly
-  if (g_Window->GetKey(KeyCode::KEY_W) == GLFW_PRESS) {
-    cam.Move(cameraSpeed * cam.GetForward());
-  }
-  if (g_Window->GetKey(KeyCode::KEY_A) == GLFW_PRESS) {
-    cam.Move(-cameraSpeed * cam.GetRight());
-  }
-  if (g_Window->GetKey(KeyCode::KEY_S) == GLFW_PRESS) {
-    cam.Move(-cameraSpeed * cam.GetForward());
-  }
-  if (g_Window->GetKey(KeyCode::KEY_D) == GLFW_PRESS) {
-    cam.Move(cameraSpeed * cam.GetRight());
-  }
-}
-
-void HandleEvent(const Event &ev) {
-  // S_LOG_TRACE(ev.ToString());
-
-  switch (ev.type) {
-    case EventType::KEY:
-    case EventType::MOUSE_MOVE:
-    case EventType::MOUSE_BUTTON:
-    case EventType::MOUSE_SCROLL:
-      g_InputSys->InjectEvent(ev);
-      break;
-    case EventType::WINDOW_RESIZE: {
-      auto &k = std::get<WindowResizeEvent>(ev.payload);
-      g_RenderSys->SetViewport(0, 0, k.width, k.height);
-      break;
-    }
-    case EventType::TEXT:
-    case EventType::QUIT:
-      break;
-  }
-}
-
-std::vector<VertexP> CreateWordGridMesh(i32 gridSize, f32 spacing) {
-  std::vector<VertexP> mesh;
-  for (int i = -gridSize; i <= gridSize; i++) {
-    // Ignore the forward and right axis
-    if (i == 0) continue;
-    mesh.emplace_back(i * spacing, 0.0f, -gridSize * spacing);
-    mesh.emplace_back(i * spacing, 0.0f, +gridSize * spacing);
-    mesh.emplace_back(-gridSize * spacing, 0.0f, i * spacing);
-    mesh.emplace_back(+gridSize * spacing, 0.0f, i * spacing);
-  }
-
-  // X axis
-  mesh.emplace_back(-gridSize, 0.0f, 0.0f);
-  mesh.emplace_back(+gridSize, 0.0f, 0.0f);
-  // Y axis
-  mesh.emplace_back(0.0f, -gridSize, 0.0f);
-  mesh.emplace_back(0.0f, +gridSize, 0.0f);
-  // Z axis
-  mesh.emplace_back(0.0f, 0.0f, -gridSize);
-  mesh.emplace_back(0.0f, 0.0f, +gridSize);
-
-  return mesh;
-}
-
-i32 main(void) {
-  std::unique_ptr<Sono::Global> global = std::make_unique<Sono::Global>();
-  Sono::Global::GetPtr()->Init();
-
-  g_MemSys = MemorySystem::GetPtr();
-  g_RenderSys = RenderSystem::GetPtr();
-  g_EventSys = EventSystem::GetPtr();
-  g_InputSys = InputSystem::GetPtr();
-
-  RenderDevice *device = g_RenderSys->GetRenderDevice();
-
-  g_Window = g_RenderSys->CreateRenderWindow(1600, 1000, "Hello Sono");
-  g_Window->EnableVsync(true);
-
-  std::vector<VertexP> gridVertices = CreateWordGridMesh(20, 1.0f);
-  std::vector<VertexP> axesVertices = {
-    {0.0f, 0.0f, 0.0f},
-    {1.0f, 0.0f, 0.0f},
-    {0.0f, 0.0f, 0.0f},
-    {0.0f, 1.0f, 0.0f},
-    {0.0f, 0.0f, 0.0f},
-    {0.0f, 0.0f, 1.0f}
-  };
-
-  std::vector<VertexPN> cubeVertices = {
-    // -z face
-    VertexPN({-0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
-    VertexPN({+0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
-    VertexPN({+0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
-    VertexPN({-0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
-    // +z face
-    VertexPN({-0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
-    VertexPN({+0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
-    VertexPN({+0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
-    VertexPN({-0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
-    // -x face
-    VertexPN({-0.5f, +0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}),
-    VertexPN({-0.5f, +0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}),
-    VertexPN({-0.5f, -0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}),
-    VertexPN({-0.5f, -0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}),
-    // +x face
-    VertexPN({+0.5f, +0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}),
-    VertexPN({+0.5f, +0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}),
-    VertexPN({+0.5f, -0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}),
-    VertexPN({+0.5f, -0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}),
-    // -y face
-    VertexPN({-0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}),
-    VertexPN({+0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}),
-    VertexPN({+0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}),
-    VertexPN({-0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}),
-    // +y face
-    VertexPN({-0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}),
-    VertexPN({+0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}),
-    VertexPN({+0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}),
-    VertexPN({-0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}),
-  };
-
-  std::vector<u16> cubeIndices = {
-    0,  1,  2,  2,  3,  0,  4,  5,  6,  6,  7,  4,  8,  9,  10, 10, 11, 8,
-    12, 13, 14, 14, 15, 12, 16, 17, 18, 18, 19, 16, 20, 21, 22, 22, 23, 20,
-  };
-
-  // clang-format off
-  Buffer *vb = device->CreateBuffer({
-    .count = cubeVertices.size(),
-    .stride = sizeof(VertexPN),
-    .usage = BufferUsage::Vertex,
-    .data = cubeVertices.data()
-  });
-  Buffer *ib = device->CreateBuffer({
-    .count = cubeIndices.size(),
-    .stride = sizeof(u16),
-    .usage = BufferUsage::Index,
-    .data = cubeIndices.data()
-  });
-
+  Buffer *vb;
+  Buffer *ib;
   // Debugging buffers
-  Buffer *gridVb = device->CreateBuffer({
-    .count = gridVertices.size(),
-    .stride = sizeof(VertexP),
-    .usage = BufferUsage::Vertex,
-    .data = gridVertices.data()
-  });
-  Buffer *axesVb = device->CreateBuffer({
-    .count = axesVertices.size(),
-    .stride = sizeof(VertexP),
-    .usage = BufferUsage::Vertex,
-    .data = axesVertices.data()
-  });
+  Buffer *gridVb;
+  Buffer *axesVb;
 
-  VertexArray *cubeVAO = g_RenderSys->CreateVertexArray();
-  cubeVAO->AddVertexBuffer(vb, VertexTraits<VertexPN>::GetLayout());
-  cubeVAO->SetIndexBuffer(ib);
-  VertexArray *lightVAO = g_RenderSys->CreateVertexArray();
-  lightVAO->AddVertexBuffer(vb, VertexTraits<VertexPN>::GetLayout());
-  lightVAO->SetIndexBuffer(ib);
-  VertexArray *gridVAO = g_RenderSys->CreateVertexArray();
-  gridVAO->AddVertexBuffer(gridVb, VertexTraits<VertexP>::GetLayout());
-  VertexArray *axesVAO = g_RenderSys->CreateVertexArray();
-  axesVAO->AddVertexBuffer(axesVb, VertexTraits<VertexP>::GetLayout());
-
-  // Texture *texture, *texture2;
-  // {
-  //   PROFILE_SCOPE("Create Textures");
-  //   unsigned char *data;
-  //   int width, height, nrChannels;
-  //
-  //   stbi_set_flip_vertically_on_load(true); data =
-  //   stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels,
-  //   0); texture =
-  //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB,
-  //     width, height);
-  //   texture->Update(data, 0);
-  //   texture->GenerateMipmaps();
-  //   stbi_image_free(data);
-  //
-  //   data = stbi_load("assets/textures/awesomeface.png", &width, &height,
-  //   &nrChannels, 0); texture2 =
-  //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA,
-  //     TEX_FORMAT_RGBA, width, height);
-  //   texture2->Update(data, 0);
-  //   texture2->GenerateMipmaps();
-  //   stbi_image_free(data);
-  // }
+  VertexArray *cubeVAO;
+  VertexArray *lightVAO;
+  VertexArray *gridVAO;
+  VertexArray *axesVAO;
 
   RenderPipeline *cubePipeline;
   RenderPipeline *lightCubePipeline;
   RenderPipeline *gridPipeline;
   RenderPipeline *axesPipeline;
-  {
-    // clang-format off
+
+  Color3 cubeColor;
+  Color3 lightColor;
+  Transform cubeTransform;
+  Transform lightCubeTransform;
+
+  void Init() override {
+    g_RenderSys = RenderSystem::GetPtr();
+    g_InputSys = InputSystem::GetPtr();
+    m_ActiveWindow->EnableVsync(false);
+
+    // glm::quat q = ;
+    // glm::rotate(q, glm::radians(45), glm::vec3(0.0f, 1.0f, 0.0f))
+
+    RenderDevice *device = g_RenderSys->GetRenderDevice();
+
+    gridVertices = CreateWordGridMesh(20, 1.0f);
+    axesVertices = {
+      {0.0f, 0.0f, 0.0f},
+      {1.0f, 0.0f, 0.0f},
+      {0.0f, 0.0f, 0.0f},
+      {0.0f, 1.0f, 0.0f},
+      {0.0f, 0.0f, 0.0f},
+      {0.0f, 0.0f, 1.0f}
+    };
+    cubeVertices = {
+      // -z face
+      VertexPN({-0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
+      VertexPN({+0.5f, +0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
+      VertexPN({+0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
+      VertexPN({-0.5f, -0.5f, -0.5f}, {+0.0f, +0.0f, -1.0f}),
+      // +z face
+      VertexPN({-0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
+      VertexPN({+0.5f, +0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
+      VertexPN({+0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
+      VertexPN({-0.5f, -0.5f, +0.5f}, {+0.0f, +0.0f, +1.0f}),
+      // -x face
+      VertexPN({-0.5f, +0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}),
+      VertexPN({-0.5f, +0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}),
+      VertexPN({-0.5f, -0.5f, -0.5f}, {-1.0f, +0.0f, +0.0f}),
+      VertexPN({-0.5f, -0.5f, +0.5f}, {-1.0f, +0.0f, +0.0f}),
+      // +x face
+      VertexPN({+0.5f, +0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}),
+      VertexPN({+0.5f, +0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}),
+      VertexPN({+0.5f, -0.5f, -0.5f}, {+1.0f, +0.0f, +0.0f}),
+      VertexPN({+0.5f, -0.5f, +0.5f}, {+1.0f, +0.0f, +0.0f}),
+      // -y face
+      VertexPN({-0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}),
+      VertexPN({+0.5f, -0.5f, -0.5f}, {+0.0f, -1.0f, +0.0f}),
+      VertexPN({+0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}),
+      VertexPN({-0.5f, -0.5f, +0.5f}, {+0.0f, -1.0f, +0.0f}),
+      // +y face
+      VertexPN({-0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}),
+      VertexPN({+0.5f, +0.5f, -0.5f}, {+0.0f, +1.0f, +0.0f}),
+      VertexPN({+0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}),
+      VertexPN({-0.5f, +0.5f, +0.5f}, {+0.0f, +1.0f, +0.0f}),
+    };
+    cubeIndices = {
+      0,  1,  2,  2,  3,  0,  4,  5,  6,  6,  7,  4,  8,  9,  10, 10, 11, 8,
+      12, 13, 14, 14, 15, 12, 16, 17, 18, 18, 19, 16, 20, 21, 22, 22, 23, 20,
+    };
+
+    vb = device->CreateBuffer(
+      {.count = cubeVertices.size(),
+       .stride = sizeof(VertexPN),
+       .usage = BufferUsage::Vertex,
+       .data = cubeVertices.data()}
+    );
+    ib = device->CreateBuffer(
+      {.count = cubeIndices.size(),
+       .stride = sizeof(u16),
+       .usage = BufferUsage::Index,
+       .data = cubeIndices.data()}
+    );
+
+    // Debugging buffers
+    gridVb = device->CreateBuffer(
+      {.count = gridVertices.size(),
+       .stride = sizeof(VertexP),
+       .usage = BufferUsage::Vertex,
+       .data = gridVertices.data()}
+    );
+    axesVb = device->CreateBuffer(
+      {.count = axesVertices.size(),
+       .stride = sizeof(VertexP),
+       .usage = BufferUsage::Vertex,
+       .data = axesVertices.data()}
+    );
+
+    cubeVAO = g_RenderSys->CreateVertexArray();
+    cubeVAO->AddVertexBuffer(vb, VertexTraits<VertexPN>::GetLayout());
+    cubeVAO->SetIndexBuffer(ib);
+    lightVAO = g_RenderSys->CreateVertexArray();
+    lightVAO->AddVertexBuffer(vb, VertexTraits<VertexPN>::GetLayout());
+    lightVAO->SetIndexBuffer(ib);
+    gridVAO = g_RenderSys->CreateVertexArray();
+    gridVAO->AddVertexBuffer(gridVb, VertexTraits<VertexP>::GetLayout());
+    axesVAO = g_RenderSys->CreateVertexArray();
+    axesVAO->AddVertexBuffer(axesVb, VertexTraits<VertexP>::GetLayout());
+
+    // Texture *texture, *texture2;
+    // {
+    //   PROFILE_SCOPE("Create Textures");
+    //   unsigned char *data;
+    //   int width, height, nrChannels;
+    //
+    //   stbi_set_flip_vertically_on_load(true); data =
+    //   stbi_load("assets/textures/container.jpg", &width, &height, &nrChannels,
+    //   0); texture =
+    //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGB, TEX_FORMAT_RGB,
+    //     width, height);
+    //   texture->Update(data, 0);
+    //   texture->GenerateMipmaps();
+    //   stbi_image_free(data);
+    //
+    //   data = stbi_load("assets/textures/awesomeface.png", &width, &height,
+    //   &nrChannels, 0); texture2 =
+    //     g_RenderSys->CreateTexture(TEX_TYPE_2D, TEX_FORMAT_RGBA,
+    //     TEX_FORMAT_RGBA, width, height);
+    //   texture2->Update(data, 0);
+    //   texture2->GenerateMipmaps();
+    //   stbi_image_free(data);
+    // }
+
+    {
+      // clang-format off
     PROFILE_SCOPE("CreateRenderPipelines");
     cubePipeline = device->CreatePipeline({
       .vertex = device->CreateShader({
@@ -306,204 +216,258 @@ i32 main(void) {
         .stage = ShaderStage::FRAGMENT
       })
     });
-    // clang-format on
+      // clang-format on
+    }
+
+    EventDispatcher::Register<MouseMoveEvent>([this](const MouseMoveEvent &e) {
+      ImGuiIO &io = ImGui::GetIO();
+      io.MousePos = ImVec2(e.xpos, e.ypos);
+
+      if (m_ActiveWindow->GetCurrentCursorMode() != CursorMode::DISABLED) return;
+
+      Vec2 mouseDelta = Mouse::GetDelta();
+      float sensitivity = 0.05f;
+
+      // Apply rotation deltas
+      float yawDelta = mouseDelta.x * sensitivity;
+      float pitchDelta = -mouseDelta.y * sensitivity;
+
+      cam.Rotate(Vec3(pitchDelta, yawDelta, 0.0f));
+    });
+
+    cam.SetPerspective(Sono::Radians(80.0f), m_ActiveWindow->GetAspect(), 0.1f, 100.0f);
+
+    cubeColor = Color3(255, 128, 79);
+    lightColor = Color3(255, 255, 255);
+    cubeTransform.SetPosition({0.0f, 0.5f, 0.0f});
+    lightCubeTransform = cubeTransform;
+    lightCubeTransform.Move({-1.2f, 1.0f, -2.0f});
+    lightCubeTransform.SetScale(Vec3(0.5f));
   }
 
-  EventDispatcher::Register<MouseMoveEvent>([](const MouseMoveEvent &e) {
-    ImGuiIO &io = ImGui::GetIO();
-    io.MousePos = ImVec2(e.xpos, e.ypos);
+  void Update() override {
+    ProcessInput();
 
-    if (g_Window->GetCurrentCursorMode() != CursorMode::DISABLED) return;
+    // lightCubeTransform.Move(Vec3::Right * Time::DeltaTime() * 1.25f);
+    // lightCubeTransform.LookAt(cubeTransform);
+    if (lightCubeTransform.IsDirty()) {
+      lightCubeTransform.UpdateModelMatrix();
+    }
+    if (cubeTransform.IsDirty()) {
+      cubeTransform.UpdateModelMatrix();
+    }
 
-    Vec2 mouseDelta = Mouse::GetDelta();
-    float sensitivity = 0.05f;
+    // cam.SetPosition(lightPos + lightCube.GetForward());
+    // cam.LookAt(Vec3::Zero);
+    /* Render here */
+    PROFILE_SCOPE("MAIN_LOOP::RENDER::RenderOneFrame");
 
-    // Apply rotation deltas
-    float yawDelta = mouseDelta.x * sensitivity;
-    float pitchDelta = -mouseDelta.y * sensitivity;
+    g_RenderSys->BeginFrame(cam);
+    g_RenderSys->Submit<ClearCommand>(Color3(20, 20, 20));
 
-    cam.Rotate(Vec3(pitchDelta, yawDelta, 0.0f));
-  });
+    g_RenderSys->Submit<BindShaderCommand>(axesPipeline);
+    g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
+    g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(255, 0, 0));
+    g_RenderSys->Submit<DrawCommand>(
+      axesVAO, 0, 2, PrimitiveType::LINES, cubeTransform.GetModelMatrix()
+    );
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 255, 0));
+    g_RenderSys->Submit<DrawCommand>(
+      axesVAO, 2, 2, PrimitiveType::LINES, cubeTransform.GetModelMatrix()
+    );
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 0, 255));
+    g_RenderSys->Submit<DrawCommand>(
+      axesVAO, 4, 2, PrimitiveType::LINES, cubeTransform.GetModelMatrix()
+    );
 
-  /// ================================================================================
-  /// Render States
-  /// ================================================================================
-  cam.SetPerspective(Sono::Radians(80.0f), g_Window->GetAspect(), 0.1f, 100.0f);
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(255, 0, 0));
+    g_RenderSys->Submit<DrawCommand>(
+      axesVAO, 0, 2, PrimitiveType::LINES, lightCubeTransform.GetModelMatrix()
+    );
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 255, 0));
+    g_RenderSys->Submit<DrawCommand>(
+      axesVAO, 2, 2, PrimitiveType::LINES, lightCubeTransform.GetModelMatrix()
+    );
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 0, 255));
+    g_RenderSys->Submit<DrawCommand>(
+      axesVAO, 4, 2, PrimitiveType::LINES, lightCubeTransform.GetModelMatrix()
+    );
 
-  Color3 cubeColor(255, 128, 79);
-  Color3 lightColor(255, 255, 255);
+    g_RenderSys->Submit<BindShaderCommand>(gridPipeline);
+    g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
+    g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
+    // Draw non axis line
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(40, 40, 40));
+    g_RenderSys->Submit<DrawCommand>(gridVAO, 0, gridVertices.size() - 6, PrimitiveType::LINES);
+    // Draw axis line
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(255, 0, 0));
+    g_RenderSys->Submit<DrawCommand>(gridVAO, gridVertices.size() - 6, 2, PrimitiveType::LINES);
+    // g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(0, 255, 0));
+    // g_RenderSys->Submit<DrawCommand>(gridVAO, gridVertices.size() - 4, 2,
+    // PrimitiveType::LINES);
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(0, 0, 255));
+    g_RenderSys->Submit<DrawCommand>(gridVAO, gridVertices.size() - 2, 2, PrimitiveType::LINES);
 
-  Transform cubeTransform;
-  cubeTransform.SetPosition({0.0f, 0.5f, 0.0f});
+    Vec3 cubeDiffuse = cubeColor * Vec3(0.6f);
+    Vec3 cubeAmbient = cubeDiffuse * Vec3(0.4f);
 
-  Transform lightCubeTransform = cubeTransform;
-  lightCubeTransform.Move({-1.2f, 1.0f, -2.0f});
-  lightCubeTransform.SetScale(Vec3(0.5f));
+    g_RenderSys->Submit<BindShaderCommand>(cubePipeline);
+    g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.ambient", cubeAmbient);
+    g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.diffuse", cubeDiffuse);
+    g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.specular", Vec3(0.5f));
+    g_RenderSys->Submit<SetUniformCommand<f32>>("uMaterial.shininess", 32.0f);
 
-  /// ================================================================================
-  /// Main Loop
-  /// ================================================================================
-  g_RenderSys->InitImGui(g_Window);
-  /* Loop until the user closes the window */
-  {
-    PROFILE_SCOPE("MAIN_LOOP");
-    while (!g_Window->ShouldClose()) {
-      /* Poll for and process events */
-      {
-        PROFILE_SCOPE("MAIN_LOOP::Handle Events");
-        glfwPollEvents();
-        while (auto *ev = g_EventSys->Pop()) {
-          HandleEvent(*ev);
-          EventDispatcher::Dispatch(*ev);
-        }
-        ProcessInput();
+    // lightColor.x = sin(glfwGetTime() * 2.0f);
+    // lightColor.y = sin(glfwGetTime() * 0.7f);
+    // lightColor.z = sin(glfwGetTime() * 1.3f);
+    Vec3 lightDiffuse = lightColor * Vec3(0.6f);
+    Vec3 lightAmbient = lightDiffuse * Vec3(0.4f);
+    g_RenderSys->Submit<SetUniformCommand<Vec3>>(
+      "uLight.position", lightCubeTransform.GetPosition()
+    );
+    g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.ambient", lightAmbient);
+    g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.diffuse", lightDiffuse);
+    g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.specular", lightColor);
+    g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
+    g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
+    // g_RenderSys->Submit<DrawCommand>(cubeVao, 36);
+    g_RenderSys->Submit<DrawIndexedCommand>(
+      cubeVAO, 0, cubeIndices.size(), cubeTransform.GetModelMatrix()
+    );
+
+    g_RenderSys->Submit<BindShaderCommand>(lightCubePipeline);
+    g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
+    g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
+    g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
+    // g_RenderSys->Submit<DrawCommand>(lightVAO, 36, lightCubeModel);
+    g_RenderSys->Submit<DrawIndexedCommand>(
+      lightVAO, 0, cubeIndices.size(), lightCubeTransform.GetModelMatrix()
+    );
+    g_RenderSys->Flush();
+  }
+
+  void OnImGuiFrame() override {
+    if (ImGui::Begin("Debug")) {
+      ImGui::Text("FPS: %.0f", Time::GetFPS());
+      ImGui::Text("Frame Data");
+      const ArenaAllocator &frameAlloc = g_RenderSys->GetFrameAllocator();
+      float progress = ((f32)frameAlloc.GetMarker() / (f32)frameAlloc.GetSize());
+      char buf[32];
+      std::string frameAllocOffsetStr = MemorySystem::ToHumanReadable(frameAlloc.GetMarker());
+      std::string frameAllocSizeStr = MemorySystem::ToHumanReadable(frameAlloc.GetSize());
+      snprintf(
+        buf, frameAllocSizeStr.size() + frameAllocOffsetStr.size() + 2, "%s/%s",
+        frameAllocOffsetStr.c_str(), frameAllocSizeStr.c_str()
+      );
+      ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), buf);
+      ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+      ImGui::Text("Arena usage (%.2f)", progress * 100);
+      ImGui::Spacing();
+
+      // ImGui::ShowStyleEditor();
+      ImGui_DrawTransformComponent(cubeTransform, "Cube");
+      ImGui::ColorEdit3("Cube Color", cubeColor.ValuePtr());
+      ImGui::Spacing();
+
+      ImGui_DrawTransformComponent(lightCubeTransform, "Light cube");
+      ImGui::ColorEdit3("Light Color", lightColor.ValuePtr());
+      ImGui::Spacing();
+
+      ImGui::Text("Camera");
+      ImGui::PushID(GetImGuiId("Camera"));
+      Vec3 newPosition = cam.GetPosition();
+      if (ImGui::DragFloat3("position", newPosition.ValuePtr(), 0.5f)) {
+        cam.SetPosition(newPosition);
       }
+      ImGui::PopID();
+      ImGui::Spacing();
+    }
+    ImGui::End();
+  }
 
-      // lightCubeTransform.Move(Vec3::Right * Time::DeltaTime() * 1.25f);
-      lightCubeTransform.LookAt(cubeTransform);
+private:
+  void ProcessInput() {
+    if (!m_ActiveWindow) return;
 
-      // cam.SetPosition(lightPos + lightCube.GetForward());
-      // cam.LookAt(Vec3::Zero);
-      /* Render here */
-      {
-        PROFILE_SCOPE("MAIN_LOOP::RENDER::RenderOneFrame");
+    if (m_ActiveWindow->GetKey(KeyCode::KEY_ESC) == GLFW_PRESS) {
+      m_ActiveWindow->SetCursorMode(CursorMode::NORMAL);
+    }
+    if (m_ActiveWindow->GetKey(KeyCode::KEY_F) == GLFW_PRESS) {
+      m_ActiveWindow->SetCursorMode(CursorMode::DISABLED);
+    }
 
-        g_RenderSys->BeginFrame(cam);
-        g_RenderSys->Submit<ClearCommand>(Color3(20, 20, 20));
-
-        g_RenderSys->Submit<BindShaderCommand>(axesPipeline);
-        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
-        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(255, 0, 0));
-        g_RenderSys->Submit<DrawCommand>(
-          axesVAO, 0, 2, PrimitiveType::LINES, cubeTransform.GetModelMatrix()
-        );
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 255, 0));
-        g_RenderSys->Submit<DrawCommand>(
-          axesVAO, 2, 2, PrimitiveType::LINES, cubeTransform.GetModelMatrix()
-        );
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 0, 255));
-        g_RenderSys->Submit<DrawCommand>(
-          axesVAO, 4, 2, PrimitiveType::LINES, cubeTransform.GetModelMatrix()
-        );
-
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(255, 0, 0));
-        g_RenderSys->Submit<DrawCommand>(
-          axesVAO, 0, 2, PrimitiveType::LINES, lightCubeTransform.GetModelMatrix()
-        );
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 255, 0));
-        g_RenderSys->Submit<DrawCommand>(
-          axesVAO, 2, 2, PrimitiveType::LINES, lightCubeTransform.GetModelMatrix()
-        );
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uAxisColor", Color3(0, 0, 255));
-        g_RenderSys->Submit<DrawCommand>(
-          axesVAO, 4, 2, PrimitiveType::LINES, lightCubeTransform.GetModelMatrix()
-        );
-
-        g_RenderSys->Submit<BindShaderCommand>(gridPipeline);
-        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
-        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
-        // Draw non axis line
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(40, 40, 40));
-        g_RenderSys->Submit<DrawCommand>(gridVAO, 0, gridVertices.size() - 6, PrimitiveType::LINES);
-        // Draw axis line
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(255, 0, 0));
-        g_RenderSys->Submit<DrawCommand>(gridVAO, gridVertices.size() - 6, 2, PrimitiveType::LINES);
-        // g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(0, 255, 0));
-        // g_RenderSys->Submit<DrawCommand>(gridVAO, gridVertices.size() - 4, 2,
-        // PrimitiveType::LINES);
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLineColor", Color3(0, 0, 255));
-        g_RenderSys->Submit<DrawCommand>(gridVAO, gridVertices.size() - 2, 2, PrimitiveType::LINES);
-
-        Vec3 cubeDiffuse = cubeColor * Vec3(0.6f);
-        Vec3 cubeAmbient = cubeDiffuse * Vec3(0.4f);
-
-        g_RenderSys->Submit<BindShaderCommand>(cubePipeline);
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.ambient", cubeAmbient);
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.diffuse", cubeDiffuse);
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uMaterial.specular", Vec3(0.5f));
-        g_RenderSys->Submit<SetUniformCommand<f32>>("uMaterial.shininess", 32.0f);
-
-        // lightColor.x = sin(glfwGetTime() * 2.0f);
-        // lightColor.y = sin(glfwGetTime() * 0.7f);
-        // lightColor.z = sin(glfwGetTime() * 1.3f);
-        Vec3 lightDiffuse = lightColor * Vec3(0.6f);
-        Vec3 lightAmbient = lightDiffuse * Vec3(0.4f);
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>(
-          "uLight.position", lightCubeTransform.GetPosition()
-        );
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.ambient", lightAmbient);
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.diffuse", lightDiffuse);
-        g_RenderSys->Submit<SetUniformCommand<Vec3>>("uLight.specular", lightColor);
-        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
-        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
-        // g_RenderSys->Submit<DrawCommand>(cubeVao, 36);
-        g_RenderSys->Submit<DrawIndexedCommand>(
-          cubeVAO, 0, cubeIndices.size(), cubeTransform.GetModelMatrix()
-        );
-
-        g_RenderSys->Submit<BindShaderCommand>(lightCubePipeline);
-        g_RenderSys->Submit<SetUniformCommand<Color3>>("uLightColor", lightColor);
-        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uProj", cam.GetProjectionMatrix());
-        g_RenderSys->Submit<SetUniformCommand<Mat4>>("uView", cam.GetViewMatrix());
-        // g_RenderSys->Submit<DrawCommand>(lightVAO, 36, lightCubeModel);
-        g_RenderSys->Submit<DrawIndexedCommand>(
-          lightVAO, 0, cubeIndices.size(), lightCubeTransform.GetModelMatrix()
-        );
-        g_RenderSys->Flush();
-
-        g_RenderSys->BeginImGuiFrame();
-        if (ImGui::Begin("Debug")) {
-          ImGui::Text("FPS: %.0f", Time::GetFPS());
-          ImGui::Text("Frame Data");
-          const ArenaAllocator &frameAlloc = g_RenderSys->GetFrameAllocator();
-          float progress = ((f32)frameAlloc.GetMarker() / (f32)frameAlloc.GetSize());
-          char buf[32];
-          std::string frameAllocOffsetStr = MemorySystem::ToHumanReadable(frameAlloc.GetMarker());
-          std::string frameAllocSizeStr = MemorySystem::ToHumanReadable(frameAlloc.GetSize());
-          snprintf(
-            buf, frameAllocSizeStr.size() + frameAllocOffsetStr.size() + 2, "%s/%s",
-            frameAllocOffsetStr.c_str(), frameAllocSizeStr.c_str()
-          );
-          ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f), buf);
-          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
-          ImGui::Text("Arena usage (%.2f)", progress * 100);
-          ImGui::Spacing();
-
-          // ImGui::ShowStyleEditor();
-          ImGui_DrawTransformComponent(cubeTransform, "Cube");
-          ImGui::ColorEdit3("Cube Color", cubeColor.ValuePtr());
-          ImGui::Spacing();
-
-          ImGui_DrawTransformComponent(lightCubeTransform, "Light cube");
-          ImGui::ColorEdit3("Light Color", lightColor.ValuePtr());
-          ImGui::Spacing();
-
-          ImGui::Text("Camera");
-          ImGui::PushID(GetImGuiId("Camera"));
-          Vec3 newPosition = cam.GetPosition();
-          if (ImGui::DragFloat3("position", newPosition.ValuePtr(), 0.5f)) {
-            cam.SetPosition(newPosition);
-          }
-          ImGui::PopID();
-          ImGui::Spacing();
-        }
-        ImGui::End();
-        g_RenderSys->EndImGuiFrame();
-
-        g_RenderSys->EndFrame();
-      }
-      g_InputSys->EndFrame();
-
-      Time::Tick();
+    const float cameraSpeed = 10.0f * Time::DeltaTime(); // adjust accordingly
+    if (m_ActiveWindow->GetKey(KeyCode::KEY_W) == GLFW_PRESS) {
+      cam.Move(cameraSpeed * cam.GetForward());
+    }
+    if (m_ActiveWindow->GetKey(KeyCode::KEY_A) == GLFW_PRESS) {
+      cam.Move(-cameraSpeed * cam.GetRight());
+    }
+    if (m_ActiveWindow->GetKey(KeyCode::KEY_S) == GLFW_PRESS) {
+      cam.Move(-cameraSpeed * cam.GetForward());
+    }
+    if (m_ActiveWindow->GetKey(KeyCode::KEY_D) == GLFW_PRESS) {
+      cam.Move(cameraSpeed * cam.GetRight());
     }
   }
 
-  /// ================================================================================
-  /// Cleanup
-  /// ================================================================================
+  void ImGui_DrawTransformComponent(
+    Transform &transform, const std::string &name = "Unamed transform"
+  ) {
+    Vec3 position = transform.GetPosition();
+    Vec3 rotationRad = transform.GetEulerRotation();
+    Vec3 scale = transform.GetScale();
 
-  g_RenderSys->ShutdownImGui();
-  Sono::Global::GetPtr()->Shutdown();
-  return 0;
-}
+    ImGui::Text("%s", name.c_str());
+    ImGui::PushID(GetImGuiId(name));
+    if (ImGui::DragFloat3("position", position.ValuePtr(), 0.25f)) {
+      transform.SetPosition(position);
+    }
+    if (ImGui::DragFloat3("rotation", rotationRad.ValuePtr(), 0.5f)) {
+      transform.SetEulerRotation(rotationRad);
+    }
+    if (ImGui::DragFloat3("scale", scale.ValuePtr(), 0.05f)) {
+      transform.SetScale(scale);
+    }
+    ImGui::PopID();
+  }
+
+  u32 GetImGuiId(const std::string &key) {
+    static std::unordered_map<std::string, u32> s_AutoIdMap;
+    static u32 s_AutoId = 0;
+
+    auto idItor = s_AutoIdMap.find(key);
+    if (idItor == s_AutoIdMap.end()) {
+      return (s_AutoIdMap[key] = s_AutoId++);
+    } else {
+      return idItor->second;
+    }
+  }
+
+  std::vector<VertexP> CreateWordGridMesh(i32 gridSize, f32 spacing) {
+    std::vector<VertexP> mesh;
+    for (int i = -gridSize; i <= gridSize; i++) {
+      // Ignore the forward and right axis
+      if (i == 0) continue;
+      mesh.emplace_back(i * spacing, 0.0f, -gridSize * spacing);
+      mesh.emplace_back(i * spacing, 0.0f, +gridSize * spacing);
+      mesh.emplace_back(-gridSize * spacing, 0.0f, i * spacing);
+      mesh.emplace_back(+gridSize * spacing, 0.0f, i * spacing);
+    }
+
+    // X axis
+    mesh.emplace_back(-gridSize, 0.0f, 0.0f);
+    mesh.emplace_back(+gridSize, 0.0f, 0.0f);
+    // Y axis
+    mesh.emplace_back(0.0f, -gridSize, 0.0f);
+    mesh.emplace_back(0.0f, +gridSize, 0.0f);
+    // Z axis
+    mesh.emplace_back(0.0f, 0.0f, -gridSize);
+    mesh.emplace_back(0.0f, 0.0f, +gridSize);
+
+    return mesh;
+  }
+};
+
+SONO_IMPLEMENT_MAIN(SonoTest);

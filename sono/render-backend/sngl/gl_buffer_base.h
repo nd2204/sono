@@ -1,9 +1,8 @@
 #ifndef SN_GL_BUFFER_BASE_H
 #define SN_GL_BUFFER_BASE_H
 
-#include "render/buffer_base.h"
-
-#include "glad/glad.h"
+#include <render/buffer_base.h>
+#include <glad/glad.h>
 
 class GLBuffer : public Buffer {
 public:

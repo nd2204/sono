@@ -1,13 +1,12 @@
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
-#include "common/singleton.h"
-#include "event/event_system.h"
-#include "core/memory/memory_system.h"
-#include "core/input/input_system.h"
-#include "render/render_system.h"
-#include "debug/profiler.h"
-
+#include <core/common/singleton.h>
+#include <core/event/event_system.h>
+#include <core/memory/memory_system.h>
+#include <core/input/input_system.h>
+#include <core/debug/profiler.h>
+#include <render/render_system.h>
 #include <memory>
 
 namespace Sono {

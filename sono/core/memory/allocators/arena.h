@@ -1,8 +1,9 @@
 #ifndef ARENA_H
 #define ARENA_H
 
-#include "core/common/types.h"
-#include "core/memory/allocator.h"
+#include "core/memory/allocation_info.h"
+#include <core/common/types.h>
+#include <core/memory/allocator.h>
 #include <utility>
 
 class ArenaAllocator : public Allocator {
@@ -29,15 +30,18 @@ public:
 
   /// @param sizeBytes the size in bytes
   /// @return the pointer to the zeroed out preallocated memory
-  void *Alloc(usize sizeBytes) override;
+  void *Alloc(usize sizeBytes, AllocationType tag) override;
 
   /// @param sizeBytes the size in bytes
   /// @param sizeBytes the size in bytes
   /// @return the pointer to the zeroed out, aligned, preallocated memory
-  void *AllocAlign(usize sizeBytes, u16 align) override;
+  void *AllocAlign(usize sizeBytes, u16 align, AllocationType tag) override;
 
   /// this does nothing
   void Free(void *mem) override { (void)mem; };
+
+  /// this does nothing
+  void FreeAlign(void *mem) override { (void)mem; };
 
   /// @return: the offset in bytes from the buffer to the current stack top.
   Marker GetMarker() const;

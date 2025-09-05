@@ -35,10 +35,12 @@ endif()
 
 file(GLOB_RECURSE CORE_SRC "core/*.cpp")
 file(GLOB_RECURSE RENDER_SRC "render/*.cpp")
+file(GLOB_RECURSE RENDER_BACKEND_SRC "render-backend/*.cpp")
 
 add_library(${TARGET_NAME} STATIC
   ${CORE_SRC}
   ${RENDER_SRC}
+  ${RENDER_BACKEND_SRC}
 )
 
 target_link_libraries(${TARGET_NAME} PUBLIC

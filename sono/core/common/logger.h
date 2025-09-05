@@ -114,6 +114,7 @@ public:
       oss << " [" << LogLevelToString(level) << "] ";
     }
     oss << buffer.data();
+    oss << ANSI_RESET;
 
     std::string finalMessage = oss.str();
 

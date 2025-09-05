@@ -1,12 +1,10 @@
-#include "core/common/logger.h"
-#include "core/memory/memory_system.h"
-
-#include "render/render_device.h"
-#include "render_system.h"
+#include <core/common/logger.h>
+#include <core/memory/memory_system.h>
+#include <core/debug/profiler.h>
+#include <render/render_system.h>
 
 #include <sstream>
 #include <GLFW/glfw3.h>
-#include "core/debug/profiler.h"
 
 #define RENDER_FRAME_ALLOC_SIZE (1 * SN_MEM_MIB)
 

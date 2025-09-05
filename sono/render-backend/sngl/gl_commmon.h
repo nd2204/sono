@@ -1,7 +1,7 @@
 #ifndef SN_GL_COMMON_H
 
 #include <core/common/logger.h>
-#include "glad/glad.h"
+#include <glad/glad.h>
 #include <string>
 
 inline GLenum _GlCheckError(const char *file, int line) {

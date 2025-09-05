@@ -1,11 +1,12 @@
-#include "gl_buffer_base.h"
-#include "gl_render_device.h"
-#include "gl_texture.h"
-#include "gl_vertex_array.h"
-#include "gl_window.h"
-#include "render/shader/shader.h"
-#include "gl_render_system.h"
-#include "gl_commmon.h"
+#include <render-backend/sngl/gl_buffer_base.h>
+#include <render-backend/sngl/gl_render_system.h>
+#include <render-backend/sngl/gl_render_device.h>
+#include <render-backend/sngl/gl_texture.h>
+#include <render-backend/sngl/gl_vertex_array.h>
+#include <render-backend/sngl/gl_window.h>
+#include <render-backend/sngl/gl_commmon.h>
+
+#include <render/shader/shader.h>
 
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
@@ -25,11 +26,12 @@ void GLRenderSystem::Init() {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
   m_pDevice = m_Arena.New<GLRenderDevice>(&m_Arena);
+  m_pDevice->Init();
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Shutdown() {
   LOG_INFO("<-- Shutting down GLRenderSystem -->");
-  m_pDevice->DeleteAllBuffers();
+  m_pDevice->Shutdown();
   m_Arena.FreeInternalBuffer();
 }
 // --------------------------------------------------------------------------------

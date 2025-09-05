@@ -11,10 +11,10 @@ constexpr Vec2 gVector2Down(0, -1);
 constexpr Vec3 gVector3Zero(0, 0, 0);
 constexpr Vec3 gVector3Right(1, 0, 0);
 constexpr Vec3 gVector3Up(0, 1, 0);
-constexpr Vec3 gVector3Forward(0, 0, 1);
+constexpr Vec3 gVector3Forward(0, 0, -1);
 constexpr Vec3 gVector3Left(-1, 0, 0);
 constexpr Vec3 gVector3Down(0, -1, 0);
-constexpr Vec3 gVector3Back(0, 0, -1);
+constexpr Vec3 gVector3Back(0, 0, 1);
 
 constexpr Vec4 gVector4Zero(0, 0, 0, 0);
 

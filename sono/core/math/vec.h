@@ -3,7 +3,6 @@
 
 #include "vec_base.h"
 #include <ostream>
-#include <sstream>
 
 template <int N, typename T>
 struct Vec : public VecBase<N, T> {
@@ -209,13 +208,13 @@ struct Vec : public VecBase<N, T> {
   }
 
   std::string ToString() const {
-    std::stringstream ss;
-    ss << "vec" << N << "[";
+    std::ostringstream oss;
+    oss << "vec" << N << "[";
     for (int i = 0; i < N - 1; i++) {
-      ss << std::to_string(ValuePtr()[i]) << ",";
+      oss << std::to_string(ValuePtr()[i]) << ",";
     }
-    ss << std::to_string(ValuePtr()[N - 1]) << "]";
-    return ss.str();
+    oss << std::to_string(ValuePtr()[N - 1]) << "]";
+    return oss.str();
   }
 
   size_t hash() const {

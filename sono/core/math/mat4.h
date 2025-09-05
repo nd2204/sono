@@ -44,7 +44,7 @@ struct Mat4 : public MatBase<4, 4, f32> {
   static Mat4 Rotation(Radian angle, const Vec3 &axis);
 
   /// @brief create a rotation matrix from euler angles
-  static Mat4 RotationFromEuler(const Vec3 &euler);
+  static Mat4 FromEuler(const Vec3 &euler);
 
   // static Mat4 Rotate(const Quaternion &rotation);
 
@@ -79,25 +79,25 @@ struct Mat4 : public MatBase<4, 4, f32> {
   // clang-format on
 
   Mat4 &operator+=(const Mat4 &rhs) {
-    n[0][0] += rhs[0][0];
-    n[0][1] += rhs[0][1];
-    n[0][2] += rhs[0][2];
-    n[0][3] += rhs[0][3];
+    n[0][0] += rhs(0, 0);
+    n[0][1] += rhs(0, 1);
+    n[0][2] += rhs(0, 2);
+    n[0][3] += rhs(0, 3);
 
-    n[1][0] += rhs[1][0];
-    n[1][1] += rhs[1][1];
-    n[1][2] += rhs[1][2];
-    n[1][3] += rhs[1][3];
+    n[1][0] += rhs(1, 0);
+    n[1][1] += rhs(1, 1);
+    n[1][2] += rhs(1, 2);
+    n[1][3] += rhs(1, 3);
 
-    n[2][0] += rhs[2][0];
-    n[2][1] += rhs[2][1];
-    n[2][2] += rhs[2][2];
-    n[2][3] += rhs[2][3];
+    n[2][0] += rhs(2, 0);
+    n[2][1] += rhs(2, 1);
+    n[2][2] += rhs(2, 2);
+    n[2][3] += rhs(2, 3);
 
-    n[3][0] += rhs[3][0];
-    n[3][1] += rhs[3][1];
-    n[3][2] += rhs[3][2];
-    n[3][3] += rhs[3][3];
+    n[3][0] += rhs(3, 0);
+    n[3][1] += rhs(3, 1);
+    n[3][2] += rhs(3, 2);
+    n[3][3] += rhs(3, 3);
 
     return *this;
   }
@@ -109,25 +109,25 @@ struct Mat4 : public MatBase<4, 4, f32> {
   }
 
   Mat4 &operator-=(const Mat4 &rhs) {
-    n[0][0] -= rhs[0][0];
-    n[0][1] -= rhs[0][1];
-    n[0][2] -= rhs[0][2];
-    n[0][3] -= rhs[0][3];
+    n[0][0] -= rhs(0, 0);
+    n[0][1] -= rhs(0, 1);
+    n[0][2] -= rhs(0, 2);
+    n[0][3] -= rhs(0, 3);
 
-    n[1][0] -= rhs[1][0];
-    n[1][1] -= rhs[1][1];
-    n[1][2] -= rhs[1][2];
-    n[1][3] -= rhs[1][3];
+    n[1][0] -= rhs(1, 0);
+    n[1][1] -= rhs(1, 1);
+    n[1][2] -= rhs(1, 2);
+    n[1][3] -= rhs(1, 3);
 
-    n[2][0] -= rhs[2][0];
-    n[2][1] -= rhs[2][1];
-    n[2][2] -= rhs[2][2];
-    n[2][3] -= rhs[2][3];
+    n[2][0] -= rhs(2, 0);
+    n[2][1] -= rhs(2, 1);
+    n[2][2] -= rhs(2, 2);
+    n[2][3] -= rhs(2, 3);
 
-    n[3][0] -= rhs[3][0];
-    n[3][1] -= rhs[3][1];
-    n[3][2] -= rhs[3][2];
-    n[3][3] -= rhs[3][3];
+    n[3][0] -= rhs(3, 0);
+    n[3][1] -= rhs(3, 1);
+    n[3][2] -= rhs(3, 2);
+    n[3][3] -= rhs(3, 3);
 
     return *this;
   }
@@ -138,51 +138,49 @@ struct Mat4 : public MatBase<4, 4, f32> {
     return r;
   }
 
-  // clang-format off
-  
   Mat4 &operator*=(const Mat4 &rhs) {
     Mat4 lhs = *this;
 
-    n[0][0] = lhs[0][0] * rhs[0][0] + lhs[0][1] * rhs[1][0] + lhs[0][2] * rhs[2][0] + lhs[0][3] * rhs[3][0];
-    n[0][1] = lhs[0][0] * rhs[0][1] + lhs[0][1] * rhs[1][1] + lhs[0][2] * rhs[2][1] + lhs[0][3] * rhs[3][1];
-    n[0][2] = lhs[0][0] * rhs[0][2] + lhs[0][1] * rhs[1][2] + lhs[0][2] * rhs[2][2] + lhs[0][3] * rhs[3][2];
-    n[0][3] = lhs[0][0] * rhs[0][3] + lhs[0][1] * rhs[1][3] + lhs[0][2] * rhs[2][3] + lhs[0][3] * rhs[3][3];
+    // clang-format off
+    n[0][0] = lhs(0,0) * rhs(0,0) + lhs(0,1) * rhs(1,0) + lhs(0,2) * rhs(2,0) + lhs(0,3) * rhs(3,0);
+    n[0][1] = lhs(0,0) * rhs(0,1) + lhs(0,1) * rhs(1,1) + lhs(0,2) * rhs(2,1) + lhs(0,3) * rhs(3,1);
+    n[0][2] = lhs(0,0) * rhs(0,2) + lhs(0,1) * rhs(1,2) + lhs(0,2) * rhs(2,2) + lhs(0,3) * rhs(3,2);
+    n[0][3] = lhs(0,0) * rhs(0,3) + lhs(0,1) * rhs(1,3) + lhs(0,2) * rhs(2,3) + lhs(0,3) * rhs(3,3);
 
-    n[1][0] = lhs[1][0] * rhs[0][0] + lhs[1][1] * rhs[1][0] + lhs[1][2] * rhs[2][0] + lhs[1][3] * rhs[3][0];
-    n[1][1] = lhs[1][0] * rhs[0][1] + lhs[1][1] * rhs[1][1] + lhs[1][2] * rhs[2][1] + lhs[1][3] * rhs[3][1];
-    n[1][2] = lhs[1][0] * rhs[0][2] + lhs[1][1] * rhs[1][2] + lhs[1][2] * rhs[2][2] + lhs[1][3] * rhs[3][2];
-    n[1][3] = lhs[1][0] * rhs[0][3] + lhs[1][1] * rhs[1][3] + lhs[1][2] * rhs[2][3] + lhs[1][3] * rhs[3][3];
+    n[1][0] = lhs(1,0) * rhs(0,0) + lhs(1,1) * rhs(1,0) + lhs(1,2) * rhs(2,0) + lhs(1,3) * rhs(3,0);
+    n[1][1] = lhs(1,0) * rhs(0,1) + lhs(1,1) * rhs(1,1) + lhs(1,2) * rhs(2,1) + lhs(1,3) * rhs(3,1);
+    n[1][2] = lhs(1,0) * rhs(0,2) + lhs(1,1) * rhs(1,2) + lhs(1,2) * rhs(2,2) + lhs(1,3) * rhs(3,2);
+    n[1][3] = lhs(1,0) * rhs(0,3) + lhs(1,1) * rhs(1,3) + lhs(1,2) * rhs(2,3) + lhs(1,3) * rhs(3,3);
 
-    n[2][0] = lhs[2][0] * rhs[0][0] + lhs[2][1] * rhs[1][0] + lhs[2][2] * rhs[2][0] + lhs[2][3] * rhs[3][0];
-    n[2][1] = lhs[2][0] * rhs[0][1] + lhs[2][1] * rhs[1][1] + lhs[2][2] * rhs[2][1] + lhs[2][3] * rhs[3][1];
-    n[2][2] = lhs[2][0] * rhs[0][2] + lhs[2][1] * rhs[1][2] + lhs[2][2] * rhs[2][2] + lhs[2][3] * rhs[3][2];
-    n[2][3] = lhs[2][0] * rhs[0][3] + lhs[2][1] * rhs[1][3] + lhs[2][2] * rhs[2][3] + lhs[2][3] * rhs[3][3];
+    n[2][0] = lhs(2,0) * rhs(0,0) + lhs(2,1) * rhs(1,0) + lhs(2,2) * rhs(2,0) + lhs(2,3) * rhs(3,0);
+    n[2][1] = lhs(2,0) * rhs(0,1) + lhs(2,1) * rhs(1,1) + lhs(2,2) * rhs(2,1) + lhs(2,3) * rhs(3,1);
+    n[2][2] = lhs(2,0) * rhs(0,2) + lhs(2,1) * rhs(1,2) + lhs(2,2) * rhs(2,2) + lhs(2,3) * rhs(3,2);
+    n[2][3] = lhs(2,0) * rhs(0,3) + lhs(2,1) * rhs(1,3) + lhs(2,2) * rhs(2,3) + lhs(2,3) * rhs(3,3);
 
-    n[3][0] = lhs[3][0] * rhs[0][0] + lhs[3][1] * rhs[1][0] + lhs[3][2] * rhs[2][0] + lhs[3][3] * rhs[3][0];
-    n[3][1] = lhs[3][0] * rhs[0][1] + lhs[3][1] * rhs[1][1] + lhs[3][2] * rhs[2][1] + lhs[3][3] * rhs[3][1];
-    n[3][2] = lhs[3][0] * rhs[0][2] + lhs[3][1] * rhs[1][2] + lhs[3][2] * rhs[2][2] + lhs[3][3] * rhs[3][2];
-    n[3][3] = lhs[3][0] * rhs[0][3] + lhs[3][1] * rhs[1][3] + lhs[3][2] * rhs[2][3] + lhs[3][3] * rhs[3][3];
+    n[3][0] = lhs(3,0) * rhs(0,0) + lhs(3,1) * rhs(1,0) + lhs(3,2) * rhs(2,0) + lhs(3,3) * rhs(3,0);
+    n[3][1] = lhs(3,0) * rhs(0,1) + lhs(3,1) * rhs(1,1) + lhs(3,2) * rhs(2,1) + lhs(3,3) * rhs(3,1);
+    n[3][2] = lhs(3,0) * rhs(0,2) + lhs(3,1) * rhs(1,2) + lhs(3,2) * rhs(2,2) + lhs(3,3) * rhs(3,2);
+    n[3][3] = lhs(3,0) * rhs(0,3) + lhs(3,1) * rhs(1,3) + lhs(3,2) * rhs(2,3) + lhs(3,3) * rhs(3,3);
+    // clang-format on
 
     return *this;
   }
 
-  // clang-format on
-
   friend inline Vec4 operator*(const Mat4 &lhs, const Vec4 &rhs) {
     return Vec4(
-      lhs[0][0] * rhs.x + lhs[0][1] * rhs.y + lhs[0][2] * rhs.z + lhs[0][3] * rhs.w,
-      lhs[1][0] * rhs.x + lhs[1][1] * rhs.y + lhs[1][2] * rhs.z + lhs[1][3] * rhs.w,
-      lhs[2][0] * rhs.x + lhs[2][1] * rhs.y + lhs[2][2] * rhs.z + lhs[2][3] * rhs.w,
-      lhs[3][0] * rhs.x + lhs[3][1] * rhs.y + lhs[3][2] * rhs.z + lhs[3][3] * rhs.w
+      lhs(0, 0) * rhs.x + lhs(0, 1) * rhs.y + lhs(0, 2) * rhs.z + lhs(0, 3) * rhs.w,
+      lhs(1, 0) * rhs.x + lhs(1, 1) * rhs.y + lhs(1, 2) * rhs.z + lhs(1, 3) * rhs.w,
+      lhs(2, 0) * rhs.x + lhs(2, 1) * rhs.y + lhs(2, 2) * rhs.z + lhs(2, 3) * rhs.w,
+      lhs(3, 0) * rhs.x + lhs(3, 1) * rhs.y + lhs(3, 2) * rhs.z + lhs(3, 3) * rhs.w
     );
   }
 
   friend inline Vec4 operator*(const Vec4 &lhs, const Mat4 &rhs) {
     return Vec4(
-      rhs[0][0] * lhs.x + rhs[0][1] * lhs.y + rhs[0][2] * lhs.z + rhs[0][3] * lhs.w,
-      rhs[1][0] * lhs.x + rhs[1][1] * lhs.y + rhs[1][2] * lhs.z + rhs[1][3] * lhs.w,
-      rhs[2][0] * lhs.x + rhs[2][1] * lhs.y + rhs[2][2] * lhs.z + rhs[2][3] * lhs.w,
-      rhs[3][0] * lhs.x + rhs[3][1] * lhs.y + rhs[3][2] * lhs.z + rhs[3][3] * lhs.w
+      rhs(0, 0) * lhs.x + rhs(0, 1) * lhs.y + rhs(0, 2) * lhs.z + rhs(0, 3) * lhs.w,
+      rhs(1, 0) * lhs.x + rhs(1, 1) * lhs.y + rhs(1, 2) * lhs.z + rhs(1, 3) * lhs.w,
+      rhs(2, 0) * lhs.x + rhs(2, 1) * lhs.y + rhs(2, 2) * lhs.z + rhs(2, 3) * lhs.w,
+      rhs(3, 0) * lhs.x + rhs(3, 1) * lhs.y + rhs(3, 2) * lhs.z + rhs(3, 3) * lhs.w
     );
   }
 

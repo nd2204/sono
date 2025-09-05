@@ -1,26 +1,20 @@
 #ifndef SN_RENDER_SYSTEM_H
 #define SN_RENDER_SYSTEM_H
 
-#include "camera.h"
-#include "core/system.h"
-#include "core/common/singleton.h"
-#include "core/memory/allocators/arena.h"
-#include "render/render_command.h"
-#include "render/render_context.h"
-#include "render/render_device.h"
-#include "render/shader/shader.h"
-#include "render/resource/texture.h"
-
-#include "render_queue.h"
-#include "render_window.h"
-#include "vertex_array.h"
-#include "vertex_type.h" // IWYU pragma: export
-
-#include "debug/debug_draw.h"
-
+#include <core/system.h>
+#include <core/common/singleton.h>
+#include <core/memory/allocators/arena.h>
+#include <render/camera.h>
+#include <render/render_command.h>
+#include <render/render_context.h>
+#include <render/render_device.h>
+#include <render/resource/texture.h>
+#include <render/render_queue.h>
+#include <render/render_window.h>
+#include <render/vertex_array.h>
+#include <render/vertex_type.h> // IWYU pragma: export
+#include <render/debug/debug_draw.h>
 #include <imgui.h>
-
-struct BufferDesc;
 
 class RenderSystem
   : public Singleton<RenderSystem>
@@ -115,6 +109,7 @@ protected:
   RenderDevice *m_pDevice;
   RenderPipeline *m_pActivePipeline;
   DebugDraw *m_DebugDraw;
+  // TODO: remove this after finishing command queue on render device
   RenderQueue m_RenderQueue;
   ArenaAllocator m_Arena;
   ArenaAllocator::Marker m_FrameBeginMark;

@@ -1,8 +1,8 @@
 #ifndef SN_GL_RENDER_SYSTEM_H
 #define SN_GL_RENDER_SYSTEM_H
 
-#include "render/render_system.h"
-#include "core/math/mat4.h"
+#include <render/render_system.h>
+#include <core/math/mat4.h>
 
 class GLRenderSystem : public RenderSystem {
 public:
@@ -74,8 +74,6 @@ public:
   static GLenum ConvertPrimitiveType(PrimitiveType type);
 
 private:
-  // Mat4 m_Model;
-  // Mat4 m_View;
 };
 
 #endif // !SN_GL_RENDER_SYSTEM_H

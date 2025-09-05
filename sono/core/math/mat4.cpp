@@ -19,10 +19,10 @@ const Mat4 Mat4::Identity {
   0.0f, 0.0f, 0.0f, 1.0f,
 };
 // --------------------------------------------------------------------------------
-Mat4 Mat4::Rotation(Radian angle, const Vec3 &axis) {
+Mat4 Mat4::Rotation(Radian angleRad, const Vec3 &axis) {
   Vec3 a = axis.Normalized();
-  float c = std::cos(angle);
-  float s = std::sin(angle);
+  float c = std::cos(angleRad);
+  float s = std::sin(angleRad);
   float oneMinusC = 1.0f - c;
 
   float x = a.x;
@@ -44,16 +44,10 @@ Mat4 Mat4::Rotation(Radian angle, const Vec3 &axis) {
   return rot;
 }
 // --------------------------------------------------------------------------------
-Mat4 Mat4::RotationFromEuler(const Vec3 &eulerAngle) {
-  Vec3 angle = {
-    Sono::Radians(eulerAngle.x),
-    Sono::Radians(eulerAngle.y),
-    Sono::Radians(eulerAngle.z)
-  };
-
-  float cx = cosf(angle.pitch), sx = sinf(angle.pitch);
-  float cy = cosf(angle.yaw),   sy = sinf(angle.yaw);
-  float cz = cosf(angle.roll),  sz = sinf(angle.roll);
+Mat4 Mat4::FromEuler(const Vec3 &eulerAngle) {
+  float cx = cosf(eulerAngle.pitch), sx = sinf(eulerAngle.pitch);
+  float cy = cosf(eulerAngle.yaw),   sy = sinf(eulerAngle.yaw);
+  float cz = cosf(eulerAngle.roll),  sz = sinf(eulerAngle.roll);
 
   // Column-major order
   return Mat4{

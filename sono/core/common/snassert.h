@@ -16,8 +16,8 @@
 #define ASSERT(expr)                                                                               \
   do {                                                                                             \
     if (!(expr)) {                                                                                 \
-      DEBUG_BREAK();                                                                               \
       assert(expr);                                                                                \
+      DEBUG_BREAK();                                                                               \
     }                                                                                              \
   } while (0)
 
@@ -33,18 +33,17 @@
 #define SN_ASSERT_F(expr, fmt, ...)                                                                \
   do {                                                                                             \
     if (!(expr)) {                                                                                 \
-      LOG_F("Assertion Failed (at %s:%d): " fmt, __FILE__, __LINE__, __VA_ARGS__);                 \
-      DEBUG_BREAK();                                                                               \
+      LOG_F(fmt, __VA_ARGS__);                                                                     \
       assert(expr);                                                                                \
+      DEBUG_BREAK();                                                                               \
     }                                                                                              \
   } while (0)
 
 #define SN_ASSERT(expr, msg)                                                                       \
   do {                                                                                             \
     if (!(expr)) {                                                                                 \
-      LOG_F("Assertion Failed (at %s:%d): " #msg, __FILE__, __LINE__);                             \
+      assert(expr && msg);                                                                         \
       DEBUG_BREAK();                                                                               \
-      assert(expr);                                                                                \
     }                                                                                              \
   } while (0)
 

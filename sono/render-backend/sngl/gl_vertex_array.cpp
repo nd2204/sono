@@ -1,6 +1,6 @@
-#include "gl_buffer_base.h"
-#include "gl_vertex_array.h"
-#include "core/common/snassert.h"
+#include <render-backend/sngl/gl_buffer_base.h>
+#include <render-backend/sngl/gl_vertex_array.h>
+#include <core/common/snassert.h>
 
 #define GL_ATTRIBUTE_COUNT 16
 
