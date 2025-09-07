@@ -1,24 +1,23 @@
+#include "core/common/logger.h"
+#include "core/common/snassert.h"
 #include <render-backend/sngl/gl_buffer_base.h>
 #include <render-backend/sngl/gl_render_system.h>
 #include <render-backend/sngl/gl_render_device.h>
 #include <render-backend/sngl/gl_texture.h>
 #include <render-backend/sngl/gl_vertex_array.h>
 #include <render-backend/sngl/gl_window.h>
-#include <render-backend/sngl/gl_commmon.h>
+#include <render-backend/sngl/gl_common.h>
 
 #include <render/shader/shader.h>
 
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_glfw.h>
 
-#include <string>
-
 GLRenderSystem::GLRenderSystem()
   : RenderSystem() {}
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Init() {
-  LOG_INFO("<-- Initializing GLRenderSystem -->");
-
+  System::Init();
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -30,7 +29,7 @@ void GLRenderSystem::Init() {
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Shutdown() {
-  LOG_INFO("<-- Shutting down GLRenderSystem -->");
+  System::Shutdown();
   m_pDevice->Shutdown();
   m_Arena.FreeInternalBuffer();
 }
@@ -52,7 +51,6 @@ RenderWindow *GLRenderSystem::CreateRenderWindow(
 
 void GLRenderSystem::BeginFrame(const Camera &cam) {
   m_FrameBeginMark = m_Arena.GetMarker();
-
   if (m_pActivePipeline) {
     m_pActivePipeline->SetUniform("uView", cam.GetViewMatrix());
     m_pActivePipeline->SetUniform("uProj", cam.GetProjectionMatrix());
@@ -79,8 +77,7 @@ void GLRenderSystem::Draw(
   i32 numBuffers = vao->GetVertexBuffers().size();
   va->Bind();
   for (int i = 0; i < numBuffers; i++) {
-    glDrawArrays(ConvertPrimitiveType(topology), offset, maxVertCount);
-    GL_CHECK_ERROR();
+    GL_CALL(glDrawArrays, ConvertPrimitiveType(topology), offset, maxVertCount);
   }
 }
 // --------------------------------------------------------------------------------
@@ -96,9 +93,9 @@ void GLRenderSystem::DrawIndexed(
   else if (ib->GetStride() == sizeof(u8))
     type = GL_UNSIGNED_BYTE;
 
-  va->Bind();
+  vao->Bind();
   // clang-format off
-  glDrawElements(
+  GL_CALL(glDrawElements,
     ConvertPrimitiveType(topology),
     idxCount,
     type,
@@ -108,44 +105,32 @@ void GLRenderSystem::DrawIndexed(
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::Clear(const Vec4 &c) {
-  glClearColor(c.r, c.g, c.b, c.a);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  GL_CHECK_ERROR();
+  GL_CALL(glClearColor, c.r, c.g, c.b, c.a);
+  GL_CALL(glClear, GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 // ================================================================================
 // Pipeline management
 // ================================================================================
-
-VertexArray *GLRenderSystem::CreateVertexArray() { return m_Arena.New<GLVertexArray>(); }
-// --------------------------------------------------------------------------------
 void GLRenderSystem::BindVertexArray(VertexArray *va) {
+  ASSERT(va);
   return reinterpret_cast<GLVertexArray *>(va)->Bind();
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::BindTexture(Texture *texture, u32 unit) {
+  ASSERT(texture);
   reinterpret_cast<GLTexture *>(texture)->Bind(unit);
-  std::string uniformName = "uTexture" + std::to_string(unit);
-  if (m_pActivePipeline) {
-    m_pActivePipeline->Bind();
-    m_pActivePipeline->SetUniform(uniformName.c_str(), (i32)unit);
-  }
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::BindBuffer(Buffer *buffer, u32 index) {
-  (void)index;
+  ASSERT(buffer);
   buffer->Bind();
 }
 // --------------------------------------------------------------------------------
 void GLRenderSystem::BindPipeline(RenderPipeline *pipeline, u32 index) {
-  (void)index;
-  m_pActivePipeline = pipeline;
+  ASSERT(pipeline);
   pipeline->Bind();
-}
-// --------------------------------------------------------------------------------
-void GLRenderSystem::UnbindPipeline(RenderPipeline *pipeline, u32 index) {
-  (void)index;
-  pipeline->Unbind();
+  m_pActivePipeline = pipeline;
 }
 
 // ================================================================================
@@ -153,6 +138,7 @@ void GLRenderSystem::UnbindPipeline(RenderPipeline *pipeline, u32 index) {
 // ================================================================================
 
 void GLRenderSystem::InitImGui(RenderWindow *window) {
+  ASSERT(window);
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGui::StyleColorsDark();

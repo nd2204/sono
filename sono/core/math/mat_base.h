@@ -7,6 +7,28 @@
 #include <string>
 #include <utility>
 
+// template <class MatrixType, u32 N, u32 C, u32 R, u32 I>
+// struct TransposeMatrixMTImpl {
+//   enum {
+//     NextI = I + 1,
+//     NextC = NextI / N % N,
+//     NextR = (NextI % N) + NextC + 1,
+//   };
+//   static inline void eval(MatrixType &m) {
+//     if (R < N) {
+//       std::swap(m[C][R], m[R][C]);
+//     }
+//     TransposeMatrixMTImpl<MatrixType, NextI, NextC, NextR, NextI>::eval(m);
+//   }
+// };
+//
+// // Templatized matrix transpose
+// template <class MatrixType, u32 N>
+// struct TransposeMatrixMT {
+//   static inline void eval(MatrixType &m) { TransposeMatrixMTImpl<MatrixType, N, 0, 1,
+//   0>::eval(m); }
+// };
+
 template <int R, int C, typename T>
 struct MatBase {
   T n[R][C];
@@ -53,15 +75,6 @@ struct MatBase {
   const T &operator()(usize row, usize col) const {
     SN_ASSERT(row < R && col < C, "Index out of bound");
     return n[row][col];
-  }
-
-  void Tranpose() {
-    SN_ASSERT(R == C, "Must be a square matrix");
-    for (i32 r = 1; r < R; ++r) {
-      for (i32 c = 0; c < r; ++r) {
-        std::swap(&n[r][c], &n[c][r]);
-      }
-    }
   }
 
   std::string ToString() const {

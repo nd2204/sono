@@ -1,36 +1,35 @@
-#include "resource_manager.h"
-
-#include "core/common/logger.h"
+#include <core/resource/resource_manager.h>
+#include <core/common/logger.h>
+#include <core/memory/memory_system.h>
 
 #include <memory>
 
-template <typename TAG>
-ResourceManager<TAG>::ResourceManager()
-  : m_CurrRes(ResourceMapItor(m_ResMap)) {
+template <class ResType>
+ResourceManager<ResType>::ResourceManager()
+  : m_CurrRes(ResourceMapItor(m_ResMap))
+  , m_MaxMem(SN_MEM_MIB * 100)
+/* , m_Allocator(m_MaxMem, sizeof(ResourceBase), 16)*/ {
   Clear();
 }
 // --------------------------------------------------------------------------------
-template <typename TAG>
-void ResourceManager<TAG>::Clear() {}
+template <class ResType>
+void ResourceManager<ResType>::Clear() {}
 // --------------------------------------------------------------------------------
-template <typename TAG>
-void ResourceManager<TAG>::Init() {
-  LOG_INFO_F("[ResourceManager] Initializing %s ...", s_Name);
+template <class ResType>
+void ResourceManager<ResType>::Init() {
+  ENGINE_INFO("|ResourceManager| Initializing %s ...", s_Name);
 }
 // --------------------------------------------------------------------------------
-template <typename TAG>
-void ResourceManager<TAG>::Shutdown() {
-  LOG_INFO_F("[ResourceManager] Shutting down %s ...", s_Name);
+template <class ResType>
+void ResourceManager<ResType>::Shutdown() {
+  ENGINE_INFO("|ResourceManager| Shutting down %s ...", s_Name);
 }
 // --------------------------------------------------------------------------------
-template <typename TAG>
-ResourceHandle<TAG> ResourceManager<TAG>::Load(const std::string &name) {
-  ResourceHandle<TAG> handle;
-  return handle;
-}
+template <class ResType>
+ResourceHandle ResourceManager<ResType>::Load(const std::string &name) {}
 // --------------------------------------------------------------------------------
-template <typename TAG>
-void ResourceManager<TAG>::Unload(ResourceHandle<TAG> handle) {}
+template <class ResType>
+void ResourceManager<ResType>::Unlock(ResourceHandle handle) {}
 // --------------------------------------------------------------------------------
-template <typename TAG>
-void ResourceManager<TAG>::Unload(ResourcePtr resPtr) {}
+template <class ResType>
+void ResourceManager<ResType>::Unlock(ResourcePtr resPtr) {}

@@ -1,12 +1,14 @@
 #ifndef SN_PROFILER_H
 #define SN_PROFILER_H
 
+#include "core/common/time.h"
 #include "core/common/types.h"
 #include "core/common/singleton.h"
 #include "core/memory/allocators/arena.h"
 
 #include <mutex>
 #include <unordered_map>
+#include <chrono>
 
 // TODO: add this definition to build system as option
 #define SN_DEBUG_PROFILER
@@ -25,9 +27,12 @@ namespace Sono {
 /// Record time in milliseconds
 struct ProfileEvent {
   const char *name;
-  f32 startTime;
-  f32 endTime;
+  f32 start; // start time in seconds
+  f32 end;   // end time in seconds
   u32 threadID;
+  f32 Duration(TimeUnit unit = TimeUnit::NANOSECONDS) const {
+    return FormatSecondsToUnit(end - start, unit);
+  }
 };
 
 class IProfileSink {
@@ -69,6 +74,7 @@ public:
   void Init();
   void Shutdown();
   void BeginSession();
+  f32 GetEventDuration(const char *name) const;
   std::string GenerateSessionReport() const;
 
   template <typename T, typename... Args>
@@ -86,7 +92,7 @@ private:
   std::mutex m_Mutex;
   std::vector<IProfileSink *> m_Sinks;
 
-  std::unordered_map<const char *, f32> m_EventDurationSecMap;
+  std::unordered_map<const char *, f32> m_EventDurations;
   ArenaAllocator m_SessionAlloc;
 };
 

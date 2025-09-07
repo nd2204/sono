@@ -1,3 +1,4 @@
+#include "render-backend/sngl/gl_common.h"
 #include <render-backend/sngl/gl_buffer_base.h>
 #include <render-backend/sngl/gl_vertex_array.h>
 #include <core/common/snassert.h>
@@ -55,10 +56,10 @@ void GLVertexArray::AddVertexBuffer(Buffer *buffer, const VertexLayout &layout) 
   glBindVertexArray(m_ID);
   buffer->Bind();
 
-  LOG_DEBUG_F("__ Vertex Array [id=%d]", m_ID);
+  ENGINE_DEBUG("__ Vertex Array [id=%d]", m_ID);
   const auto &attributes = layout.GetAttributes();
   for (auto &attrib : attributes) {
-    LOG_DEBUG_F(
+    ENGINE_DEBUG(
       "   |__ enabling vertex attributes [loc=%d, count=%d, type=%d, normalized=%d, stride=%d, "
       "offset=%d]",
       attrib.location, attrib.GetElementCount(), attrib.type, attrib.normalized, layout.GetStride(),

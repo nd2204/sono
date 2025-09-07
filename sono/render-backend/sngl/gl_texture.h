@@ -7,9 +7,7 @@
 
 class GLTexture : public Texture {
 public:
-  GLTexture(
-    TextureType type, TextureFormat internalFormat, TextureFormat format, i32 width, i32 height
-  );
+  GLTexture(const TextureDesc &desc);
 
   u32 GetID() const;
 
@@ -17,13 +15,13 @@ public:
 
   void Unbind() const;
 
-  void SetWrap(u32 wrapMode);
+  void SetWrap(GLuint wrapMode);
 
-  void SetWrapAxis(u32 wrapAxis, u32 wrapMode);
+  void SetWrapAxis(GLuint wrapAxis, GLuint wrapMode);
 
-  void SetFilter(u32 filterMode);
+  void SetFilter(GLuint filterMode);
 
-  void SetFilterZoom(u32 filterZoom, u32 filterMode);
+  void SetFilterZoom(GLuint filterZoom, GLuint filterMode);
 
   virtual void GenerateMipmaps() override;
 
@@ -31,15 +29,13 @@ public:
 
   virtual void Update(const void *data, u32 mipLevels) override;
 
-  virtual void SetFormat(TextureFormat format) override;
-
   operator u32() const;
 
   ~GLTexture();
 
 private:
   u32 m_TextureID; // OpenGL texture ID
-  // u32 m_Channels;              // Number of channels (3 for RGB, 4 for RGBA)
+  GLuint m_Target;
 };
 
 #endif // !GLTEXTURE_H

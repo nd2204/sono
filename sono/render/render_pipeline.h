@@ -10,6 +10,7 @@
 #include "core/math/mat3.h"
 
 struct PipelineDesc {
+  std::string label = "";
   Shader *vertex;
   Shader *fragment;
 };
@@ -24,6 +25,8 @@ public:
   virtual void Bind() const = 0;
 
   virtual void Unbind() const = 0;
+
+  inline const std::string &GetLabel() const { return m_Desc.label; }
 
   virtual void SetUniform(const char *uniform, const Vec4 &v4) const = 0;
   virtual void SetUniform(const char *uniform, const Vec3 &v3) const = 0;
@@ -40,7 +43,7 @@ public:
   virtual void SetUniform(const char *uniform, const MatBase<4, 2, f32> &mat4x2) const = 0;
 
   virtual void SetUniform(const char *uniform, const MatBase<3, 4, f32> &mat3x4) const = 0;
-  virtual void SetUniform(const char *uniform, const Mat3 &mat3) const = 0;
+  virtual void SetUniform(const char *uniform, const MatBase<3, 3, f32> &mat3) const = 0;
   virtual void SetUniform(const char *uniform, const MatBase<3, 2, f32> &mat3x2) const = 0;
 
   virtual void SetUniform(const char *uniform, const MatBase<2, 2, f32> &mat2) const = 0;
@@ -58,19 +61,17 @@ public:
   virtual void SetInt(const char *uniform, i32 v) const = 0;
   virtual void SetBool(const char *uniform, b8 v) const = 0;
 
-  virtual void SetMat4(const char *uniform, f32 *mat4) const = 0;
-  virtual void SetMat4(const char *uniform, const Mat4 &mat4) const = 0;
-  virtual void SetMat4x3(const char *uniform, f32 *mat4x3) const = 0;
-  virtual void SetMat4x2(const char *uniform, f32 *mat4x2) const = 0;
+  virtual void SetMat4(const char *uniform, const MatBase<4, 4, f32> &mat4) const = 0;
+  virtual void SetMat4x3(const char *uniform, const MatBase<4, 3, f32> &mat4x3) const = 0;
+  virtual void SetMat4x2(const char *uniform, const MatBase<4, 2, f32> &mat4x2) const = 0;
 
-  virtual void SetMat3x4(const char *uniform, f32 *mat3x4) const = 0;
-  virtual void SetMat3(const char *uniform, f32 *mat3) const = 0;
-  virtual void SetMat3(const char *uniform, const Mat3 &mat3) const = 0;
-  virtual void SetMat3x2(const char *uniform, f32 *mat3x2) const = 0;
+  virtual void SetMat3(const char *uniform, const MatBase<3, 3, f32> &mat3) const = 0;
+  virtual void SetMat3x2(const char *uniform, const MatBase<3, 2, f32> &mat3x2) const = 0;
+  virtual void SetMat3x4(const char *uniform, const MatBase<3, 4, f32> &mat3x4) const = 0;
 
-  virtual void SetMat2(const char *uniform, f32 *mat2) const = 0;
-  virtual void SetMat2x4(const char *uniform, f32 *mat2x4) const = 0;
-  virtual void SetMat2x3(const char *uniform, f32 *mat2x3) const = 0;
+  virtual void SetMat2(const char *uniform, const MatBase<2, 2, f32> &mat2) const = 0;
+  virtual void SetMat2x3(const char *uniform, const MatBase<2, 3, f32> &mat2x3) const = 0;
+  virtual void SetMat2x4(const char *uniform, const MatBase<2, 4, f32> &mat2x4) const = 0;
 
 protected:
   PipelineDesc m_Desc;

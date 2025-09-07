@@ -1,11 +1,11 @@
-#include "core/common/snassert.h"
-#include "core/event/events.h"
-#include "core/event/event_system.h"
-#include "core/common/time.h"
+#include <core/common/snassert.h>
+#include <core/event/events.h>
+#include <core/event/event_system.h>
+#include <core/common/time.h>
 
 #include <glad/glad.h>
-#include "gl_window.h"
-#include "core/debug/profiler.h"
+#include <render-backend/sngl/gl_window.h>
+#include <render-backend/sngl/gl_common.h>
 
 #include <cstdlib>
 
@@ -27,7 +27,7 @@ void GLWindow::Create(i32 width, i32 height, const char *title, WindowMode mode)
     exit(-1);
   }
 
-  glEnable(GL_DEPTH_TEST);
+  GL_CALL(glEnable, GL_DEPTH_TEST);
 
   // TODO: remove condition after handled switching to windowed mode
   if (mode != WIN_MODE_WINDOWED) {

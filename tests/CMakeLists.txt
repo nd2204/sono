@@ -10,9 +10,6 @@ add_executable(${PROJECT_NAME}
   main.cpp
   ${MATH_TEST_SRC}
 )
+
 target_link_libraries(${PROJECT_NAME} PRIVATE sono)
 target_include_directories(${PROJECT_NAME} PRIVATE vendors/doctest)
-
-# TODO: Move this 2 line to sono-editor
-add_executable(SonoEditor sono/src/main.cpp)
-target_link_libraries(SonoEditor PRIVATE sono)

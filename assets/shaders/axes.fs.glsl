@@ -1,5 +1,3 @@
-#version 330 core
-
 uniform vec3 uAxisColor;
 
 out vec4 FragColor;

@@ -36,7 +36,7 @@ RenderWindow *RenderSystem::CreateRenderWindow(
       break;
   }
   oss << ")";
-  LOG_DEBUG(oss.str().c_str());
+  ENGINE_DEBUG("%s", oss.str().c_str());
 
   return nullptr;
 }

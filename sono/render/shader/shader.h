@@ -12,7 +12,7 @@ inline std::string LoadShaderSrcFromFile(const char *filePath) {
   std::ifstream file(filePath);
   std::stringstream buffer;
   buffer << file.rdbuf();
-  LOG_INFO_F("Loaded shader sources from %s", filePath);
+  ENGINE_INFO("Loaded shader sources from %s", filePath);
   return buffer.str();
 }
 
@@ -29,7 +29,7 @@ public:
 
   virtual ~Shader() {}
 
-  virtual void Compile() = 0;
+  virtual b8 Compile() = 0;
 
   virtual ShaderStage GetStage() const { return m_Desc.stage; };
 

@@ -2,16 +2,9 @@
 #define SN_RESOURCE_BASE_H
 
 #include "core/common/types.h"
-#include <ctime>
 
-template <typename TAG>
-class ResourceManager;
-
-template <typename TAG>
 class ResourceBase {
 public:
-  friend class ResourceManager<TAG>;
-
   enum PriorityType {
     RES_PRIORITY_0 = 0,
     RES_PRIORITY_1,
@@ -20,55 +13,58 @@ public:
   };
 
   ResourceBase() { Clear(); }
-  virtual ~ResourceBase() { Destroy(); }
+
+  virtual ~ResourceBase() {}
+
+  // Increment the reference counting
+  constexpr void Acquire();
+
+  // Decrement the reference counting.
+  constexpr void Release();
+
+  // Return the reference count of the current resource
+  constexpr u32 GetRefCount() const;
+
+  // Return true if the current resource is in use
+  constexpr bool IsLocked() const;
+
+  // Assign the priority of current resource
+  constexpr void SetPriority(PriorityType priority);
+
+  // Return the priority of current resource
+  constexpr PriorityType GetPriority() const;
+
+  // Get last access timestamp in seconds
+  constexpr f32 GetLastAccess() const;
+
+  // Set last access timestamp in seconds
+  constexpr void SetLastAccess(f32 time);
+
+  // Allow sorting in list for discarding
+  constexpr bool operator<(const ResourceBase &rhs) const noexcept;
 
   virtual void Clear();
 
-  virtual b8 Create() { return false; }
+  virtual b8 Load();
 
-  virtual void Destroy() {}
-
-  inline void SetPriority(PriorityType priority) { m_Priority = priority; }
-
-  inline PriorityType GetPriority() const { return m_Priority; }
-
-  inline void SetRefCount(u32 refCount) { m_RefCount = refCount; }
-
-  inline u32 GetRefCount() const { return m_RefCount; }
-
-  // Return true if the resource is in use
-  inline bool IsLocked() const { return m_RefCount > 0; }
-
-  // Allow sorting in list for discarding
-  bool operator<(const ResourceBase &rhs);
+  virtual void Destroy();
 
   // ================================================================================
   // Subclass must implements these
   // ================================================================================
 
-  virtual void Recreate() = 0;
+  virtual void Reload() = 0;
 
-  virtual void Dispose() = 0;
+  virtual void Unload() = 0;
 
   virtual u32 GetSize() const = 0;
 
-  virtual b8 IsDisposed() const = 0;
+  virtual b8 IsUnloaded() const = 0;
 
 protected:
   PriorityType m_Priority;
-  u32 m_RefCount;
+  i32 m_RefCount;
+  f32 m_LastAccess;
 };
-
-template <typename TAG>
-inline void ResourceBase<TAG>::Clear() {}
-
-template <typename TAG>
-inline bool ResourceBase<TAG>::operator<(const ResourceBase &rhs) {
-  if (GetPriority() == rhs.GetPriority()) {
-    return GetSize() < rhs.GetSize();
-  } else {
-    return GetPriority() < rhs.GetPriority();
-  }
-}
 
 #endif // !SN_RESOURCE_BASE_H

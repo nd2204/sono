@@ -7,10 +7,6 @@ EventSystem::EventSystem()
 // --------------------------------------------------------------------------------
 EventSystem::~EventSystem() {}
 // --------------------------------------------------------------------------------
-void EventSystem::Init() { LOG_INFO("<-- Initializing Event System -->"); }
-// --------------------------------------------------------------------------------
-void EventSystem::Shutdown() { LOG_INFO("<-- Shutting down Event System -->"); }
-// --------------------------------------------------------------------------------
 void EventSystem::Push(const Event &e) {
   Event *ev = &m_EventQueue[m_Head & MAX_EVENTS];
   if (m_Head - m_Tail >= MAX_EVENTS) {

@@ -114,7 +114,7 @@ if [[ $is_win -eq 1 ]]; then exe=.exe; else exe= ; fi
 if [[ $test -eq 1 ]]; then
   exec="$build_dir/tests/SonoTest$exe ${program_args[@]}"
 else
-  exec="$build_dir/tests/SonoEditor$exe ${program_args[@]}"
+  exec="$build_dir/sono-editor/SonoEditor$exe ${program_args[@]}"
 fi
 
 

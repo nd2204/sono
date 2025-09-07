@@ -11,11 +11,24 @@ public:
     , m_Current(begin)
     , m_End(end) {}
 
-  const ItorType &Begin() const { return m_Begin; }
+  ItorType &Begin() { return m_Begin; }
   ItorType &Current() { return m_Current; }
-  const ItorType &End() const { return m_End; }
+  ItorType &End() { return m_End; }
 
-  b8 Advance() { ++m_Current; };
+  const ItorType &CBegin() const { return m_Begin; }
+  const ItorType &CCurrent() const { return m_Current; }
+  const ItorType &CEnd() const { return m_End; }
+
+  void GotoBegin() { m_Current = m_Begin; }
+  void GotoEnd() { m_Current = m_End; }
+
+  b8 Advance() {
+    if (HasMore()) {
+      ++m_Current;
+      return true;
+    }
+    return false;
+  };
   b8 HasMore() const { return m_Current != m_End; }
 
 protected:
@@ -49,7 +62,7 @@ public:
   typedef typename MapType::iterator MapItorType;
   typedef typename MapType::mapped_type MapValType;
   typedef typename MapType::key_type KeyType;
-  typedef typename MapType::value_type ValType;
+  typedef typename MapType::value_type::second_type ValType;
 
   MapItor(MapItorType start, MapItorType end)
     : ItorWrapper<MapType, MapItorType, MapValType>(start, end) {}
@@ -57,11 +70,11 @@ public:
   explicit MapItor(MapType &map)
     : ItorWrapper<MapType, MapItorType, MapValType>(map.begin(), map.end()) {}
 
-  KeyType PeekKey() const { return this->m_Current->first; }
+  KeyType PeekKey() { return this->m_Current->first; }
 
-  ValType PeekVal() const { return this->m_Current->second; }
+  ValType PeekVal() { return this->m_Current->second; }
 
-  ValType *PeekValPtr() const { return &(this->m_Current->second); }
+  ValType *PeekValPtr() { return &(this->m_Current->second); }
 };
 
 #endif // !SN_ITOR_WRAPPER_H

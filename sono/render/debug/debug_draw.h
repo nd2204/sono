@@ -10,11 +10,12 @@ class RenderSystem;
 
 class DebugDraw
   : public Singleton<DebugDraw>
-  , ISystem {
+  , public System {
 public:
   DebugDraw(RenderSystem *render);
 
   void Init() override;
+
   void Shutdown() override;
 
   void Render();

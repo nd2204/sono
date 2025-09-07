@@ -37,17 +37,17 @@ struct VertexPC {
 };
 
 struct VertexPT {
-  f32 x, y, z;
-  f32 u, v;
+  f32 position[3];
+  f32 texCoords[2];
 
   VertexPT() = default;
 
   // clang-format off
   VertexPT(f32 x, f32 y, f32 z, f32 u, f32 v)
-    : x(x) , y(y) , z(z) , u(u) , v(v) {}
+    : position{x, y, z}, texCoords{u, v} {}
 
   VertexPT(const Vec3 &pos, const Vec2 &tex)
-    : x(pos.x) , y(pos.y) , z(pos.z) , u(tex.x) , v(tex.y) {}
+    : position{pos.x, pos.y, pos.z}, texCoords{tex.x, tex.y} {}
   // clang-format on
 };
 
@@ -62,16 +62,16 @@ struct VertexPN {
     : position(pos[0], pos[1], pos[2])
     , normal(norm[0],norm[1], norm[2]) {}
 
-  VertexPN(const Vec3 &pos, const Vec3 norm)
+  VertexPN(const Vec3 &pos, const Vec3 &norm)
     : position(pos)
     , normal(norm) {}
   // clang-format on
 };
 
 struct VertexPNT {
-  Vec3 position;
-  Vec3 normal;
-  Vec2 texCoords;
+  f32 position[3];
+  f32 normal[3];
+  f32 texCoords[2];
 
   VertexPNT() = default;
 
@@ -81,10 +81,10 @@ struct VertexPNT {
     , normal(norm[0],norm[1], norm[2])
     , texCoords(tex[0], tex[1]) {}
 
-  VertexPNT(const Vec3 &pos, const Vec3 norm, const Vec2 tex)
-    : position(pos)
-    , normal(norm)
-    , texCoords(tex) {}
+  VertexPNT(const Vec3 &pos, const Vec3 &norm, const Vec2 &tex)
+    : position(pos.x, pos.y, pos.z)
+    , normal(norm.x, norm.y, norm.z)
+    , texCoords(tex.x, tex.y) {}
   // clang-format on
 };
 
@@ -162,15 +162,15 @@ struct VertexTraits<VertexPNTT> {
 
 namespace std {
 
-template <>
-struct hash<VertexPNT> {
-  size_t operator()(const VertexPNT &v) const {
-    size_t h1 = hash<Vec3>()(v.position);
-    size_t h2 = hash<Vec3>()(v.normal);
-    size_t h3 = hash<Vec2>()(v.texCoords);
-    return h1 ^ (h2 << 1) ^ (h3 << 2);
-  }
-};
+// template <>
+// struct hash<VertexPNT> {
+//   size_t operator()(const VertexPNT &v) const {
+//     size_t h1 = hash<f32>()(v.position);
+//     size_t h2 = hash<Vec3>()(v.normal);
+//     size_t h3 = hash<Vec2>()(v.texCoords);
+//     return h1 ^ (h2 << 1) ^ (h3 << 2);
+//   }
+// };
 
 }
 

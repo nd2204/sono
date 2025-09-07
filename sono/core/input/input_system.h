@@ -1,9 +1,10 @@
 #ifndef SN_INPUT_SYSTEM_H
 #define SN_INPUT_SYSTEM_H
 
-#include "core/common/singleton.h"
-#include "core/event/events.h"
-#include "core/memory/allocator.h"
+#include <core/common/singleton.h>
+#include <core/event/events.h>
+#include <core/memory/allocator.h>
+#include <core/system.h>
 
 #include <bitset>
 
@@ -25,15 +26,19 @@ struct KeyState {
   std::bitset<512> prevKeys;
 };
 
-class InputSystem : public Singleton<InputSystem> {
+class InputSystem
+  : public Singleton<InputSystem>
+  , public System {
 public:
   InputSystem(Allocator &allocator);
 
   ~InputSystem() = default;
 
-  void Init();
+  void Init() override;
 
-  void Shutdown();
+  void Shutdown() override;
+
+  const char *GetName() const override { return "InputSystem"; }
 
   void InjectEvent(const Event &e);
 

@@ -2,8 +2,6 @@
 #include "../common/snassert.h"
 #include <cstdint>
 #include <cstdlib>
-#include <cstring>
-#include <iomanip>
 #include <sstream>
 #include <unordered_map>
 
@@ -22,12 +20,15 @@ MemorySystem::MemorySystem()
 // --------------------------------------------------------------------------------
 MemorySystem::~MemorySystem() {}
 // --------------------------------------------------------------------------------
-void MemorySystem::Init() { LOG_INFO("<-- Initializing MemorySystem -->"); }
+void MemorySystem::Init() {
+  System::Init();
+  LOG_INFO("<-- Initializing MemorySystem -->");
+}
 // --------------------------------------------------------------------------------
 void MemorySystem::Shutdown() {
-  LOG_INFO("<-- Shutting down MemorySystem -->");
-  S_LOG(MemorySystem::GetPtr()->GetAllocsReport());
-  S_LOG(MemorySystem::GetPtr()->GetLeaksReport());
+  System::Shutdown();
+  LOG_MSG(MemorySystem::GetPtr()->GetAllocsReport().c_str());
+  LOG_MSG(MemorySystem::GetPtr()->GetLeaksReport().c_str());
 }
 // --------------------------------------------------------------------------------
 Allocator &MemorySystem::GetGlobalAllocator() { return m_GlobalAllocator; }
