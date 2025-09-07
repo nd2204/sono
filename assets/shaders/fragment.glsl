@@ -1,5 +1,3 @@
-#version 330 core
-
 // in vec2 vTexCoord;
 //
 // uniform sampler2D uTexture0;

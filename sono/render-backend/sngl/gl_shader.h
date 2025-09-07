@@ -11,7 +11,7 @@ public:
 
   ~GLShader();
 
-  void Compile() override;
+  b8 Compile() override;
 
   GLuint GetID() const;
 

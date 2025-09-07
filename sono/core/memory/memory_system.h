@@ -1,6 +1,7 @@
 #ifndef SN_MEMORY_SYSTEM_H
 #define SN_MEMORY_SYSTEM_H
 
+#include <core/system.h>
 #include <core/memory/allocator.h>
 #include <core/memory/allocators/heap.h>
 
@@ -31,9 +32,9 @@ constexpr usize SN_MEM_GB = SN_MEM_MIB * SN_MEM_MIB;
 #define MIB(byte) (byte / SN_MEM_MIB)
 #define KIB(byte) (byte / SN_MEM_KIB)
 
-// clang-format off
-
-class MemorySystem : public Singleton<MemorySystem> {
+class MemorySystem
+  : public Singleton<MemorySystem>
+  , public System {
 public:
   MemorySystem();
 
@@ -43,9 +44,11 @@ public:
 
   MemorySystem &operator=(MemorySystem &rhs) = delete;
 
-  void Init();
+  void Init() override;
 
-  void Shutdown();
+  void Shutdown() override;
+
+  const char *GetName() const override { return "MemorySystem"; }
 
   /// @brief: track memory allocation
   void ReportAllocation(
@@ -53,7 +56,8 @@ public:
   );
 
   void ReportSubAllocation(
-    void *parent, void *child, const char *file, const char *func, usize size, int line, AllocationType type
+    void *parent, void *child, const char *file, const char *func, usize size, int line,
+    AllocationType type
   );
 
   /// @brief update memory deallocation

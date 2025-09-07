@@ -12,6 +12,8 @@ public:
 
   void Shutdown() override;
 
+  const char *GetName() const override { return "GLRenderSystem"; }
+
   RenderWindow *CreateRenderWindow(
     i32 width, i32 height, const char *title, WindowMode mode = WIN_MODE_WINDOWED
   ) override;
@@ -52,8 +54,6 @@ public:
   // Pipeline management
   // ================================================================================
 
-  VertexArray *CreateVertexArray() override;
-
   void BindVertexArray(VertexArray *va) override;
 
   void BindTexture(Texture *texture, u32 unit) override;
@@ -61,8 +61,6 @@ public:
   void BindBuffer(Buffer *buffer, u32 index) override;
 
   void BindPipeline(RenderPipeline *pipeline, u32 index) override;
-
-  void UnbindPipeline(RenderPipeline *pipeline, u32 index) override;
 
   // ================================================================================
   // Getters & Setters

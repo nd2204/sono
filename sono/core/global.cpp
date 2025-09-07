@@ -38,7 +38,8 @@ void Global::Init() {
 // shutting down in the reverse order
 void Global::Shutdown() {
 #ifdef SN_DEBUG_PROFILER
-  S_LOG(m_Profiler->GenerateSessionReport());
+  std::string report = m_Profiler->GenerateSessionReport();
+  ENGINE_MSG("%s", report.c_str());
   m_Profiler->EndSession();
   m_Profiler->Shutdown();
 #endif

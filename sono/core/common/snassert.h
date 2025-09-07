@@ -42,7 +42,7 @@
 #define SN_ASSERT(expr, msg)                                                                       \
   do {                                                                                             \
     if (!(expr)) {                                                                                 \
-      assert(expr && msg);                                                                         \
+      assert((expr) && (msg));                                                                     \
       DEBUG_BREAK();                                                                               \
     }                                                                                              \
   } while (0)

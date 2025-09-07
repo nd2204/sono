@@ -87,6 +87,19 @@ struct Mat3 : public MatBase<3, 3, f32> {
     return r;
   }
 
+  Mat3 &Transpose() {
+    std::swap(n[0][1], n[1][0]);
+    std::swap(n[1][2], n[2][1]);
+    std::swap(n[0][2], n[2][0]);
+    return *this;
+  }
+
+  Mat3 Transposed() const {
+    Mat3 ret = *this;
+    ret.Transpose();
+    return ret;
+  }
+
   static const Mat3 Zero;
 };
 

@@ -19,9 +19,10 @@ public:
 
   Shader *CreateShader(const ShaderDesc &desc) override;
 
-  Texture *CreateTexture(
-    TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
-  ) override;
+  Texture *CreateTexture(const TextureDesc &desc) override;
+
+  // TODO: Remove vertex array
+  VertexArray *CreateVertexArray() override;
 
   CommandList *CreateCommandList() override;
 

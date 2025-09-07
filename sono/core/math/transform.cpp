@@ -53,7 +53,7 @@ void Transform::Rotate(const Quaternion &q, CoordSpace relSpace) {
 }
 // --------------------------------------------------------------------------------
 void Transform::RotateAxis(const Vec3 &axis, Radian angleRad, CoordSpace relSpace) {
-  Rotate(Quaternion(angleRad, axis), relSpace);
+  Rotate(Quaternion(angleRad, axis.Normalized()), relSpace);
 }
 // --------------------------------------------------------------------------------
 void Transform::LookAt(const Transform &target, const Vec3 &worldUp) {
@@ -84,7 +84,7 @@ void Transform::SetEuler(const Vec3 &eulerDeg) {
 // --------------------------------------------------------------------------------
 const Vec3 &Transform::GetScale() const { return m_Scale; }
 // --------------------------------------------------------------------------------
-void Transform::SetScale(const Vec3 &scale) {
+void Transform::Scale(const Vec3 &scale) {
   m_Scale = scale;
   m_IsDirty = true;
 }

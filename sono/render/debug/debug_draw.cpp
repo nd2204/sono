@@ -14,7 +14,7 @@ void DebugDraw::Init() {
      .stride = sizeof(VertexPC),
      .usage = BufferUsage::Vertex | BufferUsage::MapWrite}
   );
-  m_VertexArray = m_RenderSys->CreateVertexArray();
+  m_VertexArray = device->CreateVertexArray();
   m_VertexArray->AddVertexBuffer(m_Buffer, VertexTraits<VertexPC>::GetLayout());
 }
 // --------------------------------------------------------------------------------

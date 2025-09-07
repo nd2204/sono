@@ -18,7 +18,7 @@
 
 class RenderSystem
   : public Singleton<RenderSystem>
-  , public ISystem {
+  , public System {
 public:
   RenderSystem();
 
@@ -66,8 +66,6 @@ public:
   // Pipeline management
   // ================================================================================
 
-  virtual VertexArray *CreateVertexArray() = 0;
-
   virtual void BindVertexArray(VertexArray *va) = 0;
 
   virtual void BindTexture(Texture *texture, u32 unit) = 0;
@@ -75,8 +73,6 @@ public:
   virtual void BindBuffer(Buffer *buffer, u32 index) = 0;
 
   virtual void BindPipeline(RenderPipeline *pipeline, u32 index) = 0;
-
-  virtual void UnbindPipeline(RenderPipeline *pipeline, u32 index) = 0;
 
   // ================================================================================
   // ImGui

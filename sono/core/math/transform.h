@@ -65,7 +65,9 @@ public:
 
   const Vec3 &GetScale() const;
 
-  void SetScale(const Vec3 &scale);
+  void Scale(const Vec3 &scale);
+
+  void Scale(f32 scale) { Scale(Vec3(scale)); };
 
   // --------------------------------------------------------------------------------
   // Others ...

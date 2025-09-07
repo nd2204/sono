@@ -33,7 +33,7 @@ GLShader::GLShader(const ShaderDesc &desc)
   Compile();
 }
 // --------------------------------------------------------------------------------
-void GLShader::Compile() {
+b8 GLShader::Compile() {
   SN_ASSERT(!m_Desc.src.empty(), "shader sources is empty");
 
   GLenum type = ShaderStageToOpenGLShader(m_Desc.stage);
@@ -43,8 +43,9 @@ void GLShader::Compile() {
   char infoLog[512];
 
   // glShaderSource expected a const char * const pointer
-  const char *sources[] = {m_Desc.src.c_str()};
-  glShaderSource(m_ShaderID, 1, sources, NULL);
+  // TODO: Make the version string configurable from render system
+  const char *sources[] = {"#version 330 core\n", m_Desc.src.c_str()};
+  glShaderSource(m_ShaderID, 2, sources, NULL);
   glCompileShader(m_ShaderID);
 
   glGetShaderiv(m_ShaderID, GL_COMPILE_STATUS, &success);
@@ -52,18 +53,17 @@ void GLShader::Compile() {
     glGetShaderInfoLog(m_ShaderID, 512, NULL, infoLog);
     switch (type) {
       case GL_VERTEX_SHADER:
-        LOG_ERROR_F("Vertex shader compilation failed: %s", infoLog);
+        ENGINE_ERROR("Vertex shader compilation failed: %s", infoLog);
         break;
       case GL_GEOMETRY_SHADER:
-        LOG_ERROR_F("Geometry shader compilation failed: %s", infoLog);
+        ENGINE_ERROR("Geometry shader compilation failed: %s", infoLog);
         break;
       case GL_FRAGMENT_SHADER:
-        LOG_ERROR_F("Fragment shader compilation failed: %s", infoLog);
+        ENGINE_ERROR("Fragment shader compilation failed: %s", infoLog);
         break;
     }
-  } else {
-    LOG_INFO_F("%s compilation success", ShaderTypeStr.at(type));
   }
+  return success;
 }
 // --------------------------------------------------------------------------------
 GLuint GLShader::GetID() const { return m_ShaderID; }

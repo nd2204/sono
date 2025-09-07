@@ -1,8 +1,8 @@
 #ifndef SN_VERTEX_ARRAY_H
 #define SN_VERTEX_ARRAY_H
 
-#include "vertex_layout.h"
-#include "render/render_device.h"
+#include <render/vertex_layout.h>
+#include <render/buffer_base.h>
 
 class VertexArray {
 public:

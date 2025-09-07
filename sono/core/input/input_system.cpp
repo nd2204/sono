@@ -10,12 +10,12 @@ InputSystem::InputSystem(Allocator &allocator)
   , m_KeyState(nullptr) {}
 // --------------------------------------------------------------------------------
 void InputSystem::Init() {
-  LOG_INFO("<-- Initializing InputSystem -->");
+  System::Init();
   Mouse::Init(this);
 }
 // --------------------------------------------------------------------------------
 void InputSystem::Shutdown() {
-  LOG_INFO("<-- Shutting down InputSystem -->");
+  System::Shutdown();
   m_Allocator.Free(m_MouseState);
   m_Allocator.Free(m_KeyState);
 }

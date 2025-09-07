@@ -1,3 +1,4 @@
+#include "render-backend/sngl/gl_common.h"
 #include <render-backend/sngl/gl_command_queue.h>
 #include <render-backend/sngl/gl_command.h>
 
@@ -18,7 +19,7 @@ void GLCommandQueue::ExecuteGLCommand(GLCommand *cmd) {
     }
     case CmdType::Draw: {
       const CmdDraw &draw = cmd->cmdDraw;
-      glDrawArrays(GL_TRIANGLES, draw.firstVertex, draw.vertexCount);
+      GL_CALL(glDrawArrays, GL_TRIANGLES, draw.firstVertex, draw.vertexCount);
       break;
     }
     case CmdType::DrawIndexed: {
@@ -28,7 +29,9 @@ void GLCommandQueue::ExecuteGLCommand(GLCommand *cmd) {
         type = GL_UNSIGNED_SHORT;
       else if (m_IndexBuffer->GetStride() == sizeof(u8))
         type = GL_UNSIGNED_BYTE;
-      glDrawElements(GL_TRIANGLES, draw.idxCount, type, reinterpret_cast<void *>(draw.firstIdx));
+      GL_CALL(
+        glDrawElements, GL_TRIANGLES, draw.idxCount, type, reinterpret_cast<void *>(draw.firstIdx)
+      );
       break;
     }
   }

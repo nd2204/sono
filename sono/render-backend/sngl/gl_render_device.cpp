@@ -1,4 +1,5 @@
-#include "core/memory/memory_system.h"
+#include <core/memory/memory_system.h>
+#include <render-backend/sngl/gl_vertex_array.h>
 
 #include <render-backend/sngl/gl_render_pipeline.h>
 #include <render-backend/sngl/gl_render_device.h>
@@ -48,17 +49,24 @@ RenderPipeline *GLRenderDevice::CreateDefaultPipeline() {
 }
 // --------------------------------------------------------------------------------
 RenderPipeline *GLRenderDevice::CreatePipeline(const PipelineDesc &desc) {
-  return m_pResourceAllocator->New<GLRenderPipeline>(desc);
+  GLRenderPipeline *pipeline = m_pResourceAllocator->New<GLRenderPipeline>(desc);
+  ENGINE_DEBUG(
+    "Created Pipeline [label=%s;program_id=%d]", pipeline->GetLabel().c_str(), pipeline->GetID()
+  );
+  return pipeline;
 }
 // --------------------------------------------------------------------------------
 Shader *GLRenderDevice::CreateShader(const ShaderDesc &desc) {
   return m_pResourceAllocator->New<GLShader>(desc);
 }
 // --------------------------------------------------------------------------------
-Texture *GLRenderDevice::CreateTexture(
-  TextureType type, TextureFormat internalFmt, TextureFormat fmt, u32 width, u32 height
-) {
-  return m_pResourceAllocator->New<GLTexture>(type, internalFmt, fmt, width, height);
+Texture *GLRenderDevice::CreateTexture(const TextureDesc &desc) {
+  return m_pResourceAllocator->New<GLTexture>(desc);
+}
+// --------------------------------------------------------------------------------
+// TODO: Remove vertex array
+VertexArray *GLRenderDevice::CreateVertexArray() {
+  return m_pResourceAllocator->New<GLVertexArray>();
 }
 // --------------------------------------------------------------------------------
 CommandList *GLRenderDevice::CreateCommandList() { return nullptr; }

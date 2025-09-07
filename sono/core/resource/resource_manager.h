@@ -9,7 +9,7 @@
 #include <map>
 
 template <typename TAG>
-class ResourceManager : public ISystem {
+class ResourceManager : public System {
 public:
   const char *GetName() { return s_Name; };
 

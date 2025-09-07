@@ -1,10 +1,11 @@
 #ifndef SN_RENDER_OP_H
 #define SN_RENDER_OP_H
 
-#include "render/colors.h"
-#include "shader/shader.h"
-#include "vertex_array.h"
-#include "core/math/mat4.h"
+#include <render/resource/texture.h>
+#include <render/colors.h>
+#include <render/render_pipeline.h>
+#include <render/vertex_array.h>
+#include <core/math/mat4.h>
 
 class RenderSystem;
 
@@ -22,6 +23,16 @@ class RenderCommand {
 public:
   virtual ~RenderCommand() = default;
   virtual void Execute(RenderSystem &renderSys) const = 0;
+};
+
+class BindTextureCommand : public RenderCommand {
+public:
+  BindTextureCommand(Texture *texture, u32 unit);
+  void Execute(RenderSystem &renderSys) const;
+
+private:
+  Texture *m_Texture;
+  u32 m_Unit;
 };
 
 class BindShaderCommand : public RenderCommand {

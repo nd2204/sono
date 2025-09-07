@@ -4,6 +4,14 @@
 #include <glad/glad.h>
 #include <string>
 
+#ifdef NDEBUG
+
+#define GL_CHECK_ERROR()
+
+#define GL_CALL(fn, ...) fn(__VA_ARGS__)
+
+#else
+
 inline GLenum _GlCheckError(const char *file, int line) {
   GLenum errorCode;
   while ((errorCode = glGetError()) != GL_NO_ERROR) {
@@ -37,5 +45,13 @@ inline GLenum _GlCheckError(const char *file, int line) {
 }
 
 #define GL_CHECK_ERROR() _GlCheckError(__FILE__, __LINE__)
+
+#define GL_CALL(fn, ...)                                                                           \
+  do {                                                                                             \
+    fn(__VA_ARGS__);                                                                               \
+    _GlCheckError(__FILE__, __LINE__);                                                             \
+  } while (0)
+
+#endif
 
 #endif // !SN_GL_COMMON_H

@@ -1,20 +1,21 @@
 #ifndef SN_EVENT_SYSTEM_H
 #define SN_EVENT_SYSTEM_H
 
-#include "core/common/singleton.h"
-#include "events.h"
+#include <core/common/singleton.h>
+#include <core/system.h>
+#include <core/event/events.h>
 
 #define SN_QUEUE_EVENT(e) EventSystem::GetPtr()->Push(e);
 
-class EventSystem : public Singleton<EventSystem> {
+class EventSystem
+  : public Singleton<EventSystem>
+  , public System {
 public:
   EventSystem();
 
   ~EventSystem();
 
-  void Init();
-
-  void Shutdown();
+  const char *GetName() const override { return "EventSystem"; }
 
   void Push(const Event &e);
 

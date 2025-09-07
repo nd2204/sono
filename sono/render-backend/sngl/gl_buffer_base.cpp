@@ -2,7 +2,7 @@
 
 #include <render-backend/sngl/gl_render_device.h>
 #include <render-backend/sngl/gl_buffer_base.h>
-#include <render-backend/sngl/gl_commmon.h>
+#include <render-backend/sngl/gl_common.h>
 #include <render/buffer_base.h>
 
 // ------------------------------------------------------------------------------------------
@@ -19,14 +19,13 @@ GLBuffer::GLBuffer(const BufferDesc &desc)
 
   m_GlUsage = (desc.usage & BufferUsage::MapWrite) ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
-  glGenBuffers(1, &m_BufferID);
-  glBindBuffer(m_Target, m_BufferID);
-  glBufferData(m_Target, GetSize(), desc.data, m_GlUsage);
-  GL_CHECK_ERROR();
+  GL_CALL(glGenBuffers, 1, &m_BufferID);
+  GL_CALL(glBindBuffer, m_Target, m_BufferID);
+  GL_CALL(glBufferData, m_Target, GetSize(), desc.data, m_GlUsage);
 }
 // ------------------------------------------------------------------------------------------
 void *GLBuffer::Map() {
-  glBindBuffer(m_Target, m_BufferID);
+  GL_CALL(glBindBuffer, m_Target, m_BufferID);
   void *ptr = nullptr;
   SN_ASSERT(
     m_Desc.usage & BufferUsage::MapWrite || m_Desc.usage & BufferUsage::MapRead,
@@ -45,29 +44,25 @@ void *GLBuffer::Map() {
 }
 // ------------------------------------------------------------------------------------------
 void GLBuffer::Unmap() {
-  glBindBuffer(m_Target, m_BufferID);
-  glUnmapBuffer(m_Target);
-  GL_CHECK_ERROR();
+  GL_CALL(glBindBuffer, m_Target, m_BufferID);
+  GL_CALL(glUnmapBuffer, m_Target);
 }
 // ------------------------------------------------------------------------------------------
 void GLBuffer::Update(const void *data, usize size, usize offset) {
   ASSERT(offset + size <= GetSize());
-  glBindBuffer(m_Target, m_BufferID);
-  GL_CHECK_ERROR();
+  GL_CALL(glBindBuffer, m_Target, m_BufferID);
   if (offset == 0 && size == GetSize()) {
-    glBufferData(m_Target, size, data, m_GlUsage);
-    GL_CHECK_ERROR();
+    GL_CALL(glBufferData, m_Target, size, data, m_GlUsage);
   } else {
-    glBufferSubData(m_Target, offset, size, data);
-    GL_CHECK_ERROR();
+    GL_CALL(glBufferSubData, m_Target, offset, size, data);
   }
 }
 // ------------------------------------------------------------------------------------------
-void GLBuffer::Release() { glDeleteBuffers(1, &m_BufferID); }
+void GLBuffer::Release() { GL_CALL(glDeleteBuffers, 1, &m_BufferID); }
 // ------------------------------------------------------------------------------------------
-void GLBuffer::Bind() const { glBindBuffer(m_Target, m_BufferID); }
+void GLBuffer::Bind() const { GL_CALL(glBindBuffer, m_Target, m_BufferID); }
 // ------------------------------------------------------------------------------------------
-void GLBuffer::Unbind() const { glBindBuffer(m_Target, 0); }
+void GLBuffer::Unbind() const { GL_CALL(glBindBuffer, m_Target, 0); }
 // ------------------------------------------------------------------------------------------
 GLuint GLBuffer::GetID() const { return m_BufferID; }
 // ------------------------------------------------------------------------------------------
