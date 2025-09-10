@@ -214,7 +214,7 @@ void SNFree(void *mem, const char *file, i32 line) {
   free(mem);
 }
 // --------------------------------------------------------------------------------
-uintptr_t AlignAddress(uintptr_t ptr, usize align) {
+AlignResult AlignForward(uintptr_t ptr, usize align) {
   SN_ASSERT((align & (align - 1)) == 0, "alignment must be a power of two");
   SN_ASSERT(align > 0 && align <= 128, "alignment must be in range [1, 128]");
 
@@ -222,15 +222,14 @@ uintptr_t AlignAddress(uintptr_t ptr, usize align) {
   a = reinterpret_cast<uintptr_t>(align);
   mod = ptr & (a - 1);
 
+  usize offset = a - mod;
   // ptr is aligned if mod == 0
   if (mod != 0) {
-    ptr += a - mod;
+    ptr += offset;
   }
 
-  return ptr;
+  return {ptr, offset};
 }
-// --------------------------------------------------------------------------------
-uintptr_t AlignSize(uintptr_t size, usize align) { return (size + align - 1) & ~(align - 1); }
 // --------------------------------------------------------------------------------
 void *operator new(usize size, const char *file, const char *func, i32 line, AllocationType type) {
   return SNAlloc(size, file, func, line, type);

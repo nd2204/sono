@@ -59,13 +59,13 @@ void ArenaAllocator::FreeInternalBuffer() {
 }
 // ------------------------------------------------------------------------------------------
 void *ArenaAllocator::AllocAlign(usize sizeBytes, u16 align, AllocationType tag) {
-  uintptr_t current_ptr = (uintptr_t)m_Buf + (uintptr_t)m_Offset;
-  uintptr_t offset = AlignAddress(current_ptr, align);
-  offset -= (uintptr_t)m_Buf; // Change to relative offset
+  uintptr_t currPtrOffset = (uintptr_t)m_Buf + (uintptr_t)m_Offset;
+  uintptr_t currOffsetAligned = AlignForward(currPtrOffset, align).aligned - (uintptr_t)m_Buf;
 
-  if (offset + sizeBytes <= m_BufSize) {
-    void *ptr = &m_Buf[offset];
-    m_Offset = offset + sizeBytes;
+  if (currOffsetAligned + sizeBytes <= m_BufSize) {
+    void *ptr = &m_Buf[currOffsetAligned];
+    m_Offset = currOffsetAligned + sizeBytes;
+    (void)tag;
     // MemorySystem::GetPtr()->ReportSubAllocation(
     //   m_Buf, ptr, __FILE__, __FUNCTION__, sizeBytes, __LINE__, tag
     // );

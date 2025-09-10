@@ -100,9 +100,12 @@ void operator delete(void *mem, const char *file, i32 line);
 
 void operator delete[](void *mem, const char *file, i32 line);
 
-uintptr_t AlignAddress(uintptr_t addr, usize align);
+struct AlignResult {
+  uintptr_t aligned;
+  usize offset;
+};
 
-uintptr_t AlignSize(uintptr_t size, usize align);
+AlignResult AlignForward(uintptr_t addr, usize align);
 
 #define SN_ZERO(ptr, size) memset((ptr), 0, (size));
 

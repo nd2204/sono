@@ -7,13 +7,18 @@
 
 class Allocator {
 public:
-  virtual void *Alloc(usize sizeInBytes, AllocationType tag = ALLOC_TYPE_GENERAL) = 0;
+  virtual void *Alloc(usize sizeInBytes = 0, AllocationType tag = ALLOC_TYPE_GENERAL) = 0;
+
   virtual void *AllocAlign(
-    usize sizeInBytes, u16 align, AllocationType tag = ALLOC_TYPE_GENERAL
-  ) = 0;
+    usize sizeInBytes = 0, u16 align = 16, AllocationType tag = ALLOC_TYPE_GENERAL
+  ) {
+    (void)align;
+    return Alloc(sizeInBytes, tag);
+  };
 
   virtual void Free(void *mem) = 0;
-  virtual void FreeAlign(void *mem) = 0;
+
+  virtual void FreeAlign(void *mem) { Free(mem); };
 
   template <typename T, AllocationType Tag = ALLOC_TYPE_GENERAL, typename... Args>
   T *New(Args &&...args) {
